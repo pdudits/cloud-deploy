@@ -1,0 +1,7 @@
+= Payara Cloud Deployer
+
+Payara Cloud deployer is Kubernetes-based service to deploy your Jakarta EE and MicroProfile applications into Kubernetes cluster.
+
+== Status
+
+The project is currently in conception phase.

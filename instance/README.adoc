@@ -1,0 +1,3 @@
+= Cloud Instance
+
+Instance is Docker image based on Payara Micro optimized for running Cloud Deployer payloads.
