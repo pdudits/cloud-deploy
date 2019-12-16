@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  annotations:
+    payara.cloud/artifact-url: https://cloud3.blob.core.windows.net/deployment/micro1/consumer-app.war
+    payara.cloud/artifact-version: "1"
+    payara.cloud/project: "micro1"
+    payara.cloud/stage: "test"
+    payara.cloud/artifact: consumer-app
+    payara.cloud/path: /consumer-app
+spec:
+  template:
+    spec:
+      containers:
+        - name: micro
+          env: 
+            # Configure REST client via environment variable
+            - name: FISH_PAYARA_TALK_REPLICATIONTROUBLE_CONTENTAUTHZ_USER_REPLICATION_REPLICATIONAPI_MP_REST_URL
+              value: http://micro1-service-producer-app-test/producer-app/replication

@@ -1,0 +1,13 @@
+# additional paths to expand vars in
+varReference:
+  - path: spec/template/metadata/annotations
+    kind: Deployment
+  - path: spec/template/metadata/labels
+    kind: Deployment  
+  - path: spec/selector/matchLabels
+    kind: Deployment
+  - path: spec/selector
+    kind: Service     
+  - path: spec/rules/http/paths/path
+    kind: Ingress
+    

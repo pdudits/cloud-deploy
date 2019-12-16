@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app
+  annotations:
+    payara.cloud/artifact-url: https://cloud3.blob.core.windows.net/deployment/micro1/producer-app.war
+    payara.cloud/artifact-version: "1"
+    payara.cloud/project: "micro1"
+    payara.cloud/stage: "test"
+    payara.cloud/artifact: producer-app
+    payara.cloud/domain: 9ba44192900145a88bfb.westeurope.aksapp.io
+    payara.cloud/path: /producer-app
