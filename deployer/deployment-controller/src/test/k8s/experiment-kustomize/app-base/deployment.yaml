@@ -50,7 +50,7 @@ spec:
               name: podinfo
       containers:
       - name: micro
-        image: payara/micro:latest
+        image: payara/micro:jdk11
         volumeMounts:
           - mountPath: /opt/payara/deployments
             name: deployments

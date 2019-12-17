@@ -8,5 +8,4 @@ metadata:
     payara.cloud/project: "micro1"
     payara.cloud/stage: "test"
     payara.cloud/artifact: producer-app
-    payara.cloud/domain: 9ba44192900145a88bfb.westeurope.aksapp.io
     payara.cloud/path: /producer-app
