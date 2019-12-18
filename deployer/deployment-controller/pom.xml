@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+  ~
+  ~  The contents of this file are subject to the terms of either the GNU
+  ~  General Public License Version 2 only ("GPL") or the Common Development
+  ~  and Distribution License("CDDL") (collectively, the "License").  You
+  ~  may not use this file except in compliance with the License.  You can
+  ~  obtain a copy of the License at
+  ~  https://github.com/payara/Payara/blob/master/LICENSE.txt
+  ~  See the License for the specific
+  ~  language governing permissions and limitations under the License.
+  ~
+  ~  When distributing the software, include this License Header Notice in each
+  ~  file and include the License file at glassfish/legal/LICENSE.txt.
+  ~
+  ~  GPL Classpath Exception:
+  ~  The Payara Foundation designates this particular file as subject to the "Classpath"
+  ~  exception as provided by the Payara Foundation in the GPL Version 2 section of the License
+  ~  file that accompanied this code.
+  ~
+  ~  Modifications:
+  ~  If applicable, add the following below the License Header, with the fields
+  ~  enclosed by brackets [] replaced by your own identifying information:
+  ~  "Portions Copyright [year] [name of copyright owner]"
+  ~
+  ~  Contributor(s):
+  ~  If you wish your version of this file to be governed by only the CDDL or
+  ~  only the GPL Version 2, indicate your decision by adding "[Contributor]
+  ~  elects to include this software in this distribution under the [CDDL or GPL
+  ~  Version 2] license."  If you don't indicate a single choice of license, a
+  ~  recipient has the option to distribute your version of this file under
+  ~  either the CDDL, the GPL Version 2 or to extend the choice of license to
+  ~  its licensees as provided above.  However, if you add GPL Version 2 code
+  ~  and therefore, elected the GPL Version 2 license, then the option applies
+  ~  only if the new code is made subject to such option by the copyright
+  ~  holder.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>fish.payara.cloud</groupId>
+        <artifactId>cloud-deployer-parent</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>deployment-controller</artifactId>
+    <name>Cloud Deployment Controller</name>
+    <packaging>war</packaging>
+
+    <properties>
+
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>jakarta.platform</groupId>
+            <artifactId>jakarta.jakartaee-web-api</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.microprofile</groupId>
+            <artifactId>microprofile</artifactId>
+            <type>pom</type>
+        </dependency>
+
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>kubernetes-client</artifactId>
+            <version>4.6.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>fish.payara.extras</groupId>
+            <artifactId>payara-micro</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.junit</groupId>
+            <artifactId>arquillian-junit-container</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>fish.payara.arquillian</groupId>
+            <artifactId>payara-micro-remote</artifactId>
+            <!-- ECOSYS-86 -->
+            <version>2.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>fish.payara.arquillian</groupId>
+            <artifactId>payara-micro-deployer</artifactId>
+            <type>war</type>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>deployer-for-tests</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>fish.payara.arquillian</groupId>
+                                    <artifactId>payara-micro-deployer</artifactId>
+                                    <type>war</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <stripVersion>true</stripVersion>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>fish.payara.maven.plugins</groupId>
+                <artifactId>payara-micro-maven-plugin</artifactId>
+                <version>1.0.6</version>
+                <executions>
+                    <execution>
+                        <id>start-test-instance</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <daemon>true</daemon>
+                            <deployWar>false</deployWar>
+                            <commandLineOptions>
+                                <option>
+                                    <key>--deploy</key>
+                                    <value>
+                                        ${project.build.directory}/dependency/payara-micro-deployer.war;micro-deployer
+                                    </value>
+                                </option>
+                                <option>
+                                    <key>--logToFile</key>
+                                    <value>${project.build.directory}/payara-micro.log</value>
+                                </option>
+                                <option>
+                                    <key>--nocluster</key>
+                                </option>
+                                <option>
+                                    <key>--rootdir</key>
+                                    <value>${project.build.directory}/micro-root</value>
+                                </option>
+                            </commandLineOptions>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stop-test-instance</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <payaraVersion>${payara.version}</payaraVersion>
+                    <deployWar>true</deployWar>
+                    <contextRoot>/</contextRoot>
+                    <commandLineOptions>
+                        <option>
+                            <key>--nocluster</key>
+                        </option>
+                    </commandLineOptions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.0.0-M4</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <!-- when debugging integration test, also debug the server -->
+            <id>debug-it</id>
+            <activation>
+                <property>
+                    <name>maven.failsafe.debug</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>fish.payara.maven.plugins</groupId>
+                        <artifactId>payara-micro-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>start-test-instance</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>start</goal>
+                                </goals>
+                                <configuration>
+                                    <javaCommandLineOptions>
+                                        <option>
+                                            <value>-Xdebug</value>
+                                        </option>
+                                        <option>
+                                            <key>-Xrunjdwp:transport</key>
+                                            <value>dt_socket,server=y,suspend=n,address=9009</value>
+                                        </option>
+                                    </javaCommandLineOptions>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
