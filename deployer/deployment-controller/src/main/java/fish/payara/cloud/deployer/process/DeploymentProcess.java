@@ -42,6 +42,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -71,6 +72,25 @@ public class DeploymentProcess {
         return process;
     }
 
+    public void addConfiguration(DeploymentProcessState process, Configuration configuration) {
+        updateProcess(process, p -> p.addConfiguration(configuration));
+    }
+
+    public void setConfiguration(DeploymentProcessState process, String kind, String id, Map<String,String> values) {
+        setConfiguration(process, kind, id, true, values);
+    }
+
+    public void setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String,String> values) {
+        updateProcess(process, p -> p.setConfiguration(kind, id, submit, values));
+        if (submit) {
+            updateProcess(process, p -> p.submitConfigurations(false));
+        }
+    }
+
+    public void submitConfiguration(DeploymentProcessState process) {
+        updateProcess(process, p -> p.submitConfigurations(true));
+    }
+
     /**
      * Mark deployment process as failed.
      * @param process Process to update
@@ -81,7 +101,7 @@ public class DeploymentProcess {
         updateProcess(process, p -> p.fail(message, exception));
     }
 
-    private void updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, ChangeKind> update) {
+    private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, ChangeKind> update) {
         var storedProcess = runningProcesses.get(process.getId());
         ChangeKind eventKind = null;
         synchronized (storedProcess) {
@@ -90,6 +110,7 @@ public class DeploymentProcess {
         if (eventKind != null) {
             storedProcess.fireAsync(deploymentEvent, eventKind);
         }
+        return storedProcess;
     }
 
     /**

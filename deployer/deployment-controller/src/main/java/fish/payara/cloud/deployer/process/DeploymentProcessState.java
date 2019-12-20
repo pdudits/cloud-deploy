@@ -44,8 +44,11 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 
@@ -66,7 +69,7 @@ public class DeploymentProcessState {
     private Throwable failureCause;
     private volatile int version;
     private File tempLocation;
-    private Map<String, Configuration> configurations = new LinkedHashMap<>();
+    private Set<Configuration> configurations = new LinkedHashSet<>();
     private URI persistentLocation;
     private String podName;
     private Instant completion;
@@ -155,8 +158,8 @@ public class DeploymentProcessState {
      * Configuration of artifact.
      * @return discovered configurations of the artifact
      */
-    public Map<String, Configuration> getConfigurations() {
-        return Collections.unmodifiableMap(configurations);
+    public Set<Configuration> getConfigurations() {
+        return Collections.unmodifiableSet(configurations);
     }
 
     /**
@@ -195,5 +198,45 @@ public class DeploymentProcessState {
         this.failed = true;
         this.completion = Instant.now();
         return ChangeKind.FAILED;
+    }
+
+    ChangeKind addConfiguration(Configuration configuration) {
+        if (configurations.contains(configuration)) {
+            throw new IllegalArgumentException("Matching configuration is already present");
+        }
+        version++;
+        configurations.add(configuration);
+        return ChangeKind.CONFIGURATION_ADDED;
+    }
+
+    ChangeKind setConfiguration(String kind, String id, boolean submit, Map<String, String> values) {
+        var config = findConfiguration(kind, id);
+        if (config.isPresent()) {
+            config.get().updateConfiguration(values);
+            if (submit && config.get().isComplete()) {
+                config.get().setSubmitted(true);
+            }
+            version++;
+            return ChangeKind.CONFIGURATION_SET;
+        } else {
+            throw new IllegalArgumentException("Configuration "+kind+"/"+id+" not present");
+        }
+    }
+
+    private Optional<Configuration> findConfiguration(String kind, String id) {
+        return configurations.stream().filter(c -> c.getKind().equals(kind) && c.getId().equals(id)).findAny();
+    }
+
+    ChangeKind submitConfigurations(boolean force) {
+        boolean allComplete = configurations.stream().allMatch(Configuration::isComplete);
+        if (allComplete) {
+            configurations.stream().forEach(c -> c.setSubmitted(true));
+            version++;
+            return ChangeKind.CONFIGURATION_FINISHED;
+        } else if (force) {
+            throw new IllegalStateException("Cannot submit configuration, not all configurations are complete");
+        } else {
+            return null;
+        }
     }
 }
