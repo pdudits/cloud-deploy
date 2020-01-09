@@ -38,7 +38,6 @@
 
 package fish.payara.cloud.deployer.process;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -266,7 +265,7 @@ public class ConfigurationTest {
             var optional = context.key("optional").check(this::startsWithO);
 
             if (optional.isPresent() && optional.get().equals("odd") && context.updatedKeys().size() % 2 == 1) {
-                context.setTopLevelContext();
+                context.topLevel();
                 // That's odd validation, isn't it?
                 // In reality, validation that requires multiple fields to be changed.
                 throw new IllegalArgumentException("Even number of fields should be updated at time");
