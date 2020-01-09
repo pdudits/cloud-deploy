@@ -5,3 +5,7 @@ Payara Cloud deployer is Kubernetes-based service to deploy your Jakarta EE and 
 == Status
 
 The project is currently in conception phase.
+
+== Building
+
+The project is Maven based, and uses Java 11, which is selected via https://maven.apache.org/guides/mini/guide-using-toolchains.html[Maven Toolchain Plugin], it is therefore necessary to configure your `$HOME/.m2/toolchains.xml` properly to provide JDK version 11.
