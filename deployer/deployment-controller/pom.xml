@@ -85,15 +85,16 @@
 
         <dependency>
             <groupId>fish.payara.arquillian</groupId>
-            <artifactId>payara-micro-remote</artifactId>
+            <artifactId>arquillian-payara-micro-managed</artifactId>
+            <version>2.0</version>
             <!-- ECOSYS-86 -->
-            <version>2.1-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
-
+        
         <dependency>
             <groupId>fish.payara.arquillian</groupId>
-            <artifactId>payara-micro-deployer</artifactId>
-            <type>war</type>
+            <artifactId>payara-client-ee7</artifactId>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -109,90 +110,49 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>deployer-for-tests</id>
-                        <phase>pre-integration-test</phase>
+                        <phase>process-test-classes</phase>
                         <goals>
                             <goal>copy</goal>
                         </goals>
                         <configuration>
                             <artifactItems>
                                 <artifactItem>
-                                    <groupId>fish.payara.arquillian</groupId>
-                                    <artifactId>payara-micro-deployer</artifactId>
-                                    <type>war</type>
+                                    <groupId>fish.payara.extras</groupId>
+                                    <artifactId>payara-micro</artifactId>
+                                    <version>${payara.version}</version>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${session.executionRootDirectory}/target/</outputDirectory>
+                                    <destFileName>payara-micro-${payara.version}.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
-                            <stripVersion>true</stripVersion>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <groupId>fish.payara.maven.plugins</groupId>
-                <artifactId>payara-micro-maven-plugin</artifactId>
-                <version>1.0.6</version>
-                <executions>
-                    <execution>
-                        <id>start-test-instance</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>start</goal>
-                        </goals>
-                        <configuration>
-                            <daemon>true</daemon>
-                            <deployWar>false</deployWar>
-                            <commandLineOptions>
-                                <option>
-                                    <key>--deploy</key>
-                                    <value>
-                                        ${project.build.directory}/dependency/payara-micro-deployer.war;micro-deployer
-                                    </value>
-                                </option>
-                                <option>
-                                    <key>--logToFile</key>
-                                    <value>${project.build.directory}/payara-micro.log</value>
-                                </option>
-                                <option>
-                                    <key>--nocluster</key>
-                                </option>
-                                <option>
-                                    <key>--rootdir</key>
-                                    <value>${project.build.directory}/micro-root</value>
-                                </option>
-                            </commandLineOptions>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>stop-test-instance</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>stop</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <payaraVersion>${payara.version}</payaraVersion>
-                    <deployWar>true</deployWar>
-                    <contextRoot>/</contextRoot>
-                    <commandLineOptions>
-                        <option>
-                            <key>--nocluster</key>
-                        </option>
-                    </commandLineOptions>
+                    <configuration>
+                        <systemProperties>
+                            <skipEAR>true</skipEAR>
+                            <payara.microJar>${session.executionRootDirectory}/target/payara-micro-5.191.jar</payara.microJar>
+                            <use.cnHost>${use.cnHost}</use.cnHost>
+                        </systemProperties>
+                    </configuration>
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.0.0-M4</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <configuration>
+                    <rules>
+                        <requireProperty>
+                            <property>payara.version</property>
+                            <message>"Payara version must be specified."</message>
+                            <regex>^5.*</regex>
+                            <regexMessage>"This profile is only supported on Payara 5"</regexMessage>
+                        </requireProperty>
+                    </rules>
+                </configuration>
             </plugin>
         </plugins>
     </build>
