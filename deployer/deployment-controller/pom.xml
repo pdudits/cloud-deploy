@@ -135,23 +135,10 @@
                     <configuration>
                         <systemProperties>
                             <skipEAR>true</skipEAR>
-                            <payara.microJar>${session.executionRootDirectory}/target/payara-micro-5.191.jar</payara.microJar>
+                            <payara.microJar>${session.executionRootDirectory}/target/payara-micro-${payara.version}.jar</payara.microJar>
                             <use.cnHost>${use.cnHost}</use.cnHost>
                         </systemProperties>
                     </configuration>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <configuration>
-                    <rules>
-                        <requireProperty>
-                            <property>payara.version</property>
-                            <message>"Payara version must be specified."</message>
-                            <regex>^5.*</regex>
-                            <regexMessage>"This profile is only supported on Payara 5"</regexMessage>
-                        </requireProperty>
-                    </rules>
                 </configuration>
             </plugin>
         </plugins>

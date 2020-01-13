@@ -1,7 +1,7 @@
 /*
  *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- *  Copyright (c) [2019] Payara Foundation and/or its affiliates. All rights reserved.
+ *  Copyright (c) [2020] Payara Foundation and/or its affiliates. All rights reserved.
  * 
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -48,6 +48,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -84,7 +85,7 @@ public class UploadTest {
     //Tests that a file can be uploaded. As deployment in done asynchronously all files will deploy fine, but may be fail later 
    @Test
    public void uploadTest() throws IOException {
-       WebTarget jaxrstarget = javax.ws.rs.client.ClientBuilder.newClient().
+       WebTarget jaxrstarget = ClientBuilder.newClient().
                target(URI.create(new URL(base, "deployment/foo/bar").toExternalForm()));
        System.out.println(jaxrstarget.getUri().toString());
        Response response = jaxrstarget.request(MediaType.APPLICATION_OCTET_STREAM_TYPE).
