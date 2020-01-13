@@ -75,7 +75,7 @@ public class Upload {
     DeploymentProcess process;
     
     @POST
-    @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive"})
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive", MediaType.MULTIPART_FORM_DATA})
     @Path("{project}/{stage}")
     public Response uploadWar(@PathParam("project") String project, @PathParam("stage") String stage, InputStream uploadWar) {
         try {

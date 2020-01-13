@@ -145,8 +145,12 @@
                                 <option>
                                     <key>--deploy</key>
                                     <value>
-                                        ${project.build.directory}/dependency/payara-micro-deployer.war:micro-deployer
+                                        ${project.build.directory}/dependency/payara-micro-deployer.war
                                     </value>
+                                </option>
+                                 <option>
+                                    <key>--contextroot</key>
+                                    <value>/micro-deployer</value>
                                 </option>
                                 <option>
                                     <key>--logToFile</key>
