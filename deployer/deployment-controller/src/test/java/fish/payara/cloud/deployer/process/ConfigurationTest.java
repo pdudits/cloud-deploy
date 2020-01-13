@@ -55,7 +55,7 @@ public class ConfigurationTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
-    private DeploymentProcessState processState = new DeploymentProcessState(null, null);;
+    private DeploymentProcessState processState = new DeploymentProcessState(null, null, null);
     private MockConfiguration conf = new MockConfiguration("id");
     private SimpleMockConfiguration simple = new SimpleMockConfiguration("id");
 

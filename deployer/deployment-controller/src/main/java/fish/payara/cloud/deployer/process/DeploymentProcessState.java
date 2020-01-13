@@ -63,6 +63,7 @@ public class DeploymentProcessState {
     private final String id;
     private final Namespace namespace;
     private final Instant start = Instant.now();
+    private final String name;
     private boolean complete;
     private boolean failed;
     private String completionMessage;
@@ -74,9 +75,10 @@ public class DeploymentProcessState {
     private String podName;
     private Instant completion;
 
-    DeploymentProcessState(Namespace target, File tempLocation) {
+    DeploymentProcessState(Namespace target, String name, File tempLocation) {
         this.id = UUID.randomUUID().toString();
         this.namespace = target;
+        this.name = name;
         this.tempLocation = tempLocation;
     }
 
@@ -103,6 +105,14 @@ public class DeploymentProcessState {
      */
     public Namespace getNamespace() {
         return namespace;
+    }
+
+    /**
+     * The name of the uploaded artifact
+     * @return name (incl. extension) of the file that was uploaded from client side
+     */
+    public String getName() {
+        return name;
     }
 
     /**

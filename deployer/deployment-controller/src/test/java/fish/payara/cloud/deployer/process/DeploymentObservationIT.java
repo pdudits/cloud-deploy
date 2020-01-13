@@ -76,7 +76,7 @@ public class DeploymentObservationIT {
     public void generalAndSpecificObserversAreInvoked() {
         observer.expect(1);
         // this will not be allowed for long, but for now we're good with invalid arguments
-        process.start(null, null);
+        process.start(null, null, null);
         observer.await();
         assertEquals("PROCESS_STARTED observer should receive an event", 1, observer.getProcessStart());
     }
@@ -85,7 +85,7 @@ public class DeploymentObservationIT {
     public void failedDeploymentIsComplete() {
         observer.expect(2);
         // this will not be allowed for long, but for now we're good with invalid arguments
-        DeploymentProcessState state = process.start(null, null);
+        DeploymentProcessState state = process.start(null, null, null);
         process.fail(state, "A failure", new IllegalArgumentException());
         observer.await();
         state = observer.getLastProcess();

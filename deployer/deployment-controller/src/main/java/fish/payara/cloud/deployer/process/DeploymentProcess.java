@@ -62,11 +62,12 @@ public class DeploymentProcess {
     /**
      * Start new deployment process.
      * @param artifactLocation non-null local location of deployment artifact
+     * @param name the name of the upload
      * @param target namespace to deploy to
      * @return new state representing the deployment process
      */
-    public DeploymentProcessState start(File artifactLocation, Namespace target) {
-        var process = new DeploymentProcessState(target, artifactLocation);
+    public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
+        var process = new DeploymentProcessState(target, name, artifactLocation);
         runningProcesses.put(process.getId(), process);
         process.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
         return process;
