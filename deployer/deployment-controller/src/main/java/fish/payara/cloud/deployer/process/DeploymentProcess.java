@@ -72,14 +72,39 @@ public class DeploymentProcess {
         return process;
     }
 
+    /**
+     * Add new configuration to a process
+     * @param process process to update
+     * @param configuration configuration to add
+     * @throws IllegalArgumentException when configuration with same kind and id is already present in the process
+     */
     public void addConfiguration(DeploymentProcessState process, Configuration configuration) {
         updateProcess(process, p -> p.addConfiguration(configuration));
     }
 
+    /**
+     * Update configuration values, and submit the configuration automatically
+     * @param process process to update
+     * @param kind kind of configuration
+     * @param id id of configuration
+     * @param values values to set
+     * @throws IllegalArgumentException when such configuration is not present
+     * @throws ConfigurationValidationException when values are not valid
+     */
     public void setConfiguration(DeploymentProcessState process, String kind, String id, Map<String,String> values) {
         setConfiguration(process, kind, id, true, values);
     }
 
+    /**
+     * Update configuration values, and optionally submit the configuration if it is complete.
+     * @param process process to update
+     * @param kind kind of configuration
+     * @param id id of configuration
+     * @param submit whether to submit if configuration is complete after update
+     * @param values values to set
+     * @throws IllegalArgumentException when such configuration is not present
+     * @throws ConfigurationValidationException when values are not valid
+     */
     public void setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String,String> values) {
         updateProcess(process, p -> p.setConfiguration(kind, id, submit, values));
         if (submit) {
@@ -87,7 +112,12 @@ public class DeploymentProcess {
         }
     }
 
-    public void submitConfiguration(DeploymentProcessState process) {
+    /**
+     * Submit all configurations of a process.
+     * @param process process to update
+     * @throws IllegalStateException when some of the configurations are incomplete
+     */
+    public void submitConfigurations(DeploymentProcessState process) {
         updateProcess(process, p -> p.submitConfigurations(true));
     }
 
@@ -114,7 +144,7 @@ public class DeploymentProcess {
     }
 
     /**
-     *
+     * Mark that inspection process is finished
      * @param process
      */
     public void inspectionFinished(DeploymentProcessState process) {
