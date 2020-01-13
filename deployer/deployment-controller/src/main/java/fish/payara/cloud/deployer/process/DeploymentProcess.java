@@ -148,6 +148,14 @@ public class DeploymentProcess {
      * Mark that inspection process is finished
      * @param process
      */
+    public void inspectionStarted(DeploymentProcessState process) {
+        updateProcess(process, p -> ChangeKind.INSPECTION_STARTED);
+    }
+
+    /**
+     * Mark that inspection process is finished
+     * @param process
+     */
     public void inspectionFinished(DeploymentProcessState process) {
         updateProcess(process, p -> ChangeKind.INSPECTION_FINISHED);
     }
