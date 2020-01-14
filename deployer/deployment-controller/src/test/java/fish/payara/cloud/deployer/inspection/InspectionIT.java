@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -36,62 +36,58 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.inspection;
 
+import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.process.ProcessObserver;
+import fish.payara.cloud.deployer.utils.DurationConverter;
+import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Before;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
+import static fish.payara.cloud.deployer.inspection.InspectionHelper.write;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 @RunWith(Arquillian.class)
-public class DeploymentObservationIT {
+public class InspectionIT {
     @Deployment
     public static WebArchive deployment() {
+        var shrinkwrap = Maven.resolver().loadPomFromFile("pom.xml").resolve("org.jboss.shrinkwrap:shrinkwrap-impl-base")
+                .withTransitivity().asFile();
         return ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
-                .addClass(ProcessObserver.class);
+                .addPackage(Inspection.class.getPackage())
+                .addPackage(ContextRootConfiguration.class.getPackage())
+                .addClass(DurationConverter.class)
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(InspectionObserver.class)
+                .addAsLibraries(shrinkwrap);
     }
 
     @Inject
-    DeploymentProcess process;
+    InspectionObserver observer;
 
     @Inject
-    ProcessObserver observer;
+    DeploymentProcess deployment;
 
-    @Before
-    public void resetObserver() {
+    @Test
+    public void contextRootIsEventuallyDiscovered() throws InterruptedException {
+        var testFile = write(ShrinkWrap.create(WebArchive.class)
+            .addAsManifestResource(new StringAsset("artifactId=maven-artifact"), "maven/fish.payara.cloud.test/test/pom.properties"));
         observer.reset();
-    }
-
-    @Test
-    public void generalAndSpecificObserversAreInvoked() {
-        observer.expect(1);
-        // this will not be allowed for long, but for now we're good with invalid arguments
-        process.start(null, null, null);
+        deployment.start(testFile, "test-app.war", new Namespace("test","dev"));
         observer.await();
-        assertEquals("PROCESS_STARTED observer should receive an event", 1, observer.getProcessStart());
-    }
-
-    @Test
-    public void failedDeploymentIsComplete() {
-        observer.expect(2);
-        // this will not be allowed for long, but for now we're good with invalid arguments
-        DeploymentProcessState state = process.start(null, null, null);
-        process.fail(state, "A failure", new IllegalArgumentException());
-        observer.await();
-        state = observer.getLastProcess();
-        assertTrue("Process should be complete", state.isComplete());
-        assertTrue("Process should be marked as failed", state.isFailed());
-        assertNotNull("Process should contain completion time", state.getCompletion());
-        assertEquals("PROCESS_STARTED observer should receive an event", 1, observer.getProcessStart());
+        var contextRoot = observer.getConfiguration(ContextRootConfiguration.KIND).orElseThrow(() -> new AssertionError("Context root should be discovered"));
+        assertEquals("/maven-artifact", contextRoot.getValue(ContextRootConfiguration.CONTEXT_ROOT).get());
     }
 }

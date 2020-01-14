@@ -78,9 +78,10 @@ public class Upload {
     DeploymentProcess process;
     
     @POST
-    @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive", MediaType.MULTIPART_FORM_DATA})
-    @Path("{project}/{stage}")
-    public Response uploadWar(@PathParam("project") String project, @PathParam("stage") String stage, InputStream uploadWar) {
+    @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive"})
+    @Path("{project}/{stage}/{name}")
+    public Response uploadWar(@PathParam("project") String project, @PathParam("stage") String stage,
+                              @PathParam("name") String name, InputStream uploadWar) {
         try {
             java.nio.file.Path tempFile = Files.createTempFile("upload", ".war");
             long bytesRead = Files.copy(uploadWar, tempFile, StandardCopyOption.REPLACE_EXISTING);
@@ -88,7 +89,7 @@ public class Upload {
                 return Response.status(400, "Empty file").build();
             }
             
-            DeploymentProcessState state = process.start(tempFile.toFile(), new Namespace(project, stage));
+            DeploymentProcessState state = process.start(tempFile.toFile(), name, new Namespace(project, stage));
             
             return Response.status(201).entity(state.toString()).build();
         } catch (IOException ex) {
@@ -99,9 +100,10 @@ public class Upload {
     
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public Response uploadWarForm(@FormDataParam("project") String project, @FormDataParam("stage") String stage,@FormDataParam("artifact") InputStream artifact,
-             @FormDataParam("file") FormDataContentDisposition fileDisposition) {
-        return uploadWar(project, stage, artifact);
+    public Response uploadWarForm(@FormDataParam("project") String project, @FormDataParam("stage") String stage,
+                                  @FormDataParam("artifact") InputStream artifact,
+                                  @FormDataParam("artifact") FormDataContentDisposition fileDisposition) {
+        return uploadWar(project, stage, fileDisposition.getFileName(), artifact);
     }
     
     
