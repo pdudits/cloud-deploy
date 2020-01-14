@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
- *
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * 
+ *  Copyright (c) [2020] Payara Foundation and/or its affiliates. All rights reserved.
+ * 
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
  *  and Distribution License("CDDL") (collectively, the "License").  You
@@ -9,20 +11,23 @@
  *  https://github.com/payara/Payara/blob/master/LICENSE.txt
  *  See the License for the specific
  *  language governing permissions and limitations under the License.
- *
+ * 
+ *  When distributing the software, include this License Header Notice in each
+ *  file and include the License.
+ * 
  *  When distributing the software, include this License Header Notice in each
  *  file and include the License file at glassfish/legal/LICENSE.txt.
- *
+ * 
  *  GPL Classpath Exception:
  *  The Payara Foundation designates this particular file as subject to the "Classpath"
  *  exception as provided by the Payara Foundation in the GPL Version 2 section of the License
  *  file that accompanied this code.
- *
+ * 
  *  Modifications:
  *  If applicable, add the following below the License Header, with the fields
  *  enclosed by brackets [] replaced by your own identifying information:
  *  "Portions Copyright [year] [name of copyright owner]"
- *
+ * 
  *  Contributor(s):
  *  If you wish your version of this file to be governed by only the CDDL or
  *  only the GPL Version 2, indicate your decision by adding "[Contributor]
@@ -35,51 +40,28 @@
  *  only if the new code is made subject to such option by the copyright
  *  holder.
  */
+package fish.payara.cloud.deployer.endpoints;
 
-html,body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    padding: 0;
-    margin: 0;
-    height: 100%;
-    background-color: #002c3e;
-    color: #dae0e2;
-}
+import java.util.HashSet;
+import java.util.Set;
+import javax.ws.rs.ApplicationPath;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
-body {
-    margin: auto;
-    width: 40rem;
-}
+/**
+ * JAX-RS endpoints activator
+ * @author jonathan coustick
+ */
+@ApplicationPath("/api")
+public class Application extends javax.ws.rs.core.Application {
 
-.light {
-    font-weight: 300;
-}
-
-.primary-blue {
-    color: #002c3e;
-}
-
-h1,h2,h3,.primary-orange {
-    color: #f0981b
-}
-
-.secondary-blue {
-    color: #0096d6;
-}
-
-.secondary-light {
-    color: #dae0e2;
-}
-
-
-.secondary-dark {
-    color: #434445;
-}
-
-form {
-    display: grid;
-    grid-template-columns: 5em [main] auto;
-    grid-gap: 0.5em
-}
-input[type=submit] {
-    grid-column: main;
+    @Override
+    public Set<Class<?>> getClasses() {
+        HashSet<Class<?>> classes = new HashSet<>();
+        classes.add(Upload.class);
+        classes.add(MultiPartFeature.class);
+        return classes;
+    }
+    
+    
+    
 }

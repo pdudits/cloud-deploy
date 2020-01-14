@@ -60,6 +60,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-multipart</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.eclipse.microprofile</groupId>
             <artifactId>microprofile</artifactId>
             <type>pom</type>
@@ -99,6 +105,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -147,6 +154,10 @@
                                     <value>
                                         ${project.build.directory}/dependency/payara-micro-deployer.war
                                     </value>
+                                </option>
+                                 <option>
+                                    <key>--contextroot</key>
+                                    <value>/micro-deployer</value>
                                 </option>
                                 <option>
                                     <key>--contextroot</key>
