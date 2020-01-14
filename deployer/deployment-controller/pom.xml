@@ -120,6 +120,13 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.2.4</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -261,6 +268,13 @@
                         </executions>
                     </plugin>
                 </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>run</id>
+            <build>
+                <defaultGoal>toolchains:toolchain payara-micro:run</defaultGoal>
             </build>
         </profile>
     </profiles>

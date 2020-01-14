@@ -38,6 +38,7 @@
 
 package fish.payara.cloud.deployer.process;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
 import java.util.concurrent.ConcurrentHashMap;
@@ -73,6 +74,7 @@ public class ProcessObserver {
         this.processStart++;
     }
 
+    @PostConstruct
     public void reset() {
         this.general = 0;
         this.processStart = 0;

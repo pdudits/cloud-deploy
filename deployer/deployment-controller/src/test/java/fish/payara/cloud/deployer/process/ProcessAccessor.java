@@ -36,23 +36,18 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.utils;
+package fish.payara.cloud.deployer.process;
 
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.enterprise.inject.Produces;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.UUID;
 
-@Singleton
-public class ManagedConcurrencyProducer {
-    @Resource
-    ManagedScheduledExecutorService mses;
+public class ProcessAccessor {
 
-    @Produces
-    public ManagedScheduledExecutorService produceManagedSchedulerExecutorService() {
-        return mses;
+    public static DeploymentProcessState createProcess() {
+        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
+    }
+
+    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
+        process.transition(kind);
+        return new StateChanged(process, kind);
     }
 }

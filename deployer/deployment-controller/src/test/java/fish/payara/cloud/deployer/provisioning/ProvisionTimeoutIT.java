@@ -36,23 +36,50 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.utils;
+package fish.payara.cloud.deployer.provisioning;
 
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.enterprise.inject.Produces;
-import java.util.concurrent.ScheduledExecutorService;
+import fish.payara.cloud.deployer.process.ChangeKind;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.process.ProcessObserver;
+import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.StringAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-@Singleton
-public class ManagedConcurrencyProducer {
-    @Resource
-    ManagedScheduledExecutorService mses;
+import javax.inject.Inject;
 
-    @Produces
-    public ManagedScheduledExecutorService produceManagedSchedulerExecutorService() {
-        return mses;
+@RunWith(Arquillian.class)
+public class ProvisionTimeoutIT {
+    @Deployment
+    public static WebArchive deployment() {
+        return ShrinkWrap.create(WebArchive.class)
+                .addPackage(DeploymentProcess.class.getPackage())
+                .addClass(ProcessObserver.class)
+                .addClass(ProvisioningController.class)
+                .addClass(ManagedConcurrencyProducer.class)
+                .addAsResource(new StringAsset("provision.timeout=PT2S"), "META-INF/microprofile-config.properties");
+    }
+
+    @Inject
+    DeploymentProcess deployment;
+
+    @Inject
+    ProcessObserver observer;
+
+    @Test
+    public void provisionWithoutActivityTimesOut() {
+        DeploymentProcessState process = deployment.start(null, "test.war", new Namespace("test", "dev"));
+        // submittings configs triggers provisioning
+        observer.reset();
+        deployment.submitConfigurations(process);
+        observer.await(ChangeKind.PROVISION_STARTED);
+        // and without further activity it will fail
+        observer.await(ChangeKind.FAILED);
     }
 }
