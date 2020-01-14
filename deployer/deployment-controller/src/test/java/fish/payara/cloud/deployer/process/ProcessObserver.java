@@ -40,8 +40,11 @@ package fish.payara.cloud.deployer.process;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertTrue;
 
@@ -53,9 +56,14 @@ public class ProcessObserver {
     private int processStart;
     private DeploymentProcessState lastProcess;
 
+    private ConcurrentHashMap<ChangeKind, Integer> eventCounts = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<ChangeKind, CountDownLatch> eventLatches = new ConcurrentHashMap<>();
+
     void generalObserver(@ObservesAsync StateChanged event) {
         this.general++;
         this.lastProcess = event.getProcess();
+        eventCounts.compute(event.getKind(), ((changeKind, count) -> count == null ? 1 : count+1));
+        eventLatches.get(event.getKind()).countDown();
         if (this.latch != null) {
             latch.countDown();
         }
@@ -70,6 +78,8 @@ public class ProcessObserver {
         this.processStart = 0;
         this.lastProcess = null;
         this.latch = null;
+        eventCounts.clear();
+        Stream.of(ChangeKind.values()).forEach(kind -> eventLatches.put(kind, new CountDownLatch(1)));
     }
 
     public void expect(int events) {
@@ -86,12 +96,20 @@ public class ProcessObserver {
         }
     }
 
+    public void await(ChangeKind kind) {
+        try {
+            assertTrue("Event "+kind+" should be fired within short time", eventLatches.get(kind).await(5, TimeUnit.SECONDS));
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted while waiting for "+kind, e);
+        }
+    }
+
     public int getGeneral() {
         return general;
     }
 
     public int getProcessStart() {
-        return processStart;
+        return eventCounts.getOrDefault(ChangeKind.PROCESS_STARTED, 0);
     }
 
     public DeploymentProcessState getLastProcess() {
