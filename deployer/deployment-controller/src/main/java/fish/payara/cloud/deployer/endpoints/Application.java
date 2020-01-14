@@ -45,18 +45,20 @@ package fish.payara.cloud.deployer.endpoints;
 import java.util.HashSet;
 import java.util.Set;
 import javax.ws.rs.ApplicationPath;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
 
 /**
  * JAX-RS endpoints activator
  * @author jonathan coustick
  */
-@ApplicationPath("/")
+@ApplicationPath("/api")
 public class Application extends javax.ws.rs.core.Application {
 
     @Override
     public Set<Class<?>> getClasses() {
         HashSet<Class<?>> classes = new HashSet<>();
         classes.add(Upload.class);
+        classes.add(MultiPartFeature.class);
         return classes;
     }
     

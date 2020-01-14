@@ -74,3 +74,12 @@ h1,h2,h3,.primary-orange {
 .secondary-dark {
     color: #434445;
 }
+
+form {
+    display: grid;
+    grid-template-columns: 5em [main] auto;
+    grid-gap: 0.5em
+}
+input[type=submit] {
+    grid-column: main;
+}
