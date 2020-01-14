@@ -237,6 +237,11 @@ public class DeploymentProcessState {
         return configurations.stream().filter(c -> c.getKind().equals(kind) && c.getId().equals(id)).findAny();
     }
 
+    ChangeKind transition(ChangeKind target) {
+        version++;
+        return target;
+    }
+
     ChangeKind submitConfigurations(boolean force) {
         boolean allComplete = configurations.stream().allMatch(Configuration::isComplete);
         if (allComplete) {

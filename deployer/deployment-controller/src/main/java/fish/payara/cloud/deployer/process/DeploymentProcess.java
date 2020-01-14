@@ -147,24 +147,32 @@ public class DeploymentProcess {
     /**
      * Mark that inspection process is finished
      * @param process
+     * @return
      */
-    public void inspectionStarted(DeploymentProcessState process) {
-        updateProcess(process, p -> ChangeKind.INSPECTION_STARTED);
+    public DeploymentProcessState inspectionStarted(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.INSPECTION_STARTED));
     }
 
     /**
      * Mark that inspection process is finished
      * @param process
+     * @return
      */
-    public void inspectionFinished(DeploymentProcessState process) {
-        updateProcess(process, p -> ChangeKind.INSPECTION_FINISHED);
+    public DeploymentProcessState inspectionFinished(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.INSPECTION_FINISHED));
     }
 
     /**
      * Mark that configuration process starts
      * @param process
+     * @return
      */
-    public void configurationStarted(DeploymentProcessState process) {
-        updateProcess(process, p -> ChangeKind.CONFIGURATION_STARTED);
+    public DeploymentProcessState configurationStarted(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.CONFIGURATION_STARTED));
     }
+
+    public DeploymentProcessState provisioningStarted(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_STARTED));
+    }
+
 }
