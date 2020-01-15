@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -43,9 +43,7 @@ import java.io.File;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -195,7 +193,7 @@ public class DeploymentProcessState {
     public Instant getCompletion() {
         return completion;
     }
-
+    
     CompletionStage<StateChanged> fireAsync(Event<StateChanged> event, ChangeKind kind) {
         return event.select(kind.asFilter()).fireAsync(new StateChanged(this, kind));
     }

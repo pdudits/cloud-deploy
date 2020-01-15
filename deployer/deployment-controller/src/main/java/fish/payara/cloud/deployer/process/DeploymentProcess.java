@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -158,5 +158,9 @@ public class DeploymentProcess {
      */
     public void inspectionFinished(DeploymentProcessState process) {
         updateProcess(process, p -> ChangeKind.INSPECTION_FINISHED);
+    }
+    
+    public DeploymentProcessState getProcessState(String id) {
+        return runningProcesses.get(id);
     }
 }

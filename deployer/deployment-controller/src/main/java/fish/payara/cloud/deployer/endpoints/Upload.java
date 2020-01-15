@@ -42,25 +42,34 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
+import fish.payara.cloud.deployer.process.ChangeKind;
+import fish.payara.cloud.deployer.process.DeploymentObserver;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.process.StateChanged;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
+import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.FormParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.sse.Sse;
+import javax.ws.rs.sse.SseEventSink;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;  
 import org.glassfish.jersey.media.multipart.FormDataParam;  
 
@@ -72,10 +81,16 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 @ApplicationScoped
 public class Upload {
     
+    @Resource
+    ManagedExecutorService concurrency;
+    
     private static final Logger LOGGER = Logger.getLogger("CLOUD-DEPLOYER");
     
     @Inject
     DeploymentProcess process;
+    
+    @Inject
+    DeploymentObserver deploymentStream;
     
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive"})
@@ -91,7 +106,7 @@ public class Upload {
             
             DeploymentProcessState state = process.start(tempFile.toFile(), name, new Namespace(project, stage));
             
-            return Response.status(201).entity(state.toString()).build();
+            return Response.status(201).entity(state.getId()).build();
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error in file upload", ex);
             return Response.serverError().build();
@@ -105,6 +120,36 @@ public class Upload {
                                   @FormDataParam("artifact") FormDataContentDisposition fileDisposition) {
         return uploadWar(project, stage, fileDisposition.getFileName(), artifact);
     }
+    
+    @GET
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    @Path("progress/{id}")
+    public void getDeploymentEvents(@Context SseEventSink eventSink,@Context Sse sse, @PathParam("id") String id) {
+        if (process.getProcessState(id).isComplete()) {
+            try (eventSink) {
+                eventSink.send(sse.newEvent(process.getProcessState(id).toString()));
+            }
+        }
+        
+        deploymentStream.addRequest(eventSink, id);
+        
+    }
+    
+    
+    
+    @GET
+    @Path("{id}")
+    public Response deploymentStatus(@PathParam("id") String id) {
+        return Response.ok(process.getProcessState(id)).build();
+    }
+    
+    @GET
+    @Path("{project}/{stage}/{id}")
+    public Response deploymentStatus(@PathParam("project") String project,@PathParam("stage") String stage,@PathParam("id") String id) {
+        return Response.ok(process.getProcessState(id)).build();
+    }
+    
+    
     
     
 }
