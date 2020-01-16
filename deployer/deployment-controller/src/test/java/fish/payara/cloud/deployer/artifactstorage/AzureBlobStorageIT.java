@@ -38,6 +38,7 @@
 
 package fish.payara.cloud.deployer.artifactstorage;
 
+import com.microsoft.azure.storage.StorageException;
 import fish.payara.cloud.deployer.DockerTest;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
 import org.junit.Test;
@@ -45,13 +46,15 @@ import org.junit.experimental.categories.Category;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import static org.junit.Assert.assertEquals;
 
 @Category(DockerTest.class)
 public class AzureBlobStorageIT {
     @Test
-    public void testUpload() throws IOException {
+    public void artifactIsUploadedAndDeleted() throws IOException {
         var storage = new AzureBlobStorage();
         storage.azureConnectionString = System.getProperty(AzureBlobStorage.CONFIG_CONNECTIONSTRING);
         storage.blobContainer = System.getProperty(AzureBlobStorage.CONFIG_CONTAINER);
@@ -66,5 +69,37 @@ public class AzureBlobStorageIT {
             var content = input.readAllBytes();
             assertEquals("Downloaded and uploaded sizes should match", source.length(), content.length);
         }
+
+        ProcessAccessor.setPersistentLocation(process, uri);
+        storage.deleteArtifact(process);
+    }
+
+    @Test(expected = IOException.class)
+    public void artbitraryArtifactIsNotDeleted() throws IOException, URISyntaxException, StorageException {
+        var storage = new AzureBlobStorage();
+        storage.azureConnectionString = System.getProperty(AzureBlobStorage.CONFIG_CONNECTIONSTRING);
+        storage.blobContainer = System.getProperty(AzureBlobStorage.CONFIG_CONTAINER);
+        storage.initAccount();
+
+        var process = ProcessAccessor.createProcess();
+        ProcessAccessor.setPersistentLocation(process, storage.container.getBlockBlobReference("random/stuff.txt").getUri());
+
+        storage.deleteArtifact(process);
+    }
+
+    @Test
+    public void artifactsFromDifferentStorageAreIgnored() throws IOException, URISyntaxException, StorageException {
+        var storage = new AzureBlobStorage();
+        storage.azureConnectionString = System.getProperty(AzureBlobStorage.CONFIG_CONNECTIONSTRING);
+        storage.blobContainer = System.getProperty(AzureBlobStorage.CONFIG_CONTAINER);
+        storage.initAccount();
+
+        var process = ProcessAccessor.createProcess();
+        // this effectively replaces container name with random, therefore the uri represents something outside the
+        // container
+        var foreignUri = storage.container.getUri().resolve(URI.create("./random/stuff.txt"));
+        ProcessAccessor.setPersistentLocation(process, foreignUri);
+
+        storage.deleteArtifact(process);
     }
 }

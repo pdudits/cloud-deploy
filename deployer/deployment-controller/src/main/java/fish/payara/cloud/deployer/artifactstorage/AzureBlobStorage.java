@@ -44,6 +44,7 @@ import com.microsoft.azure.storage.StorageException;
 import com.microsoft.azure.storage.blob.BlobContainerPublicAccessType;
 import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -70,7 +71,7 @@ class AzureBlobStorage implements ArtifactStorage {
     String blobContainer;
 
     private CloudStorageAccount storageAccount;
-    private CloudBlobContainer container;
+    CloudBlobContainer container;
 
     @Override
     public URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException {
@@ -84,6 +85,26 @@ class AzureBlobStorage implements ArtifactStorage {
         } catch (StorageException e) {
             throw new IOException("Storage error", e);
         }
+    }
+
+    @Override
+    public void deleteArtifact(DeploymentProcessState deploymentProcess) throws IOException {
+        var uri = deploymentProcess.getPersistentLocation();
+        if (uri != null) {
+            var base = container.getStorageUri().getPrimaryUri();
+            var path = base.relativize(uri);
+            if (!path.isAbsolute()) {
+                // we likely matched the prefix
+                try {
+                    var blob = container.getBlockBlobReference(path.toString());
+                    blob.delete();
+
+                } catch (URISyntaxException | StorageException e) {
+                    throw new IOException("Could not delete artifact "+uri,e);
+                }
+            }
+        }
+
     }
 
     @PostConstruct

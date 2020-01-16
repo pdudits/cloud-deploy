@@ -38,6 +38,7 @@
 
 package fish.payara.cloud.deployer.artifactstorage;
 
+import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 
 import java.io.File;
@@ -47,4 +48,5 @@ import java.util.concurrent.CompletionStage;
 
 public interface ArtifactStorage {
     URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException;
+    void deleteArtifact(DeploymentProcessState deploymentProcess) throws IOException;
 }
