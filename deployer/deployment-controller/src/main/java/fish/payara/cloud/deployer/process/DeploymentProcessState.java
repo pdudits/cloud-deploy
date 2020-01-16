@@ -254,4 +254,16 @@ public class DeploymentProcessState {
             return null;
         }
     }
+
+    ChangeKind removePersistentLocation() {
+        version++;
+        persistentLocation = null;
+        return null; // no event broadcasted
+    }
+
+    ChangeKind setPersistentLocation(URI location) {
+        version++;
+        this.persistentLocation = location;
+        return ChangeKind.ARTIFACT_STORED;
+    }
 }

@@ -36,55 +36,23 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.provisioning;
+package fish.payara.cloud.deployer.artifactstorage;
 
-import fish.payara.cloud.deployer.artifactstorage.ArtifactStorage;
-import fish.payara.cloud.deployer.artifactstorage.TempArtifactStorage;
-import fish.payara.cloud.deployer.process.ChangeKind;
-import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.process.ProcessObserver;
-import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
-import javax.inject.Inject;
-import java.io.File;
+import javax.enterprise.context.ApplicationScoped;
+import java.io.IOException;
+import java.net.URI;
 
-@RunWith(Arquillian.class)
-public class ProvisionTimeoutIT {
-    @Deployment
-    public static WebArchive deployment() {
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addClass(ProcessObserver.class)
-                .addClass(ProvisioningController.class)
-                .addClass(ArtifactStorage.class)
-                .addClass(TempArtifactStorage.class)
-                .addClass(ManagedConcurrencyProducer.class)
-                .addAsResource(new StringAsset("provision.timeout=PT2S"), "META-INF/microprofile-config.properties");
+@ApplicationScoped
+public class TempArtifactStorage implements ArtifactStorage {
+    @Override
+    public URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException {
+        return deploymentProcess.getTempLocation().toURI();
     }
 
-    @Inject
-    DeploymentProcess deployment;
-
-    @Inject
-    ProcessObserver observer;
-
-    @Test
-    public void provisionWithoutActivityTimesOut() {
-        DeploymentProcessState process = deployment.start(new File("target/test.war"), "test.war", new Namespace("test", "dev"));
-        // submittings configs triggers provisioning
-        observer.reset();
-        deployment.submitConfigurations(process);
-        observer.await(ChangeKind.PROVISION_STARTED);
-        // and without further activity it will fail
-        observer.await(ChangeKind.FAILED);
+    @Override
+    public void deleteArtifact(DeploymentProcessState deploymentProcess) throws IOException {
+        deploymentProcess.getTempLocation().delete();
     }
 }

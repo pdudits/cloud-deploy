@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static org.junit.Assert.assertTrue;
@@ -60,10 +61,14 @@ public class ProcessObserver {
     private ConcurrentHashMap<ChangeKind, Integer> eventCounts = new ConcurrentHashMap<>();
     private ConcurrentHashMap<ChangeKind, CountDownLatch> eventLatches = new ConcurrentHashMap<>();
 
+    private static final Logger LOGGER = Logger.getLogger(ProcessObserver.class.getName());
+
     void generalObserver(@ObservesAsync StateChanged event) {
         this.general++;
         this.lastProcess = event.getProcess();
         eventCounts.compute(event.getKind(), ((changeKind, count) -> count == null ? 1 : count+1));
+        var completionMessage = event.getProcess().getCompletionMessage();
+        LOGGER.info(event.getProcess().getId() + " " + event.getKind() + " " + completionMessage != null ? completionMessage : "");
         eventLatches.get(event.getKind()).countDown();
         if (this.latch != null) {
             latch.countDown();

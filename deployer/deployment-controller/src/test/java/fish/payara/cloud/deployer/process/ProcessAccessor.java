@@ -39,6 +39,7 @@
 package fish.payara.cloud.deployer.process;
 
 import java.io.File;
+import java.net.URI;
 import java.util.UUID;
 
 public class ProcessAccessor {
@@ -52,7 +53,15 @@ public class ProcessAccessor {
     }
 
     public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
+        if (kind == null) {
+            return null;
+        }
         process.transition(kind);
         return new StateChanged(process, kind);
     }
+
+    public static StateChanged setPersistentLocation(DeploymentProcessState process, URI location) {
+        return makeEvent(process, process.setPersistentLocation(location));
+    }
+
 }

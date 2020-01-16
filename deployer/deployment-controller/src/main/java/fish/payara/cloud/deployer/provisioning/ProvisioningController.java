@@ -38,6 +38,7 @@
 
 package fish.payara.cloud.deployer.provisioning;
 
+import fish.payara.cloud.deployer.artifactstorage.ArtifactStorage;
 import fish.payara.cloud.deployer.process.ChangeKind;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
@@ -47,15 +48,21 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 class ProvisioningController {
+
+    private static final Logger LOGGER = Logger.getLogger(ProvisioningController.class.getName());
+
     @Inject
     @ConfigProperty(name = "provision.timeout", defaultValue = "PT30S")
     Duration inactivityTimeout;
@@ -66,6 +73,9 @@ class ProvisioningController {
     @Inject
     ScheduledExecutorService executorService;
 
+    @Inject
+    ArtifactStorage artifactStorage;
+
     private ConcurrentMap<String,DeploymentInProvisioning> activityMonitor = new ConcurrentHashMap<>();
 
 
@@ -73,10 +83,29 @@ class ProvisioningController {
         // possibly we could do any transformations of the artifact (i. e. embedding configuration) here
 
         // then store artifact to persistent storage
+        try {
+            var persistentUri = artifactStorage.storeArtifact(event.getProcess());
+            process.artifactStored(event.getProcess(), persistentUri);
+        } catch (IOException e) {
+            process.fail(event.getProcess(), "Failed to store artifact", e);
+            return;
+        }
 
-        // process.artifactStored(event.getProcess, persistentUrl);
         startMonitoring(event);
         process.provisioningStarted(event.getProcess());
+    }
+
+
+    void deleteFailedArtifacts(@ObservesAsync @ChangeKind.Filter(ChangeKind.FAILED) StateChanged event) {
+        var uri = event.getProcess().getPersistentLocation();
+        if (uri != null) {
+            try {
+                artifactStorage.deleteArtifact(event.getProcess());
+                process.artifactDeleted(event.getProcess());
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Could not delete artifact "+uri, e);
+            }
+        }
     }
 
     void startMonitoring(StateChanged event) {

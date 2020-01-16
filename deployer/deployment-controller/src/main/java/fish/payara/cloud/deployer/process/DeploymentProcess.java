@@ -42,6 +42,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -175,4 +176,11 @@ public class DeploymentProcess {
         return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_STARTED));
     }
 
+    public DeploymentProcessState artifactDeleted(DeploymentProcessState process) {
+        return updateProcess(process, DeploymentProcessState::removePersistentLocation);
+    }
+
+    public DeploymentProcessState artifactStored(DeploymentProcessState process, URI persistentUri) {
+        return updateProcess(process, p -> p.setPersistentLocation(persistentUri));
+    }
 }
