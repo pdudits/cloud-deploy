@@ -159,4 +159,12 @@ public class DeploymentProcess {
     public void inspectionFinished(DeploymentProcessState process) {
         updateProcess(process, p -> ChangeKind.INSPECTION_FINISHED);
     }
+
+    /**
+     * Mark that configuration process starts
+     * @param process
+     */
+    public void configurationStarted(DeploymentProcessState process) {
+        updateProcess(process, p -> ChangeKind.CONFIGURATION_STARTED);
+    }
 }
