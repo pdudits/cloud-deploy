@@ -163,4 +163,12 @@ public class DeploymentProcess {
     public DeploymentProcessState getProcessState(String id) {
         return runningProcesses.get(id);
     }
+
+    /**
+     * Mark that configuration process starts
+     * @param process
+     */
+    public void configurationStarted(DeploymentProcessState process) {
+        updateProcess(process, p -> ChangeKind.CONFIGURATION_STARTED);
+    }
 }
