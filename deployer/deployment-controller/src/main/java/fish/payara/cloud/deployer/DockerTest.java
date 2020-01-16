@@ -36,23 +36,10 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer;
 
-import java.io.File;
-import java.util.UUID;
-
-public class ProcessAccessor {
-
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
-    }
-
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
-    }
-
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        process.transition(kind);
-        return new StateChanged(process, kind);
-    }
+/**
+ * Test requiring docker runtime
+ */
+public interface DockerTest {
 }

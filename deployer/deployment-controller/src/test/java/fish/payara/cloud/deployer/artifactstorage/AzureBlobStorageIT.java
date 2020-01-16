@@ -36,23 +36,35 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.artifactstorage;
+
+import fish.payara.cloud.deployer.DockerTest;
+import fish.payara.cloud.deployer.process.ProcessAccessor;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.File;
-import java.util.UUID;
+import java.io.IOException;
 
-public class ProcessAccessor {
+import static org.junit.Assert.assertEquals;
 
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
-    }
+@Category(DockerTest.class)
+public class AzureBlobStorageIT {
+    @Test
+    public void testUpload() throws IOException {
+        var storage = new AzureBlobStorage();
+        storage.azureConnectionString = System.getProperty(AzureBlobStorage.CONFIG_CONNECTIONSTRING);
+        storage.blobContainer = System.getProperty(AzureBlobStorage.CONFIG_CONTAINER);
+        storage.initAccount();
 
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
-    }
+        var source = new File("pom.xml");
+        var process = ProcessAccessor.createProcess(source);
+        var uri = storage.storeArtifact(process);
 
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        process.transition(kind);
-        return new StateChanged(process, kind);
+        // we should be able to fetch that URI now
+        try (var input = uri.toURL().openStream()) {
+            var content = input.readAllBytes();
+            assertEquals("Downloaded and uploaded sizes should match", source.length(), content.length);
+        }
     }
 }

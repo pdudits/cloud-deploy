@@ -36,23 +36,15 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.artifactstorage;
+
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
 
 import java.io.File;
-import java.util.UUID;
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.CompletionStage;
 
-public class ProcessAccessor {
-
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
-    }
-
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
-    }
-
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        process.transition(kind);
-        return new StateChanged(process, kind);
-    }
+public interface ArtifactStorage {
+    URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException;
 }
