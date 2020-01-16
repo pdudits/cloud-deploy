@@ -42,12 +42,10 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.process.ChangeKind;
 import fish.payara.cloud.deployer.process.DeploymentObserver;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.process.StateChanged;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -130,26 +128,31 @@ public class Upload {
                 eventSink.send(sse.newEvent(process.getProcessState(id).toString()));
             }
         }
-        
         deploymentStream.addRequest(eventSink, id);
         
     }
     
     
-    
     @GET
     @Path("{id}")
     public Response deploymentStatus(@PathParam("id") String id) {
-        return Response.ok(process.getProcessState(id)).build();
+        DeploymentProcessState state = process.getProcessState(id);
+        if (state == null){
+            return Response.status(440).build();
+        }
+        
+        return Response.ok(process.getProcessState(id).toString()).build();
     }
     
     @GET
     @Path("{project}/{stage}/{id}")
     public Response deploymentStatus(@PathParam("project") String project,@PathParam("stage") String stage,@PathParam("id") String id) {
-        return Response.ok(process.getProcessState(id)).build();
+        DeploymentProcessState state = process.getProcessState(id);
+        if (state == null){
+            return Response.status(440).build();
+        }
+        
+        return Response.ok(process.getProcessState(id).toString()).build();
     }
-    
-    
-    
     
 }

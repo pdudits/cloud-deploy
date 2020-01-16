@@ -25,7 +25,7 @@ public class DeploymentObserver {
     private ConcurrentHashMap<String, List<SseEventSink>> broadcasts;
 
     @Context
-    Sse sse;
+    private Sse sse;
 
     public DeploymentObserver() {
         broadcasts = new ConcurrentHashMap<>();
@@ -41,6 +41,8 @@ public class DeploymentObserver {
         String processID = event.getProcess().getId();
 
         OutboundSseEvent outboundEvent = sse.newEvent(event.toString());
+        System.out.println("");
+        System.out.println("processID is" + processID);
         for (SseEventSink sink : broadcasts.get(processID)) {
             sink.send(outboundEvent);
         }

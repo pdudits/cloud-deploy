@@ -67,10 +67,10 @@ public class DeploymentProcess {
      * @return new state representing the deployment process
      */
     public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
-        var process = new DeploymentProcessState(target, name, artifactLocation);
-        runningProcesses.put(process.getId(), process);
-        process.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
-        return process;
+        var processState = new DeploymentProcessState(target, name, artifactLocation);
+        runningProcesses.put(processState.getId(), processState);
+        processState.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
+        return processState;
     }
 
     /**
