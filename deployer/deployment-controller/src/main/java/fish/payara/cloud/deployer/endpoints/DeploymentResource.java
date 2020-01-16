@@ -77,7 +77,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
  */
 @Path("/deployment")
 @ApplicationScoped
-public class Upload {
+public class DeploymentResource {
     
     @Resource
     ManagedExecutorService concurrency;
@@ -123,7 +123,12 @@ public class Upload {
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Path("progress/{id}")
     public void getDeploymentEvents(@Context SseEventSink eventSink,@Context Sse sse, @PathParam("id") String id) {
-        if (process.getProcessState(id).isComplete()) {
+        DeploymentProcessState state = process.getProcessState(id);
+        if (state == null) {
+            eventSink.close();
+            return;
+        }
+        if (state.isComplete()) {
             try (eventSink) {
                 eventSink.send(sse.newEvent(process.getProcessState(id).toString()));
             }

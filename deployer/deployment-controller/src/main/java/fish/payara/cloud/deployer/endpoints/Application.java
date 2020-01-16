@@ -57,7 +57,7 @@ public class Application extends javax.ws.rs.core.Application {
     @Override
     public Set<Class<?>> getClasses() {
         HashSet<Class<?>> classes = new HashSet<>();
-        classes.add(Upload.class);
+        classes.add(DeploymentResource.class);
         classes.add(MultiPartFeature.class);
         return classes;
     }
