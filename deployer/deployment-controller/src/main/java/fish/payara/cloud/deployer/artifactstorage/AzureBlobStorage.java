@@ -46,6 +46,7 @@ import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.setup.AzureStorage;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.annotation.PostConstruct;
@@ -56,6 +57,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 
+@AzureStorage
 @ApplicationScoped
 class AzureBlobStorage implements ArtifactStorage {
 

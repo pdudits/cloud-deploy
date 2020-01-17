@@ -256,26 +256,17 @@
                     <plugin>
                         <groupId>fish.payara.maven.plugins</groupId>
                         <artifactId>payara-micro-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>start-test-instance</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>start</goal>
-                                </goals>
-                                <configuration>
-                                    <javaCommandLineOptions>
-                                        <option>
-                                            <value>-Xdebug</value>
-                                        </option>
-                                        <option>
-                                            <key>-Xrunjdwp:transport</key>
-                                            <value>dt_socket,server=y,suspend=n,address=9009</value>
-                                        </option>
-                                    </javaCommandLineOptions>
-                                </configuration>
-                            </execution>
-                        </executions>
+                        <configuration>
+                            <javaCommandLineOptions>
+                                <option>
+                                    <value>-Xdebug</value>
+                                </option>
+                                <option>
+                                    <key>-Xrunjdwp:transport</key>
+                                    <value>dt_socket,server=y,suspend=n,address=9009</value>
+                                </option>
+                            </javaCommandLineOptions>
+                        </configuration>
                     </plugin>
                 </plugins>
             </build>
@@ -285,7 +276,7 @@
             <!-- Run locally -->
             <id>run</id>
             <build>
-                <defaultGoal>toolchains:toolchain payara-micro:run</defaultGoal>
+                <defaultGoal>package payara-micro:start</defaultGoal>
             </build>
         </profile>
 

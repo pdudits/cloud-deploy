@@ -36,23 +36,18 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.artifactstorage;
+package fish.payara.cloud.deployer.setup;
 
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Stereotype;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import javax.enterprise.context.ApplicationScoped;
-import java.io.IOException;
-import java.net.URI;
-
-@ApplicationScoped
-public class TempArtifactStorage implements ArtifactStorage {
-    @Override
-    public URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException {
-        return deploymentProcess.getTempLocation().toURI();
-    }
-
-    @Override
-    public void deleteArtifact(DeploymentProcessState deploymentProcess) throws IOException {
-        deploymentProcess.getTempLocation().delete();
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Stereotype
+@Alternative
+@Target(ElementType.TYPE)
+public @interface AzureStorage {
 }

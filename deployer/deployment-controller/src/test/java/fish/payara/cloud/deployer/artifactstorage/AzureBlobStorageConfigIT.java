@@ -42,6 +42,7 @@ import fish.payara.cloud.deployer.DockerTest;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
+import fish.payara.cloud.deployer.setup.SetupExtension;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
@@ -52,6 +53,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+import javax.enterprise.inject.spi.Extension;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
@@ -74,10 +76,12 @@ public class AzureBlobStorageConfigIT {
                 .addClass(DeploymentProcessState.class)
                 .addClass(Namespace.class)
                 .addClass(ProcessAccessor.class)
+                .addAsServiceProvider(Extension.class, SetupExtension.class)
+                .addPackage(SetupExtension.class.getPackage())
                 .addAsResource(
                         // the properties are defined by the build and available in the client,
                         // but not in the server, which is already running
-                        new StringAsset(passSystemProperties(AzureBlobStorage.CONFIG_CONNECTIONSTRING,
+                        new StringAsset("artifactstorage=Azure\n"+passSystemProperties(AzureBlobStorage.CONFIG_CONNECTIONSTRING,
                                 AzureBlobStorage.CONFIG_CONTAINER)),
                         "META-INF/microprofile-config.properties");
     }
@@ -87,7 +91,7 @@ public class AzureBlobStorageConfigIT {
     }
 
     @Inject
-    AzureBlobStorage storage;
+    ArtifactStorage storage;
 
     @Test
     public void testUpload() throws IOException {
