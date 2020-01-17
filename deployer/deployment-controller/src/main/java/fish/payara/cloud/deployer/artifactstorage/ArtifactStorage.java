@@ -36,23 +36,17 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.utils;
+package fish.payara.cloud.deployer.artifactstorage;
 
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.enterprise.inject.Produces;
-import java.util.concurrent.ScheduledExecutorService;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
 
-@Singleton
-public class ManagedConcurrencyProducer {
-    @Resource
-    ManagedScheduledExecutorService mses;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.CompletionStage;
 
-    @Produces
-    public ManagedScheduledExecutorService produceManagedSchedulerExecutorService() {
-        return mses;
-    }
+public interface ArtifactStorage {
+    URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException;
+    void deleteArtifact(DeploymentProcessState deploymentProcess) throws IOException;
 }
