@@ -36,23 +36,17 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.utils;
+package fish.payara.cloud.deployer.setup;
 
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.enterprise.inject.Produces;
-import java.util.concurrent.ScheduledExecutorService;
+import java.lang.annotation.Annotation;
 
-@Singleton
-public class ManagedConcurrencyProducer {
-    @Resource
-    ManagedScheduledExecutorService mses;
+public enum StorageSetup {
+    AZURE(AzureStorage.class),
+    MOCK(MockStorage.class);
 
-    @Produces
-    public ManagedScheduledExecutorService produceManagedSchedulerExecutorService() {
-        return mses;
+    final Class<?> alternative;
+
+    StorageSetup(Class<? extends Annotation> alternative) {
+        this.alternative = alternative;
     }
 }

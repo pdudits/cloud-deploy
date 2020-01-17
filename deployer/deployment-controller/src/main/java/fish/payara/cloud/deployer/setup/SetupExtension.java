@@ -36,23 +36,46 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.utils;
+package fish.payara.cloud.deployer.setup;
 
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.enterprise.inject.Produces;
-import java.util.concurrent.ScheduledExecutorService;
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 
-@Singleton
-public class ManagedConcurrencyProducer {
-    @Resource
-    ManagedScheduledExecutorService mses;
+import javax.enterprise.event.Observes;
+import javax.enterprise.inject.spi.AfterTypeDiscovery;
+import javax.enterprise.inject.spi.Extension;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-    @Produces
-    public ManagedScheduledExecutorService produceManagedSchedulerExecutorService() {
-        return mses;
+public class SetupExtension implements Extension {
+    private static final Logger LOGGER = Logger.getLogger(SetupExtension.class.getName());
+
+    private Config config;
+
+    void setup(@Observes AfterTypeDiscovery afterTypeDiscovery) {
+        config = ConfigProvider.getConfig(getClass().getClassLoader());
+        var storage = lookupOption("artifactstorage", StorageSetup.class, StorageSetup.MOCK);
+
+        LOGGER.info("Selected artifact storage "+storage);
+        afterTypeDiscovery.getAlternatives().add(storage.alternative);
+
+
+    }
+
+    private <T extends Enum<T>> T lookupOption(String propertyName, Class<T> enumType, T defaultValue) {
+        return config.getOptionalValue(propertyName, String.class)
+                .flatMap(value -> safeConvert(propertyName, value, enumType))
+                .orElse(defaultValue);
+    }
+
+    private <T extends Enum<T>> Optional<T> safeConvert(String propertyName, String value, Class<T> enumType) {
+        try {
+            return Optional.of(Enum.valueOf(enumType, value.toUpperCase()));
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.SEVERE, "Invalid value of property "+propertyName+" ["+value+"]. Will fallback to default");
+        }
+        return Optional.empty();
     }
 }

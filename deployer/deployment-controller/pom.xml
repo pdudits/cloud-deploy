@@ -50,7 +50,7 @@
     <packaging>war</packaging>
 
     <properties>
-
+        <maven.docker-plugin.version>0.32.0</maven.docker-plugin.version>
     </properties>
 
     <dependencies>
@@ -81,6 +81,13 @@
             <groupId>io.fabric8</groupId>
             <artifactId>kubernetes-client</artifactId>
             <version>4.6.4</version>
+        </dependency>
+
+        <!-- Azure Storage SDK -->
+        <dependency>
+            <groupId>com.microsoft.azure</groupId>
+            <artifactId>azure-storage</artifactId>
+            <version>8.6.0</version>
         </dependency>
 
         <dependency>
@@ -118,6 +125,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.2.4</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -221,6 +235,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludedGroups>fish.payara.cloud.deployer.DockerTest</excludedGroups>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -239,23 +256,84 @@
                     <plugin>
                         <groupId>fish.payara.maven.plugins</groupId>
                         <artifactId>payara-micro-maven-plugin</artifactId>
+                        <configuration>
+                            <javaCommandLineOptions>
+                                <option>
+                                    <value>-Xdebug</value>
+                                </option>
+                                <option>
+                                    <key>-Xrunjdwp:transport</key>
+                                    <value>dt_socket,server=y,suspend=n,address=9009</value>
+                                </option>
+                            </javaCommandLineOptions>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- Run locally -->
+            <id>run</id>
+            <build>
+                <defaultGoal>package payara-micro:start</defaultGoal>
+            </build>
+        </profile>
+
+        <profile>
+            <!-- run tests with docker runtime -->
+            <id>test-docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>${maven.docker-plugin.version}</version>
                         <executions>
                             <execution>
-                                <id>start-test-instance</id>
-                                <phase>pre-integration-test</phase>
+                                <id>start-storage-emulator</id>
                                 <goals>
                                     <goal>start</goal>
                                 </goals>
                                 <configuration>
-                                    <javaCommandLineOptions>
-                                        <option>
-                                            <value>-Xdebug</value>
-                                        </option>
-                                        <option>
-                                            <key>-Xrunjdwp:transport</key>
-                                            <value>dt_socket,server=y,suspend=n,address=9009</value>
-                                        </option>
-                                    </javaCommandLineOptions>
+                                    <images>
+                                        <image>
+                                            <name>mcr.microsoft.com/azure-storage/azurite</name>
+                                            <alias>azurite</alias>
+                                            <run>
+                                                <ports>
+                                                    <port>10000:10000</port>
+                                                </ports>
+                                            </run>
+                                        </image>
+                                    </images>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>stop-storage-emulator</id>
+                                <goals>
+                                    <goal>stop</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>run-docker-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                </goals>
+                                <configuration>
+                                    <groups>fish.payara.cloud.deployer.DockerTest</groups>
+                                    <excludedGroups combine.self="override"></excludedGroups>
+                                    <systemProperties>
+                                        <artifactstorage.azure.connectionstring>UseDevelopmentStorage=true;</artifactstorage.azure.connectionstring>
+                                        <artifactstorage.azure.container>deployment</artifactstorage.azure.container>
+                                    </systemProperties>
                                 </configuration>
                             </execution>
                         </executions>

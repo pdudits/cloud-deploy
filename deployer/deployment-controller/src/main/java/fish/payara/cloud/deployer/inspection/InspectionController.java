@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.zip.ZipFile;
@@ -62,16 +63,15 @@ import java.util.zip.ZipFile;
  *
  * <p>The controller will instantiate all implementations of {@link Inspection} instances in the application,
  * and let them inspect contents of the artifact in single pass.</p>
- *
  */
 @ApplicationScoped
 class InspectionController {
     @Inject
-    @ConfigProperty(name="inspection.timeout", defaultValue="PT5S")
+    @ConfigProperty(name = "inspection.timeout", defaultValue = "PT5S")
     Duration inspectionTimeout;
 
     @Inject
-    ManagedExecutorService executorService;
+    ExecutorService executorService;
 
     @Inject
     DeploymentProcess process;
@@ -96,7 +96,7 @@ class InspectionController {
         process.inspectionStarted(deployment);
         var file = deployment.getTempLocation();
         if (file == null || !file.exists()) {
-            throw new IllegalArgumentException("Deployment does not contain a valid file: "+file);
+            throw new IllegalArgumentException("Deployment does not contain a valid file: " + file);
         }
         try (var zipFile = new ZipFile(file)) {
             var inspectionInstances = instantiateInspections();

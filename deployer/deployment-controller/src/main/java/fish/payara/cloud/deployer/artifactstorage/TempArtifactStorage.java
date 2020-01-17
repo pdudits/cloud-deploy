@@ -36,23 +36,25 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.utils;
+package fish.payara.cloud.deployer.artifactstorage;
 
-import javax.annotation.Resource;
-import javax.ejb.Singleton;
-import javax.ejb.Startup;
-import javax.enterprise.concurrent.ManagedExecutorService;
-import javax.enterprise.concurrent.ManagedScheduledExecutorService;
-import javax.enterprise.inject.Produces;
-import java.util.concurrent.ScheduledExecutorService;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.setup.MockStorage;
 
-@Singleton
-public class ManagedConcurrencyProducer {
-    @Resource
-    ManagedScheduledExecutorService mses;
+import javax.enterprise.context.ApplicationScoped;
+import java.io.IOException;
+import java.net.URI;
 
-    @Produces
-    public ManagedScheduledExecutorService produceManagedSchedulerExecutorService() {
-        return mses;
+@MockStorage
+@ApplicationScoped
+public class TempArtifactStorage implements ArtifactStorage {
+    @Override
+    public URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException {
+        return deploymentProcess.getTempLocation().toURI();
+    }
+
+    @Override
+    public void deleteArtifact(DeploymentProcessState deploymentProcess) throws IOException {
+        deploymentProcess.getTempLocation().delete();
     }
 }

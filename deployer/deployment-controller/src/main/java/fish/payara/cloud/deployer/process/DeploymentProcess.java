@@ -42,6 +42,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
+import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -147,17 +148,19 @@ public class DeploymentProcess {
     /**
      * Mark that inspection process is finished
      * @param process
+     * @return
      */
-    public void inspectionStarted(DeploymentProcessState process) {
-        updateProcess(process, p -> ChangeKind.INSPECTION_STARTED);
+    public DeploymentProcessState inspectionStarted(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.INSPECTION_STARTED));
     }
 
     /**
      * Mark that inspection process is finished
      * @param process
+     * @return
      */
-    public void inspectionFinished(DeploymentProcessState process) {
-        updateProcess(process, p -> ChangeKind.INSPECTION_FINISHED);
+    public DeploymentProcessState inspectionFinished(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.INSPECTION_FINISHED));
     }
     
     public DeploymentProcessState getProcessState(String id) {
@@ -167,8 +170,21 @@ public class DeploymentProcess {
     /**
      * Mark that configuration process starts
      * @param process
+     * @return
      */
-    public void configurationStarted(DeploymentProcessState process) {
-        updateProcess(process, p -> ChangeKind.CONFIGURATION_STARTED);
+    public DeploymentProcessState configurationStarted(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.CONFIGURATION_STARTED));
+    }
+
+    public DeploymentProcessState provisioningStarted(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_STARTED));
+    }
+
+    public DeploymentProcessState artifactDeleted(DeploymentProcessState process) {
+        return updateProcess(process, DeploymentProcessState::removePersistentLocation);
+    }
+
+    public DeploymentProcessState artifactStored(DeploymentProcessState process, URI persistentUri) {
+        return updateProcess(process, p -> p.setPersistentLocation(persistentUri));
     }
 }
