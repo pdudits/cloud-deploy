@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: $(NAME)
+  labels:
+    app.kubernetes.io/name: $(NAME)
+    app.kubernetes.io/component: http
+    app.kubernetes.io/part-of: $(ID)
+    app.kubernetes.io/managed-by: payara-cloud
+spec:
+  selector:
+    app.kubernetes.io/part-of: $(ID)
+    app.kubernetes.io/component: payara-app
+  ports:
+  - port: 80
+    targetPort: 8080
+    name: http

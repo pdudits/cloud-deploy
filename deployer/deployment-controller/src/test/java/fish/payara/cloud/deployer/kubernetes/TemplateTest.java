@@ -36,47 +36,69 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.kubernetes;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import org.junit.Test;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.Scanner;
 
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "context-root";
-    public static final String APP_NAME = "app-name";
+import static org.junit.Assert.assertEquals;
 
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
-
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
+public class TemplateTest {
+    private void assertExpandsTo(String expectation, String template) {
+        assertEquals("Testing "+template, expectation, Template.fillTemplate(new Scanner(template), TemplateTest::simpleReplacement));
     }
 
-    @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return KEYS;
-    }
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
+    static String simpleReplacement(String var) {
+        if ("BOOM".equals(var)) {
+            throw new IllegalArgumentException("BOOM");
+        } else {
+            return "["+var+"]";
         }
     }
+
+    @Test
+    public void noReplacement() {
+        assertExpandsTo("No replacement", "No replacement");
+    }
+
+    @Test
+    public void singleReplacement() {
+        assertExpandsTo("Replacing [VAR] in a string", "Replacing $(VAR) in a string");
+    }
+
+    @Test
+    public void replacementAtStart() {
+        assertExpandsTo("[START] Hello", "$(START) Hello");
+    }
+
+    @Test
+    public void replacementAtEnd() {
+        assertExpandsTo("Hello [END]", "Hello $(END)");
+    }
+
+    @Test
+    public void incompleteStart() {
+        assertExpandsTo("TRICKY) thing", "TRICKY) thing");
+    }
+
+    public void incompleteEnd() {
+        assertExpandsTo("Tricky ", "Tricky $("); // not good, not terrible
+    }
+
+    @Test(expected =  IllegalArgumentException.class)
+    public void emptyVar() {
+        assertExpandsTo(null, "Wrong $()");
+    }
+
+    @Test(expected =  IllegalArgumentException.class)
+    public void illegalVar() {
+        assertExpandsTo(null, "Wrong $(variable name)");
+    }
+
+    @Test
+    public void empty() {
+        assertExpandsTo("", "");
+    }
+
 }

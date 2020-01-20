@@ -36,47 +36,46 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.kubernetes;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import java.io.InputStream;
+import java.util.Scanner;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import java.util.Optional;
-import java.util.Set;
+class Template {
+    static Pattern VAR_END= Pattern.compile("^([A-Z_0-9]{1,30})\\)");
 
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "context-root";
-    public static final String APP_NAME = "app-name";
-
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
-
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
-    }
-
-    @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return KEYS;
-    }
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
+    static String fillTemplate(InputStream templateSource, Function<String, String> replacer) {
+        try (var scanner = new Scanner(templateSource)) {
+            return fillTemplate(scanner, replacer);
         }
+    }
+
+    static String fillTemplate(Scanner scanner, Function<String, String> replacer) {
+        var result = new StringBuilder();
+        scanner.useDelimiter("\\$\\(");
+        var first = true;
+        while (scanner.hasNext()) {
+            var part = scanner.next();
+            Matcher m = VAR_END.matcher(part);
+            if (first && scanner.match().start() > 0) {
+                // if first token doesn't start at first character, it started with $(
+                first = false;
+            }
+            if (!first) {
+                if (m.find()) {
+                    result.append(replacer.apply(m.group(1)))
+                            .append(part.substring(m.end()));
+                } else {
+                    throw new IllegalArgumentException("Invalid token around $("+part);
+                }
+            } else {
+                result.append(part);
+            }
+            first = false;
+        }
+        return result.toString();
     }
 }

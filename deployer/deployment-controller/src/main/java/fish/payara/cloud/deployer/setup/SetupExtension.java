@@ -38,6 +38,7 @@
 
 package fish.payara.cloud.deployer.setup;
 
+import fish.payara.cloud.deployer.provisioning.Provisioner;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -61,7 +62,9 @@ public class SetupExtension implements Extension {
         LOGGER.info("Selected artifact storage "+storage);
         afterTypeDiscovery.getAlternatives().add(storage.alternative);
 
-
+        var provisioning = lookupOption("provisioning", ProvisioningSetup.class, ProvisioningSetup.MOCK);
+        LOGGER.info("Selected provisioning kind "+provisioning);
+        afterTypeDiscovery.getAlternatives().add(provisioning.alternative);
     }
 
     private <T extends Enum<T>> T lookupOption(String propertyName, Class<T> enumType, T defaultValue) {

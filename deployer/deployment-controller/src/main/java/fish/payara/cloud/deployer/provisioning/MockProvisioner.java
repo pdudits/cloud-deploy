@@ -36,47 +36,37 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.provisioning;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.setup.MockProvisioning;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Optional;
-import java.util.Set;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import java.time.Duration;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "context-root";
-    public static final String APP_NAME = "app-name";
+@MockProvisioning
+@ApplicationScoped
+class MockProvisioner implements Provisioner {
+    @Inject
+    ScheduledExecutorService delay;
 
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
+    @ConfigProperty(name = "provisioning.mock.fail-after", defaultValue = "PT5S")
+    Duration failDelay;
 
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
-    }
-
-    @Override
-    public String getKind() {
-        return KIND;
-    }
+    @Inject
+    DeploymentProcess process;
 
     @Override
-    public Set<String> getKeys() {
-        return KEYS;
+    public void provision(DeploymentProcessState deployment) throws ProvisioningException {
+        delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
     }
 
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
-        }
+    private void failDeployment(DeploymentProcessState deployment) {
+        process.fail(deployment, "Provisioning is not enabled in this configuration", null);
     }
 }

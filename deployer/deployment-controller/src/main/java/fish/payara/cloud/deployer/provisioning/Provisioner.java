@@ -36,47 +36,28 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.provisioning;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
 
-import java.util.Optional;
-import java.util.Set;
-
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "context-root";
-    public static final String APP_NAME = "app-name";
-
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
-
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
-    }
-
-    @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return KEYS;
-    }
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
-        }
-    }
+/**
+ * Provisions application resources for a deployment.
+ *
+ * Provisioner is invoked by Provisioning controller after artifact is uploaded and provisioning is started.
+ * The implementation is responsible for communicating with cloud backend, creating necessary resources and
+ * informing the system about progress of provisioning.
+ *
+ * It should also inform when provisioning is finished and application is available.
+ */
+public interface Provisioner {
+    /**
+     * Provision the deployment. Check for any definition trouble, initiate the provisioning with the backend
+     * and asynchronously update the deployment with information. At the end, invoke
+     * {@link fish.payara.cloud.deployer.process.DeploymentProcess#provisioningFinished(DeploymentProcessState)}
+     * to signal end of provisioning.
+     *
+     * @param deployment deployment to provision
+     * @throws ProvisioningException in case of deployment misconfiguration or backend error
+     */
+    void provision(DeploymentProcessState deployment) throws ProvisioningException;
 }

@@ -183,4 +183,12 @@ public class DeploymentProcess {
     public DeploymentProcessState artifactStored(DeploymentProcessState process, URI persistentUri) {
         return updateProcess(process, p -> p.setPersistentLocation(persistentUri));
     }
+
+    public DeploymentProcessState endpointDetermined(DeploymentProcessState process, URI endpoint) {
+        return updateProcess(process, p -> p.setEndpoint(endpoint));
+    }
+
+    public DeploymentProcessState provisioningFinished(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_FINISHED));
+    }
 }

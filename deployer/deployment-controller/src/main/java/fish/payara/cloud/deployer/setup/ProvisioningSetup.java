@@ -36,47 +36,17 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.setup;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import java.lang.annotation.Annotation;
 
-import java.util.Optional;
-import java.util.Set;
+public enum ProvisioningSetup {
+    DIRECT(DirectProvisioning.class),
+    MOCK(MockProvisioning.class);
 
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "context-root";
-    public static final String APP_NAME = "app-name";
+    final Class<?> alternative;
 
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
-
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
-    }
-
-    @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return KEYS;
-    }
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
-        }
+    ProvisioningSetup(Class<? extends Annotation> alternative) {
+        this.alternative = alternative;
     }
 }

@@ -36,47 +36,38 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.kubernetes;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.ProcessAccessor;
+import fish.payara.cloud.deployer.provisioning.ProvisioningException;
+import org.junit.Test;
 
-import java.util.Optional;
-import java.util.Set;
+import java.net.URI;
 
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "context-root";
-    public static final String APP_NAME = "app-name";
+import static org.mockito.Mockito.mock;
 
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
+/**
+ * The test assumes, that you've got active kubectl context, which gets picked up by DefaultKubernetesClient.
+ * It will create namespace test-dev, and single set of app resources inside.
+ *
+ */
+public class CreateTestManual {
+    @Test
+    public void createDirectly() throws ProvisioningException {
+        var process = ProcessAccessor.createProcessWithName("ROOT.war");
+        ProcessAccessor.setPersistentLocation(process, URI.create("https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"));
 
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
-    }
+        var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
+        ProcessAccessor.addConfiguration(process, contextRoot);
 
-    @Override
-    public String getKind() {
-        return KIND;
-    }
+        var provisoner = new DirectProvisioner();
+        provisoner.domain = "9ba44192900145a88bfb.westeurope.aksapp.io";
+        provisoner.process = mock(DeploymentProcess.class);
 
-    @Override
-    public Set<String> getKeys() {
-        return KEYS;
-    }
+        provisoner.connectApiServer();
 
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
-        }
+        provisoner.provision(process);
     }
 }

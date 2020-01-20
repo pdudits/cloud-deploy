@@ -64,4 +64,11 @@ public class ProcessAccessor {
         return makeEvent(process, process.setPersistentLocation(location));
     }
 
+    public static StateChanged addConfiguration(DeploymentProcessState process, Configuration configuration) {
+        return makeEvent(process, process.addConfiguration(configuration));
+    }
+
+    public static DeploymentProcessState createProcessWithName(String name) {
+        return new DeploymentProcessState(new Namespace("test", "dev"), name, null);
+    }
 }

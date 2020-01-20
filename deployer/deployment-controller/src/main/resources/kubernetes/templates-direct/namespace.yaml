@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: $(PROJECT)-$(STAGE)
+  labels:
+    app.kubernetes.io/name: $(STAGE)
+    app.kubernetes.io/component: project-stage
+    app.kubernetes.io/part-of: $(PROJECT)
+    app.kubernetes.io/managed-by: payara-cloud
