@@ -77,9 +77,7 @@ public class ServerSideEventsIT {
     public static WebArchive deployment() {
         return ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
-                .addClass(ProcessObserver.class)
-                .addClass(DeploymentResource.class)
-                .addClass(Application.class);
+                .addPackage(Application.class.getPackage());
     }
 
     @Inject

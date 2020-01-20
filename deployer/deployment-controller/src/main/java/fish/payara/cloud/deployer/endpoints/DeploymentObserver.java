@@ -35,7 +35,10 @@
  *  only if the new code is made subject to such option by the copyright
  *  holder.
  */
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.endpoints;
+
+import fish.payara.cloud.deployer.process.ChangeKind;
+import fish.payara.cloud.deployer.process.StateChanged;
 
 import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.context.ApplicationScoped;
@@ -53,15 +56,15 @@ import javax.ws.rs.sse.SseEventSink;
  * @author jonathan coustick
  */
 @ApplicationScoped
-public class DeploymentObserver {
+class DeploymentObserver {
 
     private ConcurrentHashMap<String, SseBroadcaster> broadcasts;
     private Jsonb jsonb;
 
     @Context
-    private Sse sse;
+    Sse sse;
 
-    public DeploymentObserver() {
+    protected DeploymentObserver() {
         broadcasts = new ConcurrentHashMap<>();
         jsonb = JsonbBuilder.create();
     }

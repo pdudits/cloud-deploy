@@ -73,8 +73,8 @@ public class UploadIT {
     public static WebArchive deployment() {
         WebArchive archive =  ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
-                .addClass(DeploymentResource.class)
-                .addClass(Application.class);
+                .addPackage(Application.class.getPackage());
+
         System.out.println(archive.toString(true));
         return archive;
     }

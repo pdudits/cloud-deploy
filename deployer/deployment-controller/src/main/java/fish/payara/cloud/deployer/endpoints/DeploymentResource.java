@@ -42,7 +42,6 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.process.DeploymentObserver;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
@@ -54,7 +53,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import javax.annotation.security.RolesAllowed;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -132,7 +130,7 @@ public class DeploymentResource {
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @Path("progress/{id}")
-    public void getDeploymentEvents(@Context SseEventSink eventSink,@Context Sse sse, @PathParam("id") String id) {
+    public void getDeploymentEvents(@Context SseEventSink eventSink, @Context Sse sse, @PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         if (state == null) {
             eventSink.close();
