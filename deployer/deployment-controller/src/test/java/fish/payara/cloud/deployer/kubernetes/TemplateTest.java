@@ -36,39 +36,69 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.kubernetes;
 
-import java.io.File;
-import java.net.URI;
-import java.util.UUID;
+import org.junit.Test;
 
-public class ProcessAccessor {
+import java.util.Scanner;
 
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
+import static org.junit.Assert.assertEquals;
+
+public class TemplateTest {
+    private void assertExpandsTo(String expectation, String template) {
+        assertEquals("Testing "+template, expectation, Template.fillTemplate(new Scanner(template), TemplateTest::simpleReplacement));
     }
 
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
-    }
-
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        if (kind == null) {
-            return null;
+    static String simpleReplacement(String var) {
+        if ("BOOM".equals(var)) {
+            throw new IllegalArgumentException("BOOM");
+        } else {
+            return "["+var+"]";
         }
-        process.transition(kind);
-        return new StateChanged(process, kind);
     }
 
-    public static StateChanged setPersistentLocation(DeploymentProcessState process, URI location) {
-        return makeEvent(process, process.setPersistentLocation(location));
+    @Test
+    public void noReplacement() {
+        assertExpandsTo("No replacement", "No replacement");
     }
 
-    public static StateChanged addConfiguration(DeploymentProcessState process, Configuration configuration) {
-        return makeEvent(process, process.addConfiguration(configuration));
+    @Test
+    public void singleReplacement() {
+        assertExpandsTo("Replacing [VAR] in a string", "Replacing $(VAR) in a string");
     }
 
-    public static DeploymentProcessState createProcessWithName(String name) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), name, null);
+    @Test
+    public void replacementAtStart() {
+        assertExpandsTo("[START] Hello", "$(START) Hello");
     }
+
+    @Test
+    public void replacementAtEnd() {
+        assertExpandsTo("Hello [END]", "Hello $(END)");
+    }
+
+    @Test
+    public void incompleteStart() {
+        assertExpandsTo("TRICKY) thing", "TRICKY) thing");
+    }
+
+    public void incompleteEnd() {
+        assertExpandsTo("Tricky ", "Tricky $("); // not good, not terrible
+    }
+
+    @Test(expected =  IllegalArgumentException.class)
+    public void emptyVar() {
+        assertExpandsTo(null, "Wrong $()");
+    }
+
+    @Test(expected =  IllegalArgumentException.class)
+    public void illegalVar() {
+        assertExpandsTo(null, "Wrong $(variable name)");
+    }
+
+    @Test
+    public void empty() {
+        assertExpandsTo("", "");
+    }
+
 }

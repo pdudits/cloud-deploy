@@ -72,6 +72,7 @@ public class DeploymentProcessState {
     private File tempLocation;
     private Set<Configuration> configurations = new LinkedHashSet<>();
     private URI persistentLocation;
+    private URI endpoint;
     private String podName;
     private Instant completion;
 
@@ -265,5 +266,19 @@ public class DeploymentProcessState {
         version++;
         this.persistentLocation = location;
         return ChangeKind.ARTIFACT_STORED;
+    }
+
+    public Optional<String> getConfigValue(String kind, String name, String key) {
+        return findConfiguration(kind, name).flatMap(c -> c.getValue(key));
+    }
+
+    public Optional<String> getConfigValue(String kind, String key) {
+        return getConfigValue(kind, getName(), key);
+    }
+
+    public ChangeKind setEndpoint(URI endpoint) {
+        version++;
+        endpoint = null;
+        return ChangeKind.INGRESS_CREATED;
     }
 }

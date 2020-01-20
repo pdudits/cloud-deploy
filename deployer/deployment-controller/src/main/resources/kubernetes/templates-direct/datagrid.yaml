@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: $(NAME)-datagrid
+  labels:
+    app.kubernetes.io/name: $(NAME)
+    app.kubernetes.io/component: datagrid
+    app.kubernetes.io/part-of: $(ID)
+    app.kubernetes.io/managed-by: payara-cloud
+spec:
+  type: ClusterIP
+  # Hazelcast DNS discovery needs services without cluster IP, so that all endpoints reside in DNS
+  clusterIP: None
+  selector:
+    app.kubernetes.io/part-of: $(ID)
+    app.kubernetes.io/component: payara-app
+  ports:
+  - port: 6900
+    targetPort: 6900
+    name: hazelcast

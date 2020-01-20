@@ -36,39 +36,38 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.kubernetes;
 
-import java.io.File;
+import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.ProcessAccessor;
+import fish.payara.cloud.deployer.provisioning.ProvisioningException;
+import org.junit.Test;
+
 import java.net.URI;
-import java.util.UUID;
 
-public class ProcessAccessor {
+import static org.mockito.Mockito.mock;
 
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
-    }
+/**
+ * The test assumes, that you've got active kubectl context, which gets picked up by DefaultKubernetesClient.
+ * It will create namespace test-dev, and single set of app resources inside.
+ *
+ */
+public class CreateTestManual {
+    @Test
+    public void createDirectly() throws ProvisioningException {
+        var process = ProcessAccessor.createProcessWithName("ROOT.war");
+        ProcessAccessor.setPersistentLocation(process, URI.create("https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"));
 
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
-    }
+        var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
+        ProcessAccessor.addConfiguration(process, contextRoot);
 
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        if (kind == null) {
-            return null;
-        }
-        process.transition(kind);
-        return new StateChanged(process, kind);
-    }
+        var provisoner = new DirectProvisioner();
+        provisoner.domain = "9ba44192900145a88bfb.westeurope.aksapp.io";
+        provisoner.process = mock(DeploymentProcess.class);
 
-    public static StateChanged setPersistentLocation(DeploymentProcessState process, URI location) {
-        return makeEvent(process, process.setPersistentLocation(location));
-    }
+        provisoner.connectApiServer();
 
-    public static StateChanged addConfiguration(DeploymentProcessState process, Configuration configuration) {
-        return makeEvent(process, process.addConfiguration(configuration));
-    }
-
-    public static DeploymentProcessState createProcessWithName(String name) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), name, null);
+        provisoner.provision(process);
     }
 }

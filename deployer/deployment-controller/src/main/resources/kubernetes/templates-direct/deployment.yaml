@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $(NAME)
+  labels:
+    app.kubernetes.io/name: $(NAME)
+    app.kubernetes.io/component: payara-app
+    app.kubernetes.io/part-of: $(ID)
+    app.kubernetes.io/managed-by: payara-cloud     
+    #app.kubernetes.io/version: $(VERSION)
+  annotations:
+    # These annotations define the deployment
+    # Variables like NAME, PROJECT, STAGE are fetched from these
+    payara.cloud/artifact-url: $(URL)
+    #payara.cloud/artifact-version: XXX
+    payara.cloud/project: $(PROJECT)
+    payara.cloud/stage: $(STAGE)
+    payara.cloud/artifact: $(NAME)
+    payara.cloud/domain: $(DOMAIN)
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: $(NAME)
+      app.kubernetes.io/part-of: $(ID)
+      app.kubernetes.io/component: payara-app
+  template:
+    metadata:
+      name: $(ID)
+      labels:
+        app.kubernetes.io/name: $(NAME)
+        app.kubernetes.io/instance: $(NAME)
+        app.kubernetes.io/component: payara-app
+        app.kubernetes.io/part-of: $(ID)
+        app.kubernetes.io/managed-by: payara-cloud   
+      annotations:
+        payara.cloud/artifact-url: $(URL)
+    spec:
+      initContainers:
+        - name: download-app
+          # This curl image downloads the artifacts from URL in annotation
+          # into deployments volume
+          image: curlimages/curl:latest
+          command:
+            - sh
+          args: ["-c", "cd /deployments && curl -O `cat /podinfo/url`"]
+          volumeMounts:
+            - mountPath: /deployments
+              name: deployments
+            - mountPath: /podinfo
+              name: podinfo
+      containers:
+      - name: micro
+        image: payara/micro:jdk11
+        volumeMounts:
+          - mountPath: /opt/payara/deployments
+            name: deployments
+        # DNS cluster mode allows for instances of same app cluster themselves without need for Kubernetes API access
+        args: ["--deploymentDir", "/opt/payara/deployments", "--clustermode", "dns:$(ID)-datagrid:6900"]
+        resources:
+          # Allocate quarter of CPU at rest, allow for use up to 1 CPU.
+          requests:
+            cpu: 250m
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        ports:
+          - containerPort: 8080
+            name: http
+          - containerPort: 6900
+            name: datagrid
+      volumes:
+        - name: deployments
+          emptyDir: 
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: url
+                # put url from annotation into /podinfo/url
+                fieldRef:
+                  fieldPath: metadata.annotations['payara.cloud/artifact-url']

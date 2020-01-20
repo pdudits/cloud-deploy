@@ -36,39 +36,18 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.provisioning;
 
-import java.io.File;
-import java.net.URI;
-import java.util.UUID;
-
-public class ProcessAccessor {
-
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
+public class ProvisioningException extends Exception {
+    public ProvisioningException(String message) {
+        super(message);
     }
 
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
+    public ProvisioningException(String message, Throwable cause) {
+        super(message, cause);
     }
 
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        if (kind == null) {
-            return null;
-        }
-        process.transition(kind);
-        return new StateChanged(process, kind);
-    }
-
-    public static StateChanged setPersistentLocation(DeploymentProcessState process, URI location) {
-        return makeEvent(process, process.setPersistentLocation(location));
-    }
-
-    public static StateChanged addConfiguration(DeploymentProcessState process, Configuration configuration) {
-        return makeEvent(process, process.addConfiguration(configuration));
-    }
-
-    public static DeploymentProcessState createProcessWithName(String name) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), name, null);
+    public ProvisioningException(Throwable cause) {
+        super(cause);
     }
 }

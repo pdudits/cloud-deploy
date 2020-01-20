@@ -36,39 +36,46 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.kubernetes;
 
-import java.io.File;
-import java.net.URI;
-import java.util.UUID;
+import java.io.InputStream;
+import java.util.Scanner;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class ProcessAccessor {
+class Template {
+    static Pattern VAR_END= Pattern.compile("^([A-Z_0-9]{1,30})\\)");
 
-    public static DeploymentProcessState createProcess() {
-        return new DeploymentProcessState(new Namespace("test", "dev"), UUID.randomUUID().toString(), null);
-    }
-
-    public static DeploymentProcessState createProcess(File f) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), f.getName(), f);
-    }
-
-    public static StateChanged makeEvent(DeploymentProcessState process, ChangeKind kind) {
-        if (kind == null) {
-            return null;
+    static String fillTemplate(InputStream templateSource, Function<String, String> replacer) {
+        try (var scanner = new Scanner(templateSource)) {
+            return fillTemplate(scanner, replacer);
         }
-        process.transition(kind);
-        return new StateChanged(process, kind);
     }
 
-    public static StateChanged setPersistentLocation(DeploymentProcessState process, URI location) {
-        return makeEvent(process, process.setPersistentLocation(location));
-    }
-
-    public static StateChanged addConfiguration(DeploymentProcessState process, Configuration configuration) {
-        return makeEvent(process, process.addConfiguration(configuration));
-    }
-
-    public static DeploymentProcessState createProcessWithName(String name) {
-        return new DeploymentProcessState(new Namespace("test", "dev"), name, null);
+    static String fillTemplate(Scanner scanner, Function<String, String> replacer) {
+        var result = new StringBuilder();
+        scanner.useDelimiter("\\$\\(");
+        var first = true;
+        while (scanner.hasNext()) {
+            var part = scanner.next();
+            Matcher m = VAR_END.matcher(part);
+            if (first && scanner.match().start() > 0) {
+                // if first token doesn't start at first character, it started with $(
+                first = false;
+            }
+            if (!first) {
+                if (m.find()) {
+                    result.append(replacer.apply(m.group(1)))
+                            .append(part.substring(m.end()));
+                } else {
+                    throw new IllegalArgumentException("Invalid token around $("+part);
+                }
+            } else {
+                result.append(part);
+            }
+            first = false;
+        }
+        return result.toString();
     }
 }
