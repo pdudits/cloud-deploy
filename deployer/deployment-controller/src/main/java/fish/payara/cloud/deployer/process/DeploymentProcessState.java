@@ -70,6 +70,7 @@ public class DeploymentProcessState {
     private boolean complete;
     private boolean failed;
     private String completionMessage;
+    @JsonbTransient
     private Throwable failureCause;
     private volatile int version;
     @JsonbTransient

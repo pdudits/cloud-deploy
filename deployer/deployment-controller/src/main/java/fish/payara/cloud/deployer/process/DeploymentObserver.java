@@ -67,19 +67,19 @@ public class DeploymentObserver {
     }
 
     public void addRequest(SseEventSink eventSink, String processID) {
-        SseBroadcaster broadcaster = broadcasts.get(processID);
-        if (broadcaster == null) {
-            broadcaster = sse.newBroadcaster();
-        }
+        SseBroadcaster broadcaster = broadcasts.computeIfAbsent(processID, p -> sse.newBroadcaster());
         broadcaster.register(eventSink);
-        broadcasts.put(processID, broadcaster);
     }
 
     void eventListener(@ObservesAsync StateChanged event) {
         String processID = event.getProcess().getId();
 
+        var broadcaster = broadcasts.get(processID);
+        if (broadcaster == null) {
+            return;
+        }
         OutboundSseEvent outboundEvent = sse.newEvent(jsonb.toJson(event));
-        broadcasts.get(processID).broadcast(outboundEvent);
+        broadcaster.broadcast(outboundEvent);
         if (event.getKind().equals(ChangeKind.FAILED) || event.getKind().equals(ChangeKind.PROVISION_FINISHED)) {
             broadcasts.get(processID).close();
             broadcasts.remove(processID);
