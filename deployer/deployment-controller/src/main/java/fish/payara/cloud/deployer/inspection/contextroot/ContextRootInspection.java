@@ -111,8 +111,18 @@ class ContextRootInspection implements Inspection {
     @Override
     public void finish(InspectedArtifact artifact) {
         var contextRoot = determineContextRoot(artifact);
-        var config = new ContextRootConfiguration(artifact.getName(), contextRoot);
+        var appName = determineAppName(artifact);
+        var config = new ContextRootConfiguration(artifact.getName(), appName, contextRoot);
         artifact.addConfiguration(config);
+    }
+
+    private String determineAppName(InspectedArtifact artifact) {
+        // use maven artifact id, if exactly one is present
+        if (mavenMetaDiscovered == MavenMetaDiscovered.SINGLE) {
+            return mavenArtifactId;
+        }
+        // use file name without extension otherwise
+        return artifact.getName().replaceFirst("\\.\\w+$","");
     }
 
     private String determineContextRoot(InspectedArtifact artifact) {

@@ -45,12 +45,16 @@ import java.util.Set;
 
 public class ContextRootConfiguration extends Configuration {
     public static final String CONTEXT_ROOT = "context-root";
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT);
-    private final String defaultContext;
+    public static final String APP_NAME = "app-name";
 
-    public ContextRootConfiguration(String moduleName, String defaultContext) {
+    public static final String KIND = CONTEXT_ROOT;
+    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
+    private final String defaultContext;
+    private final String appName;
+
+    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
         super(moduleName);
+        this.appName = appName;
         this.defaultContext = defaultContext;
     }
 
@@ -69,6 +73,8 @@ public class ContextRootConfiguration extends Configuration {
         switch (key) {
             case CONTEXT_ROOT:
                 return Optional.ofNullable(defaultContext);
+            case APP_NAME:
+                return Optional.of(appName);
             default:
                 return super.getDefaultValue(key);
         }
