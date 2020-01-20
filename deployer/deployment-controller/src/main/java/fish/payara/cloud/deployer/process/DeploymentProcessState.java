@@ -49,6 +49,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.json.bind.annotation.JsonbPropertyOrder;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.config.PropertyOrderStrategy;
 
 /**
  * Transient state of deployment process.
@@ -57,9 +60,11 @@ import java.util.concurrent.CompletionStage;
  * <p>State is not modifiable outside of this package, but is not immutable (yet).
  * </p>
  */
+@JsonbPropertyOrder(PropertyOrderStrategy.ANY)
 public class DeploymentProcessState {
     private final String id;
     private final Namespace namespace;
+    @JsonbTransient
     private final Instant start = Instant.now();
     private final String name;
     private boolean complete;
@@ -67,8 +72,11 @@ public class DeploymentProcessState {
     private String completionMessage;
     private Throwable failureCause;
     private volatile int version;
+    @JsonbTransient
     private File tempLocation;
+    @JsonbTransient
     private Set<Configuration> configurations = new LinkedHashSet<>();
+    @JsonbTransient
     private URI persistentLocation;
     private String podName;
     private Instant completion;

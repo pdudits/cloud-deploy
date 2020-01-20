@@ -38,11 +38,17 @@
 
 package fish.payara.cloud.deployer.process;
 
+import javax.json.bind.annotation.JsonbPropertyOrder;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.config.PropertyOrderStrategy;
+
 /**
  * Asynchronous event about change of deployment process state.
  * Event is quantified with {@link ChangeKind.Filter} with its {@link ChangeKind.Filter#value() value} equal to {@link #getKind()}
  */
+@JsonbPropertyOrder(PropertyOrderStrategy.ANY)
 public class StateChanged {
+    @JsonbTransient
     private final DeploymentProcessState process;
     private final ChangeKind kind;
     private final int atVersion;

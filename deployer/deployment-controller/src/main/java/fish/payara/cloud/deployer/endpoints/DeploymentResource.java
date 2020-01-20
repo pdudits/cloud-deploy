@@ -52,11 +52,14 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.annotation.security.RolesAllowed;
 import javax.enterprise.concurrent.ManagedExecutorService;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -89,6 +92,13 @@ public class DeploymentResource {
     
     @Inject
     DeploymentObserver deploymentStream;
+    
+    private Jsonb jsonb;
+    
+    @PostConstruct
+    public void postConstruct() {
+        jsonb = JsonbBuilder.create();
+    }
     
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive"})
@@ -130,7 +140,7 @@ public class DeploymentResource {
         }
         if (state.isComplete()) {
             try (eventSink) {
-                eventSink.send(sse.newEvent(process.getProcessState(id).toString()));
+                eventSink.send(sse.newEvent(jsonb.toJson(process.getProcessState(id))));
             }
         }
         deploymentStream.addRequest(eventSink, id);
@@ -146,7 +156,7 @@ public class DeploymentResource {
             return Response.status(440).build();
         }
         
-        return Response.ok(process.getProcessState(id).toString()).build();
+        return Response.ok(jsonb.toJson(process.getProcessState(id))).build();
     }
     
     @GET
@@ -157,7 +167,7 @@ public class DeploymentResource {
             return Response.status(440).build();
         }
         
-        return Response.ok(process.getProcessState(id).toString()).build();
+        return Response.ok(jsonb.toJson(process.getProcessState(id))).build();
     }
     
 }

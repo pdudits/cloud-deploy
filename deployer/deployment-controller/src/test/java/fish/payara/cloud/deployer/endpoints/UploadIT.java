@@ -91,7 +91,13 @@ public class UploadIT {
        Response response = jaxrstarget.request(MediaType.APPLICATION_OCTET_STREAM_TYPE).
                post(Entity.entity(Files.newInputStream(Paths.get("README.adoc")),MediaType.APPLICATION_OCTET_STREAM_TYPE));
        Assert.assertEquals(201, response.getStatus());
+       String id = response.readEntity(String.class);
        
+       jaxrstarget = ClientBuilder.newClient().target(URI.create(new URL(base, "api/deployment/" + id).toExternalForm()));
+       System.out.println(jaxrstarget.getUri().toString());
+       response = jaxrstarget.request().get();
+       System.out.println(response.readEntity(String.class));
+       Assert.assertEquals(200, response.getStatus());
    }
     
 }

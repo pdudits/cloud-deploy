@@ -40,6 +40,8 @@ package fish.payara.cloud.deployer.process;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
@@ -54,12 +56,14 @@ import javax.ws.rs.sse.SseEventSink;
 public class DeploymentObserver {
 
     private ConcurrentHashMap<String, SseBroadcaster> broadcasts;
+    private Jsonb jsonb;
 
     @Context
     private Sse sse;
 
     public DeploymentObserver() {
         broadcasts = new ConcurrentHashMap<>();
+        jsonb = JsonbBuilder.create();
     }
 
     public void addRequest(SseEventSink eventSink, String processID) {
@@ -74,7 +78,7 @@ public class DeploymentObserver {
     void eventListener(@ObservesAsync StateChanged event) {
         String processID = event.getProcess().getId();
 
-        OutboundSseEvent outboundEvent = sse.newEvent(event.toString());
+        OutboundSseEvent outboundEvent = sse.newEvent(jsonb.toJson(event));
         broadcasts.get(processID).broadcast(outboundEvent);
         if (event.getKind().equals(ChangeKind.FAILED) || event.getKind().equals(ChangeKind.PROVISION_FINISHED)) {
             broadcasts.get(processID).close();

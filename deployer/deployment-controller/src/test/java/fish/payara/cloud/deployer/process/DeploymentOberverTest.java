@@ -45,6 +45,8 @@ package fish.payara.cloud.deployer.process;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.util.concurrent.CompletionStage;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
@@ -62,7 +64,6 @@ public class DeploymentOberverTest {
     @Test
     public void obervationTest() throws IllegalAccessException, NoSuchFieldException {
         DeploymentObserver observer = new DeploymentObserver();
-        
         Field sseField = observer.getClass().getDeclaredField("sse");
         sseField.setAccessible(true);
         sseField.set(observer, new EventBuilder());
@@ -156,7 +157,33 @@ public class DeploymentOberverTest {
 
         @Override
         public SseBroadcaster newBroadcaster() {
-            throw new UnsupportedOperationException("Not supported yet.");
+            return new SseBroadcaster() {
+                private SseEventSink sink;
+                @Override
+                public void onError(BiConsumer<SseEventSink, Throwable> onError) {
+                    //nothing
+                }
+
+                @Override
+                public void onClose(Consumer<SseEventSink> onClose) {
+                    //nothing
+                }
+
+                @Override
+                public void register(SseEventSink sseEventSink) {
+                    sink = sseEventSink;
+                }
+
+                @Override
+                public CompletionStage<?> broadcast(OutboundSseEvent event) {
+                    return sink.send(event);
+                }
+
+                @Override
+                public void close() {
+                    sink.close();
+                }
+            };
         }
         
     }
