@@ -76,6 +76,9 @@ class ProvisioningController {
     @Inject
     ArtifactStorage artifactStorage;
 
+    @Inject
+    Provisioner provisioner;
+
     private ConcurrentMap<String,DeploymentInProvisioning> activityMonitor = new ConcurrentHashMap<>();
 
 
@@ -93,6 +96,13 @@ class ProvisioningController {
 
         startMonitoring(event);
         process.provisioningStarted(event.getProcess());
+
+        try {
+            provisioner.provision(event.getProcess());
+            // provisoning happens asynchronously so it's up to provisioner to mark end of provisioning.
+        } catch (ProvisioningException e) {
+            process.fail(event.getProcess(), "Failed to provision", e);
+        }
     }
 
 

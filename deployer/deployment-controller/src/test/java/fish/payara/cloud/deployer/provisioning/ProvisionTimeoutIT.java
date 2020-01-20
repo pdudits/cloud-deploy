@@ -64,7 +64,7 @@ public class ProvisionTimeoutIT {
         return ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
                 .addClass(ProcessObserver.class)
-                .addClass(ProvisioningController.class)
+                .addPackage(ProvisioningController.class.getPackage())
                 .addClass(ArtifactStorage.class)
                 .addClass(TempArtifactStorage.class)
                 .addClass(ManagedConcurrencyProducer.class)

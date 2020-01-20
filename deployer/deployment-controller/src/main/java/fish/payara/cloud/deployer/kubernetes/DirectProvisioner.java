@@ -43,6 +43,7 @@ import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
+import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -58,6 +59,7 @@ import java.util.logging.Logger;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
 
+@DirectProvisioning
 @ApplicationScoped
 class DirectProvisioner implements Provisioner {
     public static final Logger LOGGER = Logger.getLogger(DirectProvisioner.class.getName());

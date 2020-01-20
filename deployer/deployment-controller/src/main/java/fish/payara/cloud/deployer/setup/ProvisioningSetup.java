@@ -38,47 +38,15 @@
 
 package fish.payara.cloud.deployer.setup;
 
-import fish.payara.cloud.deployer.provisioning.Provisioner;
-import org.eclipse.microprofile.config.Config;
-import org.eclipse.microprofile.config.ConfigProvider;
+import java.lang.annotation.Annotation;
 
-import javax.enterprise.event.Observes;
-import javax.enterprise.inject.spi.AfterTypeDiscovery;
-import javax.enterprise.inject.spi.Extension;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+public enum ProvisioningSetup {
+    DIRECT(DirectProvisioning.class),
+    MOCK(MockProvisioning.class);
 
-public class SetupExtension implements Extension {
-    private static final Logger LOGGER = Logger.getLogger(SetupExtension.class.getName());
+    final Class<?> alternative;
 
-    private Config config;
-
-    void setup(@Observes AfterTypeDiscovery afterTypeDiscovery) {
-        config = ConfigProvider.getConfig(getClass().getClassLoader());
-        var storage = lookupOption("artifactstorage", StorageSetup.class, StorageSetup.MOCK);
-
-        LOGGER.info("Selected artifact storage "+storage);
-        afterTypeDiscovery.getAlternatives().add(storage.alternative);
-
-        var provisioning = lookupOption("provisioning", ProvisioningSetup.class, ProvisioningSetup.MOCK);
-        LOGGER.info("Selected provisioning kind "+provisioning);
-        afterTypeDiscovery.getAlternatives().add(provisioning.alternative);
-    }
-
-    private <T extends Enum<T>> T lookupOption(String propertyName, Class<T> enumType, T defaultValue) {
-        return config.getOptionalValue(propertyName, String.class)
-                .flatMap(value -> safeConvert(propertyName, value, enumType))
-                .orElse(defaultValue);
-    }
-
-    private <T extends Enum<T>> Optional<T> safeConvert(String propertyName, String value, Class<T> enumType) {
-        try {
-            return Optional.of(Enum.valueOf(enumType, value.toUpperCase()));
-        } catch (RuntimeException e) {
-            LOGGER.log(Level.SEVERE, "Invalid value of property "+propertyName+" ["+value+"]. Will fallback to default");
-        }
-        return Optional.empty();
+    ProvisioningSetup(Class<? extends Annotation> alternative) {
+        this.alternative = alternative;
     }
 }
