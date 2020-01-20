@@ -83,7 +83,7 @@ public class DeploymentResource {
     @Resource
     ManagedExecutorService concurrency;
     
-    private static final Logger LOGGER = Logger.getLogger("CLOUD-DEPLOYER");
+    private static final Logger LOGGER = Logger.getLogger(DeploymentResource.class.getName());
     
     @Inject
     DeploymentProcess process;
@@ -107,12 +107,12 @@ public class DeploymentResource {
             java.nio.file.Path tempFile = Files.createTempFile("upload", ".war");
             long bytesRead = Files.copy(uploadWar, tempFile, StandardCopyOption.REPLACE_EXISTING);
             if (bytesRead == 0) {
-                return Response.status(400, "Empty file").build();
+                return Response.status(Response.Status.BAD_REQUEST.getStatusCode(), "Empty file").build();
             }
             
             DeploymentProcessState state = process.start(tempFile.toFile(), name, new Namespace(project, stage));
             
-            return Response.status(201).entity(state.getId()).build();
+            return Response.status(Response.Status.CREATED).entity(state.getId()).build();
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error in file upload", ex);
             return Response.serverError().build();
@@ -129,7 +129,7 @@ public class DeploymentResource {
     
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
-    @Path("progress/{id}")
+    @Path("{id}")
     public void getDeploymentEvents(@Context SseEventSink eventSink, @Context Sse sse, @PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         if (state == null) {
@@ -139,10 +139,10 @@ public class DeploymentResource {
         if (state.isComplete()) {
             try (eventSink) {
                 eventSink.send(sse.newEvent(jsonb.toJson(process.getProcessState(id))));
+                return;
             }
         }
         deploymentStream.addRequest(eventSink, id);
-        
     }
     
     
@@ -151,7 +151,7 @@ public class DeploymentResource {
     public Response deploymentStatus(@PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         if (state == null){
-            return Response.status(440).build();
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
         
         return Response.ok(jsonb.toJson(process.getProcessState(id))).build();
@@ -160,12 +160,7 @@ public class DeploymentResource {
     @GET
     @Path("{project}/{stage}/{id}")
     public Response deploymentStatus(@PathParam("project") String project,@PathParam("stage") String stage,@PathParam("id") String id) {
-        DeploymentProcessState state = process.getProcessState(id);
-        if (state == null){
-            return Response.status(440).build();
-        }
-        
-        return Response.ok(jsonb.toJson(process.getProcessState(id))).build();
+        return deploymentStatus(id);
     }
     
 }

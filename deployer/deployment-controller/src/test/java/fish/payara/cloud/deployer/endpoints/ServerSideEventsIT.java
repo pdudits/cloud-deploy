@@ -95,7 +95,7 @@ public class ServerSideEventsIT {
         // this will not be allowed for long, but for now we're good with invalid arguments
         DeploymentProcessState state = process.start(null, null, null);
 
-        var sseEndpoint = ClientBuilder.newClient().target(uri).path("api/deployment").path("progress").path(state.getId());
+        var sseEndpoint = ClientBuilder.newClient().target(uri).path("api/deployment").path(state.getId());
 
         sse = SseEventSource.target(sseEndpoint).build();
         sse.register(this::onMessage);
