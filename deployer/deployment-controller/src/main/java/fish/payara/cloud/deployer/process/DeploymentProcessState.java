@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -43,14 +43,15 @@ import java.io.File;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.json.bind.annotation.JsonbPropertyOrder;
+import javax.json.bind.annotation.JsonbTransient;
+import javax.json.bind.config.PropertyOrderStrategy;
 
 /**
  * Transient state of deployment process.
@@ -59,9 +60,11 @@ import java.util.concurrent.CompletionStage;
  * <p>State is not modifiable outside of this package, but is not immutable (yet).
  * </p>
  */
+@JsonbPropertyOrder(PropertyOrderStrategy.ANY)
 public class DeploymentProcessState {
     private final String id;
     private final Namespace namespace;
+    @JsonbTransient
     private final Instant start = Instant.now();
     private final String name;
     private boolean complete;
@@ -69,8 +72,11 @@ public class DeploymentProcessState {
     private String completionMessage;
     private Throwable failureCause;
     private volatile int version;
+    @JsonbTransient
     private File tempLocation;
+    @JsonbTransient
     private Set<Configuration> configurations = new LinkedHashSet<>();
+    @JsonbTransient
     private URI persistentLocation;
     private URI endpoint;
     private String podName;
@@ -196,7 +202,7 @@ public class DeploymentProcessState {
     public Instant getCompletion() {
         return completion;
     }
-
+    
     CompletionStage<StateChanged> fireAsync(Event<StateChanged> event, ChangeKind kind) {
         return event.select(kind.asFilter()).fireAsync(new StateChanged(this, kind));
     }

@@ -76,6 +76,12 @@
             <artifactId>jakarta.enterprise.concurrent-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse</groupId>
+            <artifactId>yasson</artifactId>
+            <version>1.0.6</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>io.fabric8</groupId>

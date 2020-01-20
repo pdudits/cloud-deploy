@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -68,10 +68,10 @@ public class DeploymentProcess {
      * @return new state representing the deployment process
      */
     public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
-        var process = new DeploymentProcessState(target, name, artifactLocation);
-        runningProcesses.put(process.getId(), process);
-        process.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
-        return process;
+        var processState = new DeploymentProcessState(target, name, artifactLocation);
+        runningProcesses.put(processState.getId(), processState);
+        processState.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
+        return processState;
     }
 
     /**
@@ -161,6 +161,10 @@ public class DeploymentProcess {
      */
     public DeploymentProcessState inspectionFinished(DeploymentProcessState process) {
         return updateProcess(process, p -> p.transition(ChangeKind.INSPECTION_FINISHED));
+    }
+    
+    public DeploymentProcessState getProcessState(String id) {
+        return runningProcesses.get(id);
     }
 
     /**
