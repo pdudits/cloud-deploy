@@ -58,8 +58,35 @@ body {
     color: #002c3e;
 }
 
-h1,h2,h3,.primary-orange {
+header, header h1 a, header h1 {
+    background-color: #f0981b;
+    color:  #1b2c3d;
+}
+
+header {
+    border-bottom: 2px solid #ae6e2b
+}
+
+header, h2, div.result {
+    margin: 0;
+    padding: 1rem;
+}
+
+main {
+    margin-top: 2rem;
+}
+
+h1,h2,h3,.primary-orange,h1 a {
     color: #f0981b
+}
+
+h2, div.result {
+    background-color:  #e8eff2;
+    background: linear-gradient(white 40%, #bfd3db)
+}
+
+h1 a {
+    text-decoration: none;
 }
 
 .secondary-blue {
@@ -82,4 +109,10 @@ form {
 }
 input[type=submit] {
     grid-column: main;
+}
+
+progress {
+    display: block;
+    width: 50%;
+    margin: auto;
 }

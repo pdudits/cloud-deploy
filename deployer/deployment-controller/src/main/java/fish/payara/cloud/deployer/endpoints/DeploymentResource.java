@@ -47,6 +47,7 @@ import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
@@ -58,7 +59,10 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
+import javax.mvc.Controller;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -67,6 +71,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseEventSink;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;  
@@ -90,6 +95,9 @@ public class DeploymentResource {
     
     @Inject
     DeploymentObserver deploymentStream;
+
+    @Inject
+    MvcModels models;
     
     private Jsonb jsonb;
     
@@ -104,32 +112,42 @@ public class DeploymentResource {
     public Response uploadWar(@PathParam("project") String project, @PathParam("stage") String stage,
                               @PathParam("name") String name, InputStream uploadWar) {
         try {
-            java.nio.file.Path tempFile = Files.createTempFile("upload", ".war");
-            long bytesRead = Files.copy(uploadWar, tempFile, StandardCopyOption.REPLACE_EXISTING);
-            if (bytesRead == 0) {
-                return Response.status(Response.Status.BAD_REQUEST.getStatusCode(), "Empty file").build();
-            }
-            
-            DeploymentProcessState state = process.start(tempFile.toFile(), name, new Namespace(project, stage));
-            
+            DeploymentProcessState state = startDeployment(project, stage, name, uploadWar);
+
             return Response.status(Response.Status.CREATED).entity(state.getId()).build();
         } catch (IOException ex) {
             LOGGER.log(Level.SEVERE, "Error in file upload", ex);
             return Response.serverError().build();
         }
     }
-    
+
+    private DeploymentProcessState startDeployment(String project, String stage, String name, InputStream uploadWar) throws IOException {
+        java.nio.file.Path tempFile = Files.createTempFile("upload", ".war");
+        long bytesRead = Files.copy(uploadWar, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        if (bytesRead == 0) {
+            throw new BadRequestException("Empty file");
+        }
+
+        return process.start(tempFile.toFile(), name, new Namespace(project, stage));
+    }
+
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadWarForm(@FormDataParam("project") String project, @FormDataParam("stage") String stage,
                                   @FormDataParam("artifact") InputStream artifact,
-                                  @FormDataParam("artifact") FormDataContentDisposition fileDisposition) {
-        return uploadWar(project, stage, fileDisposition.getFileName(), artifact);
+                                  @FormDataParam("artifact") FormDataContentDisposition fileDisposition, @Context UriInfo uri) {
+        try {
+            var state = startDeployment(project, stage, fileDisposition.getFileName(), artifact);
+            return Response.seeOther(uri.resolve(URI.create("deployment/"+state.getId()+"/"))).build();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Error in file upload", e);
+            return Response.serverError().build();
+        }
     }
     
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
-    @Path("{id}")
+    @Path("{id}/")
     public void getDeploymentEvents(@Context SseEventSink eventSink, @Context Sse sse, @PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         if (state == null) {
@@ -145,9 +163,9 @@ public class DeploymentResource {
         deploymentStream.addRequest(eventSink, id);
     }
     
-    
     @GET
-    @Path("{id}")
+    @Path("{id}/")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response deploymentStatus(@PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         if (state == null){
@@ -156,6 +174,26 @@ public class DeploymentResource {
         
         return Response.ok(jsonb.toJson(process.getProcessState(id))).build();
     }
+
+    @GET
+    @Path("{id}/")
+    @Produces(MediaType.TEXT_HTML)
+    @Controller
+    public String displayDeployment(@PathParam("id") String id) {
+        DeploymentProcessState state = process.getProcessState(id);
+        if (state == null){
+            throw new NotFoundException();
+        }
+        models.setDeployment(state);
+        return "deployment.xhtml";
+    }
+    
+    @GET
+    @Path("{id}")
+    public Response displayDeployment(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        // redirect to {id}/
+        return Response.seeOther(uriInfo.resolve(URI.create(id+"/"))).build();
+    }    
     
     @GET
     @Path("{project}/{stage}/{id}")
