@@ -193,6 +193,6 @@ public class DeploymentProcess {
     }
 
     public DeploymentProcessState provisioningFinished(DeploymentProcessState process) {
-        return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_FINISHED));
+        return updateProcess(process, p -> p.provisionFinished());
     }
 }
