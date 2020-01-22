@@ -45,16 +45,23 @@ import fish.payara.cloud.deployer.process.StateChanged;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @ApplicationScoped
 class ConfigurationController {
     @Inject
     DeploymentProcess deploymentProcess;
+    
+    @Inject @ConfigProperty(name="configuration.autosubmit", defaultValue="false")
+    boolean autoSubmit;
 
     void startConfiguration(@ObservesAsync @ChangeKind.Filter(ChangeKind.INSPECTION_FINISHED) StateChanged event) {
         deploymentProcess.configurationStarted(event.getProcess());
+        
+        if (autoSubmit && event.getProcess().isConfigurationComplete()) {
+            deploymentProcess.submitConfigurations(event.getProcess());
+        }
         // Some tasks that this might do as well:
-        // fast-track option: use defaults, and progress further when there are no required configuration steps
         // place timeout on configuration after which it is submitted
     }
 }
