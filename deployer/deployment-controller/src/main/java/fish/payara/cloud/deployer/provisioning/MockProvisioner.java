@@ -55,6 +55,7 @@ class MockProvisioner implements Provisioner {
     @Inject
     ScheduledExecutorService delay;
 
+    @Inject
     @ConfigProperty(name = "provisioning.mock.fail-after", defaultValue = "PT5S")
     Duration failDelay;
 

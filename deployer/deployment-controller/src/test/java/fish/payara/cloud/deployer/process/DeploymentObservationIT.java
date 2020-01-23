@@ -49,6 +49,7 @@ import org.junit.runner.RunWith;
 import javax.inject.Inject;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -93,5 +94,17 @@ public class DeploymentObservationIT {
         assertTrue("Process should be marked as failed", state.isFailed());
         assertNotNull("Process should contain completion time", state.getCompletion());
         assertEquals("PROCESS_STARTED observer should receive an event", 1, observer.getProcessStart());
+    }
+
+    @Test
+    public void provisionedDeploymentIsComplete() {
+        // this will not be allowed for long, but for now we're good with invalid arguments
+        DeploymentProcessState state = process.start(null, null, null);
+        process.provisioningFinished(state);
+        observer.await(ChangeKind.PROVISION_FINISHED);
+        state = observer.getLastProcess();
+        assertTrue("Process should be complete", state.isComplete());
+        assertFalse("Process should not be marked as failed", state.isFailed());
+        assertNotNull("Process should contain completion time", state.getCompletion());
     }
 }

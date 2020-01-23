@@ -79,7 +79,7 @@ class AzureBlobStorage implements ArtifactStorage {
     public URI storeArtifact(DeploymentProcessState deploymentProcess) throws IOException {
         try {
             var dir = container.getDirectoryReference(deploymentProcess.getNamespace().getProject());
-            var blob = dir.getBlockBlobReference(deploymentProcess.getId()+".war");
+            var blob = dir.getBlockBlobReference(deploymentProcess.getId()+"/"+deploymentProcess.getName());
             blob.uploadFromFile(deploymentProcess.getTempLocation().getAbsolutePath());
             return blob.getUri();
         } catch (URISyntaxException e) {

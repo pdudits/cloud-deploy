@@ -82,6 +82,9 @@ public class DeploymentProcessState {
     private URI endpoint;
     private String podName;
     private Instant completion;
+    private Instant lastStatusChange = Instant.now();
+    private ChangeKind lastChange = ChangeKind.PROCESS_STARTED;
+    private boolean configurable;
 
     DeploymentProcessState(Namespace target, String name, File tempLocation) {
         this.id = UUID.randomUUID().toString();
@@ -107,6 +110,22 @@ public class DeploymentProcessState {
         return version;
     }
 
+    public Instant getLastStatusChange() {
+        return lastStatusChange;
+    }
+
+    public ChangeKind getLastChange() {
+        return lastChange;
+    }
+
+    public URI getEndpoint() {
+        return endpoint;
+    }
+
+    public boolean isConfigurable() {
+        return configurable;
+    }
+    
     /**
      * Target namespace of project
      * @return non-null namespace instance;
@@ -209,22 +228,21 @@ public class DeploymentProcessState {
     }
 
     ChangeKind fail(String message, Throwable exception) {
-        version++;
         this.completionMessage = message;
         this.failureCause = exception;
         this.complete = true;
         this.failed = true;
         this.completion = Instant.now();
-        return ChangeKind.FAILED;
+        return transition(ChangeKind.FAILED);
     }
 
     ChangeKind addConfiguration(Configuration configuration) {
         if (configurations.contains(configuration)) {
             throw new IllegalArgumentException("Matching configuration is already present");
         }
-        version++;
+        configurable = true;
         configurations.add(configuration);
-        return ChangeKind.CONFIGURATION_ADDED;
+        return transition(ChangeKind.CONFIGURATION_ADDED);
     }
 
     ChangeKind setConfiguration(String kind, String id, boolean submit, Map<String, String> values) {
@@ -234,8 +252,7 @@ public class DeploymentProcessState {
             if (submit && config.get().isComplete()) {
                 config.get().setSubmitted(true);
             }
-            version++;
-            return ChangeKind.CONFIGURATION_SET;
+            return transition(ChangeKind.CONFIGURATION_SET);
         } else {
             throw new IllegalArgumentException("Configuration "+kind+"/"+id+" not present");
         }
@@ -244,23 +261,28 @@ public class DeploymentProcessState {
     private Optional<Configuration> findConfiguration(String kind, String id) {
         return configurations.stream().filter(c -> c.getKind().equals(kind) && c.getId().equals(id)).findAny();
     }
-
+    
     ChangeKind transition(ChangeKind target) {
         version++;
+        lastStatusChange = Instant.now();
+        lastChange = target;
         return target;
     }
 
     ChangeKind submitConfigurations(boolean force) {
-        boolean allComplete = configurations.stream().allMatch(Configuration::isComplete);
-        if (allComplete) {
+        if (isConfigurationComplete()) {
             configurations.stream().forEach(c -> c.setSubmitted(true));
-            version++;
-            return ChangeKind.CONFIGURATION_FINISHED;
+            configurable = false;
+            return transition(ChangeKind.CONFIGURATION_FINISHED);
         } else if (force) {
             throw new IllegalStateException("Cannot submit configuration, not all configurations are complete");
         } else {
             return null;
         }
+    }
+
+    public boolean isConfigurationComplete() {
+        return configurations.stream().allMatch(Configuration::isComplete);
     }
 
     ChangeKind removePersistentLocation() {
@@ -270,9 +292,8 @@ public class DeploymentProcessState {
     }
 
     ChangeKind setPersistentLocation(URI location) {
-        version++;
         this.persistentLocation = location;
-        return ChangeKind.ARTIFACT_STORED;
+        return transition(ChangeKind.ARTIFACT_STORED);
     }
 
     public Optional<String> getConfigValue(String kind, String name, String key) {
@@ -283,9 +304,14 @@ public class DeploymentProcessState {
         return getConfigValue(kind, getName(), key);
     }
 
-    public ChangeKind setEndpoint(URI endpoint) {
-        version++;
-        endpoint = null;
-        return ChangeKind.INGRESS_CREATED;
+    ChangeKind setEndpoint(URI endpoint) {
+        this.endpoint = endpoint;
+        return transition(ChangeKind.INGRESS_CREATED);
+    }
+
+    ChangeKind provisionFinished() {
+        this.complete = true;
+        this.completion = Instant.now();
+        return transition(ChangeKind.PROVISION_FINISHED);
     }
 }
