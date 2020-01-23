@@ -1,8 +1,6 @@
 /*
- *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- *  Copyright (c) [2020] Payara Foundation and/or its affiliates. All rights reserved.
- * 
+ * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
  *  and Distribution License("CDDL") (collectively, the "License").  You
@@ -11,23 +9,20 @@
  *  https://github.com/payara/Payara/blob/master/LICENSE.txt
  *  See the License for the specific
  *  language governing permissions and limitations under the License.
- * 
- *  When distributing the software, include this License Header Notice in each
- *  file and include the License.
- * 
+ *
  *  When distributing the software, include this License Header Notice in each
  *  file and include the License file at glassfish/legal/LICENSE.txt.
- * 
+ *
  *  GPL Classpath Exception:
  *  The Payara Foundation designates this particular file as subject to the "Classpath"
  *  exception as provided by the Payara Foundation in the GPL Version 2 section of the License
  *  file that accompanied this code.
- * 
+ *
  *  Modifications:
  *  If applicable, add the following below the License Header, with the fields
  *  enclosed by brackets [] replaced by your own identifying information:
  *  "Portions Copyright [year] [name of copyright owner]"
- * 
+ *
  *  Contributor(s):
  *  If you wish your version of this file to be governed by only the CDDL or
  *  only the GPL Version 2, indicate your decision by adding "[Contributor]
@@ -40,64 +35,88 @@
  *  only if the new code is made subject to such option by the copyright
  *  holder.
  */
+
 package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.process.DeploymentProcess;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import org.junit.Assert;
-import org.junit.Test;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.ProcessObserver;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExternalResource;
 import org.junit.runner.RunWith;
 
-/**
- * Tests that the deployment endpoint works
- * @author jonathan coustick
- */
+import javax.annotation.Resource;
+import javax.inject.Inject;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.sse.InboundSseEvent;
+import javax.ws.rs.sse.SseEventSource;
+
+import java.net.URI;
+import java.net.URL;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 @RunWith(Arquillian.class)
-public class UploadIT {
-    
+public class ServerSideEventsIT {
+    private SseEventSource sse;
+
     @Deployment
     public static WebArchive deployment() {
-        WebArchive archive =  ShrinkWrap.create(WebArchive.class)
+        return ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
                 .addPackage(Application.class.getPackage());
-
-        System.out.println(archive.toString(true));
-        return archive;
     }
-    
+
+    @Inject
+    DeploymentProcess process;
+
     @ArquillianResource
-    private URL base;
-    
-    //Tests that a file can be uploaded. As deployment in done asynchronously all files will deploy fine, but may be fail later 
-   @Test
-   public void uploadTest() throws IOException {
-       WebTarget jaxrstarget = ClientBuilder.newClient().
-               target(URI.create(new URL(base, "api/deployment/foo/bar/README.adoc").toExternalForm()));
-       System.out.println(jaxrstarget.getUri().toString());
-       Response response = jaxrstarget.request(MediaType.APPLICATION_OCTET_STREAM_TYPE).
-               post(Entity.entity(Files.newInputStream(Paths.get("README.adoc")),MediaType.APPLICATION_OCTET_STREAM_TYPE));
-       Assert.assertEquals(201, response.getStatus());
-       String id = response.readEntity(String.class);
-       
-       jaxrstarget = ClientBuilder.newClient().target(URI.create(new URL(base, "api/deployment/" + id).toExternalForm()));
-       System.out.println(jaxrstarget.getUri().toString());
-       response = jaxrstarget.request().get();
-       System.out.println(response.readEntity(String.class));
-       Assert.assertEquals(200, response.getStatus());
-   }
-    
+    URI uri;
+
+    private CountDownLatch expectMessage = new CountDownLatch(2); // initial message, and fail event
+
+    private static final Logger LOGGER = Logger.getLogger("test");
+
+    @Test
+    public void sseEventIsSentOut() throws InterruptedException {
+        // this will not be allowed for long, but for now we're good with invalid arguments
+        DeploymentProcessState state = process.start(null, null, null);
+
+        var sseEndpoint = ClientBuilder.newClient().target(uri).path("api/deployment").path(state.getId());
+
+        sse = SseEventSource.target(sseEndpoint).build();
+        sse.register(this::onMessage);
+        sse.open();
+
+        process.fail(state, "A failure", new IllegalArgumentException());
+        assertTrue("At least two messages should be received by SSE endpoint", expectMessage.await(3, TimeUnit.SECONDS));
+    }
+
+    @After
+    public void disconnect() {
+        if (sse != null) {
+            sse.close();
+        }
+    }
+
+    private void onMessage(InboundSseEvent event) {
+        if (event.isEmpty()) {
+            return;
+        }
+        LOGGER.info("Event: "+event.readData());
+        expectMessage.countDown();
+    }
 }
