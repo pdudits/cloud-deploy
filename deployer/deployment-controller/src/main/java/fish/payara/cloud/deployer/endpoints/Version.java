@@ -42,27 +42,25 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 /**
- * JAX-RS endpoints activator
+ * Endpoint to get the version of this project
  * @author jonathan coustick
  */
-@ApplicationPath("/api")
-public class Application extends javax.ws.rs.core.Application {
+@Path("/deployment")
+public class Version {
+    
+    private static final String VERSION_STRING_JSON = "{ version : \"1.0-SNAPSHOT\" }";
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deploymentStatus() {
+        return Response.ok(VERSION_STRING_JSON).build();
+    }   
 
-    @Override
-    public Set<Class<?>> getClasses() {
-        HashSet<Class<?>> classes = new HashSet<>();
-        classes.add(DeploymentResource.class);
-        classes.add(MultiPartFeature.class);
-        classes.add(Version.class);
-        return classes;
-    }
-    
-    
-    
 }
