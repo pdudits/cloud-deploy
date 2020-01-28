@@ -42,9 +42,11 @@ import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguratio
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import org.junit.Test;
 
 import java.net.URI;
+import java.util.concurrent.Executors;
 
 import static org.mockito.Mockito.mock;
 
@@ -54,6 +56,8 @@ import static org.mockito.Mockito.mock;
  *
  */
 public class CreateTestManual {
+    private DefaultKubernetesClient client;
+
     @Test
     public void createDirectly() throws ProvisioningException {
         var process = ProcessAccessor.createProcessWithName("ROOT.war");
@@ -62,12 +66,48 @@ public class CreateTestManual {
         var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
         ProcessAccessor.addConfiguration(process, contextRoot);
 
+        DirectProvisioner provisoner = setupProvisioner();
+        provisoner.provision(process);
+    }
+
+    @Test
+    public void inspectWatches() throws ProvisioningException, InterruptedException {
+        var process = ProcessAccessor.createProcessWithName("ROOT.war");
+        ProcessAccessor.setPersistentLocation(process, URI.create("https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"));
+
+        var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
+        ProcessAccessor.addConfiguration(process, contextRoot);
+
+        DirectProvisioner provisoner = setupProvisioner();
+
+        var watcher = new KubernetesWatcher();
+        watcher.client = setupClient();
+        watcher.executorService = Executors.newScheduledThreadPool(2);
+        watcher.startWatching();
+
+        provisoner.provision(process);
+
+        Thread.sleep(60000);
+        watcher.close();
+    }
+
+    private DirectProvisioner setupProvisioner() {
         var provisoner = new DirectProvisioner();
         provisoner.domain = "9ba44192900145a88bfb.westeurope.aksapp.io";
         provisoner.process = mock(DeploymentProcess.class);
-
-        provisoner.connectApiServer();
-
-        provisoner.provision(process);
+        provisoner.client = setupClient();
+        return provisoner;
     }
+
+    private DefaultKubernetesClient setupClient() {
+        if (client != null) {
+            return client;
+        }
+        var client = new KubernetesClient();
+        client.connectApiServer();
+        this.client = client.client;
+        return client.client;
+    }
+
+
 }
