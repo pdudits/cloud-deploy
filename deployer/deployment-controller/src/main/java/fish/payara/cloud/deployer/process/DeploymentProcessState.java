@@ -40,15 +40,25 @@ package fish.payara.cloud.deployer.process;
 
 import javax.enterprise.event.Event;
 import java.io.File;
+import java.io.StringReader;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.json.bind.JsonbConfig;
 import javax.json.bind.annotation.JsonbPropertyOrder;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.config.PropertyOrderStrategy;
@@ -85,12 +95,17 @@ public class DeploymentProcessState {
     private Instant lastStatusChange = Instant.now();
     private ChangeKind lastChange = ChangeKind.PROCESS_STARTED;
     private boolean configurable;
+    
+    @JsonbTransient
+    private Jsonb jsonb;
 
     DeploymentProcessState(Namespace target, String name, File tempLocation) {
         this.id = UUID.randomUUID().toString();
         this.namespace = target;
         this.name = name;
         this.tempLocation = tempLocation;
+        JsonbConfig jsonbConfig = new JsonbConfig().withSerializers(new ConfigurationSerializer());
+        jsonb = JsonbBuilder.create(jsonbConfig);
     }
 
     /**
@@ -197,6 +212,41 @@ public class DeploymentProcessState {
      */
     public Set<Configuration> getConfigurations() {
         return Collections.unmodifiableSet(configurations);
+    }
+    
+    /**
+     * Configuration of artifact as JSON format
+     * @return JsonObject representation of the config
+     */
+    public JsonObject getJsonConfiguration() {
+        JsonObjectBuilder configObjectBuilder = Json.createObjectBuilder();
+        configObjectBuilder.add("deployment", id);
+        JsonArrayBuilder orderArray = Json.createArrayBuilder();
+        for (Configuration config: getConfigurations()) {
+            JsonObjectBuilder kindObject = Json.createObjectBuilder();
+            kindObject.add("kind", config.getKind());
+            kindObject.add("id", config.getId());
+            orderArray.add(configObjectBuilder);
+        }
+        configObjectBuilder.add("order", orderArray);
+        
+        HashMap<String, List<String>> configJsons = new HashMap<>();
+        for (Configuration config: getConfigurations()) {
+            String json = jsonb.toJson(config);
+            configJsons.merge(config.getKind(), List.of(json), (List t, List u) -> {
+                u.add(t);
+                return u;
+            });
+        }
+        for (Map.Entry<String, List<String>> jsonEntry : configJsons.entrySet()) {
+            JsonObjectBuilder kindObject = Json.createObjectBuilder();
+            for (String jsonConfiguration : jsonEntry.getValue()) {
+                kindObject.add(jsonEntry.getKey(), Json.createReader(new StringReader(jsonConfiguration)).readObject());
+            }
+            configObjectBuilder.add("kind", kindObject);
+        }
+        
+        return configObjectBuilder.build();
     }
 
     /**
