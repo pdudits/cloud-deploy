@@ -44,14 +44,15 @@ package fish.payara.cloud.deployer.process;
 
 import fish.payara.cloud.deployer.process.ConfigurationSerializer;
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
-import fish.payara.cloud.deployer.process.Configuration;
-import fish.payara.cloud.deployer.process.ProcessAccessor;
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.json.stream.JsonGenerator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -60,7 +61,7 @@ import org.junit.Test;
  * 
  * @author jonathan coustick
  */
-public class SerilizationTest {
+public class JsonSerilizationTest {
     
     private static final String CONTEXT_START = "{\"TESTMODULE\":{\"keys\":[{\"name\"";
     private static final String CONTEXT_KEYS_1 = "{\"name\":\"context-root\",\"required\":false,\"default\":\"TEXTCONTEXT\"}";
@@ -105,6 +106,34 @@ public class SerilizationTest {
         Assert.assertTrue(result.contains(SIMPLE_KEYS_3));
         Assert.assertTrue(result.contains(SIMPLE_VALUES));
     }
+    
+    @Test
+    public void deploymentConfigTest() throws IOException {
+        DeploymentProcessState state = new DeploymentProcessState(new Namespace("foo", "bar"), "foobar", File.createTempFile("abc", null));
+        SimpleConfiguration config = new SimpleConfiguration();
+        ProcessAccessor.addConfiguration(state, config);
+        JsonObject jsonConfig = state.getJsonConfiguration();
+        System.out.println(jsonConfig.toString());
+        
+        Assert.assertNotNull(jsonConfig.getString("deployment")); //will be a UUID
+        JsonArray order = jsonConfig.getJsonArray("order");
+        Assert.assertEquals(1, order.size());
+        JsonObject orderObject = order.getJsonObject(0);
+        Assert.assertEquals("TEST", orderObject.getString("kind"));
+        Assert.assertEquals("TESTID", orderObject.getString("id"));
+        JsonObject configObject = jsonConfig.getJsonObject("kind").getJsonObject("TEST").getJsonObject("TESTID");
+        JsonArray keyArray = configObject.getJsonArray("keys");
+        Assert.assertEquals(3, keyArray.size());
+        JsonObject aKeyObject = keyArray.getJsonObject(0);
+        Assert.assertTrue(aKeyObject.getString("name").contains("key"));
+        Assert.assertFalse(aKeyObject.getBoolean("required"));
+        Assert.assertEquals("DEFAULT", aKeyObject.getString("default"));
+        JsonObject valuesObject = configObject.getJsonObject("values");
+        Assert.assertEquals("Value1", valuesObject.getString("key1"));
+        Assert.assertEquals("value2", valuesObject.getString("key2"));
+        Assert.assertEquals("value3", valuesObject.getString("key3"));
+    }
+    
     
     private class SimpleConfiguration extends Configuration {
         

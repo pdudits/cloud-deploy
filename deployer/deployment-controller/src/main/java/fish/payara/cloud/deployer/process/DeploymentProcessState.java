@@ -226,7 +226,7 @@ public class DeploymentProcessState {
             JsonObjectBuilder kindObject = Json.createObjectBuilder();
             kindObject.add("kind", config.getKind());
             kindObject.add("id", config.getId());
-            orderArray.add(configObjectBuilder);
+            orderArray.add(kindObject);
         }
         configObjectBuilder.add("order", orderArray);
         
