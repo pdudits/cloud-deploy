@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -38,45 +38,16 @@
 
 package fish.payara.cloud.deployer.process;
 
-import javax.json.bind.annotation.JsonbPropertyOrder;
-import javax.json.bind.annotation.JsonbTransient;
-import javax.json.bind.config.PropertyOrderStrategy;
-
 /**
- * Asynchronous event about change of deployment process state.
- * Event is quantified with {@link ChangeKind.Filter} with its {@link ChangeKind.Filter#value() value} equal to {@link #getKind()}
+ * Structured logging of deployment process.
+ * Raw log from app server should be parsed to identify deployment errors and completion of deployment process
  */
-@JsonbPropertyOrder(PropertyOrderStrategy.ANY)
-public class StateChanged {
-    @JsonbTransient
-    private final DeploymentProcessState process;
-    private final ChangeKind kind;
-    private final int atVersion;
+public class DeploymentProcessLogOutput {
 
-    StateChanged(DeploymentProcessState process, ChangeKind kind) {
-        this.process = process;
-        this.kind = kind;
-        this.atVersion = process.getVersion();
-    }
+    private String output;
 
-    public DeploymentProcessState getProcess() {
-        return process;
-    }
-
-    public ChangeKind getKind() {
-        return kind;
-    }
-
-    public int getAtVersion() {
-        return atVersion;
-    }
-
-    public boolean isLastEvent() {
-        return atVersion == process.getVersion();
-    }
-
-    @Override
-    public String toString() {
-        return "StateChanged(id="+getProcess().getId()+", kind="+kind+", atVersion="+atVersion+")";
+    void add(String chunk) {
+        // we'll eventually get to parsing stuff.
+        output = output == null ? chunk : output+chunk;
     }
 }

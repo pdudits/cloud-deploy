@@ -85,9 +85,20 @@ public class DeploymentProcessState {
     private Instant lastStatusChange = Instant.now();
     private ChangeKind lastChange = ChangeKind.PROCESS_STARTED;
     private boolean configurable;
+    private Instant endpointDeterminedAt;
+    private Instant endpointActivatedAt;
+    private Instant deploymentCompletedAt;
+    private DeploymentProcessLogOutput logOutput;
 
     DeploymentProcessState(Namespace target, String name, File tempLocation) {
         this.id = UUID.randomUUID().toString();
+        this.namespace = target;
+        this.name = name;
+        this.tempLocation = tempLocation;
+    }
+
+    DeploymentProcessState(String id, Namespace target, String name, File tempLocation) {
+        this.id = id;
         this.namespace = target;
         this.name = name;
         this.tempLocation = tempLocation;
@@ -313,5 +324,32 @@ public class DeploymentProcessState {
         this.complete = true;
         this.completion = Instant.now();
         return transition(ChangeKind.PROVISION_FINISHED);
+    }
+
+    ChangeKind podCreated(String podName) {
+        this.podName = podName;
+        return transition(ChangeKind.POD_CREATED);
+    }
+
+    ChangeKind logged(String chunk) {
+        if (logOutput == null) {
+            logOutput = new DeploymentProcessLogOutput();
+        }
+        logOutput.add(chunk);
+        return transition(ChangeKind.OUTPUT_LOGGED);
+    }
+
+    ChangeKind deploymentFinished() {
+        deploymentCompletedAt = Instant.now();
+        return transition(ChangeKind.DEPLOYMENT_READY);
+    }
+
+    ChangeKind endpointActivated() {
+        endpointActivatedAt = Instant.now();
+        return transition(ChangeKind.INGRESS_READY);
+    }
+
+    public boolean isReady() {
+        return endpointActivatedAt != null && deploymentCompletedAt != null;
     }
 }

@@ -69,6 +69,10 @@ public class DeploymentProcess {
      */
     public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
         var processState = new DeploymentProcessState(target, name, artifactLocation);
+        return start(processState);
+    }
+
+    DeploymentProcessState start(DeploymentProcessState processState) {
         runningProcesses.put(processState.getId(), processState);
         processState.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
         return processState;
@@ -136,11 +140,16 @@ public class DeploymentProcess {
     private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, ChangeKind> update) {
         var storedProcess = runningProcesses.get(process.getId());
         ChangeKind eventKind = null;
+        boolean isReady = false;
         synchronized (storedProcess) {
             eventKind = update.apply(storedProcess);
+            isReady = storedProcess.isReady();
         }
         if (eventKind != null) {
             storedProcess.fireAsync(deploymentEvent, eventKind);
+        }
+        if (isReady) {
+            storedProcess.fireAsync(deploymentEvent, ChangeKind.PROVISION_FINISHED);
         }
         return storedProcess;
     }
@@ -194,5 +203,22 @@ public class DeploymentProcess {
 
     public DeploymentProcessState provisioningFinished(DeploymentProcessState process) {
         return updateProcess(process, p -> p.provisionFinished());
+    }
+
+    public DeploymentProcessState endpointActivated(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.endpointActivated());
+    }
+
+    public DeploymentProcessState deploymentFinished(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.deploymentFinished());
+    }
+
+
+    public DeploymentProcessState podCreated(DeploymentProcessState process, String namespace, String name) {
+        return updateProcess(process, p -> p.podCreated(namespace+"/"+name));
+    }
+
+    public DeploymentProcessState outputLogged(DeploymentProcessState process, String logChunk) {
+        return updateProcess(process, p -> p.logged(logChunk));
     }
 }

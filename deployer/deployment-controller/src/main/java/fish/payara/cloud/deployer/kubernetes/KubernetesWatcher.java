@@ -38,11 +38,12 @@
 
 package fish.payara.cloud.deployer.kubernetes;
 
-import com.google.common.base.Charsets;
 import fish.payara.cloud.deployer.process.ChangeKind;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.StateChanged;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
@@ -58,7 +59,10 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
 import javax.inject.Inject;
+import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,27 +72,36 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Watcher listens to Kubernetes events related to objects created by the deployer and updates deployment process state
+ * based on them.
+ */
 @ApplicationScoped
 @DirectProvisioning
-class KubernetesWatcher {
+class KubernetesWatcher implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(KubernetesWatcher.class.getName());
 
     @Inject
     NamespacedKubernetesClient client;
     @Inject
     ScheduledExecutorService executorService;
+    @Inject
+    DeploymentProcess process;
 
     private Watch ingressWatch;
     private Watch deploymentWatch;
     private Watch podWatch;
     private Set<String> startingPods = new ConcurrentHashMap<String, Boolean>().keySet(true);
-    private ConcurrentMap<String, LogWatch> podWatches = new ConcurrentHashMap<>();
+    private ConcurrentMap<String, WatchedPod> podWatches = new ConcurrentHashMap<>();
 
+    /**
+     * Subscribes to changes of managed resources.
+     */
     @PostConstruct
     void startWatching() {
         ingressWatch = client.inAnyNamespace().extensions().ingresses()
                 .withLabel("app.kubernetes.io/managed-by", "payara-cloud")
-                .watch(new Watcher<Ingress>() {
+                .watch(new Watcher<>() {
                     @Override
                     public void eventReceived(Action action, Ingress resource) {
                         ingressEventReceived(action, resource);
@@ -101,7 +114,7 @@ class KubernetesWatcher {
                 });
         deploymentWatch = client.inAnyNamespace().apps().deployments()
                 .withLabel("app.kubernetes.io/managed-by", "payara-cloud")
-                .watch(new Watcher<Deployment>() {
+                .watch(new Watcher<>() {
                     @Override
                     public void eventReceived(Action action, Deployment resource) {
                         deploymentEventReceived(action, resource);
@@ -114,7 +127,7 @@ class KubernetesWatcher {
                 });
         podWatch = client.inAnyNamespace().pods()
                 .withLabel("app.kubernetes.io/managed-by", "payara-cloud")
-                .watch(new Watcher<Pod>() {
+                .watch(new Watcher<>() {
                     @Override
                     public void eventReceived(Action action, Pod resource) {
                         podEventReceived(action, resource);
@@ -129,23 +142,61 @@ class KubernetesWatcher {
     }
 
     @PreDestroy
-    void close() {
+    @Override
+    public void close() {
         podWatch.close();
         deploymentWatch.close();
         ingressWatch.close();
-        podWatches.values().forEach(LogWatch::close);
+        podWatches.values().forEach(WatchedPod::close);
     }
 
+    // Handlers -- update the process when needed here
+    protected void handlePodEvent(Watcher.Action action, Pod resource, String id) {
+        if (action == Watcher.Action.ADDED) {
+            process.podCreated(process.getProcessState(id), resource.getMetadata().getNamespace(), resource.getMetadata().getName());
+        }
+    }
+
+    protected void handleDeploymentEvent(Watcher.Action action, Deployment resource, String id) {
+        if (isDeploymentReady(resource)) {
+            process.deploymentFinished(process.getProcessState(id));
+        }
+    }
+
+    protected void handleLog(String id, ObjectMeta podMeta, byte[] availableBytes) {
+        process.outputLogged(process.getProcessState(id), utf8String(availableBytes));
+    }
+
+    protected void handleIngressEvent(Watcher.Action action, Ingress resource, String id) {
+        if (hasActiveIngress(resource)) {
+            process.endpointActivated(process.getProcessState(id));
+        }
+    }
+
+    private boolean isDeploymentReady(Deployment resource) {
+        return resource.getStatus() != null && resource.getStatus().getReadyReplicas() != null && resource.getStatus().getReadyReplicas() > 0;
+    }
+
+    private boolean hasActiveIngress(Ingress resource) {
+        if (resource.getStatus() == null || resource.getStatus().getLoadBalancer() == null) {
+            return false;
+        }
+        return resource.getStatus().getLoadBalancer().getIngress().stream()
+                .anyMatch(lbIngress -> lbIngress.getHostname() != null || lbIngress.getIp() != null);
+    }
+
+    /**
+     * Collect new output from any pods' logs. Called in regular intervals.
+     */
     private void pumpPodLogs() {
-        for (Map.Entry<String, LogWatch> logWatchEntry : podWatches.entrySet()) {
+        for (Map.Entry<String, WatchedPod> logWatchEntry : podWatches.entrySet()) {
             var id = logWatchEntry.getKey();
             var stream = logWatchEntry.getValue().getOutput();
             try {
                 if (stream.available() > 0) {
                     byte[] availableBytes = stream.readNBytes(stream.available());
-                    // what will it throw when this is not valid UTF_8 sequence?
-                    String chunk = new String(availableBytes, Charsets.UTF_8);
-                    LOGGER.info("Log for " + id + ":" + chunk);
+                    logLog(id, logWatchEntry.getValue().podMeta, availableBytes);
+                    handleLog(id, logWatchEntry.getValue().podMeta, availableBytes);
                 }
             } catch (IOException e) {
                 LOGGER.log(Level.WARNING, "Failed to process log pump of " + id, e);
@@ -154,6 +205,24 @@ class KubernetesWatcher {
         }
     }
 
+    private void podEventReceived(Watcher.Action action, Pod resource) {
+        var id = getDeploymentId(resource);
+        if (id == null) {
+            return;
+        }
+        logEvent(action, resource);
+        handlePodEvent(action, resource, id);
+        if (becameReady(action, resource)) {
+            registerLogWatch(id, resource);
+        }
+    }
+
+    /**
+     * Track when created pod enters ready state (its main container is started)
+     * @param action
+     * @param resource
+     * @return
+     */
     private boolean becameReady(Watcher.Action action, Pod resource) {
         var uid = resource.getMetadata().getUid();
         if (action == Watcher.Action.ADDED) {
@@ -170,38 +239,21 @@ class KubernetesWatcher {
         }
     }
 
-
-
-    private void podEventReceived(Watcher.Action action, Pod resource) {
-        var id = getDeploymentId(resource);
-        if (id == null) {
-            return;
-        }
-        logEvent(action, resource);
-        if (becameReady(action, resource)) {
-            registerLogWatch(id, resource);
-        }
-
-    }
-
-
     private void registerLogWatch(String id, Pod resource) {
-        podWatches.computeIfAbsent(id, (i) -> client.pods()
-                .inNamespace(resource.getMetadata().getNamespace())
-                .withName(resource.getMetadata().getName()).watchLog());
+        podWatches.computeIfAbsent(id, (i) -> new WatchedPod(resource));
     }
 
     void unregisterOnSuccess(@ObservesAsync @ChangeKind.Filter(ChangeKind.PROVISION_FINISHED) StateChanged event) {
         unregisterLogWatch(event.getProcess().getId());
     }
 
+    void unregisterOnFail(@ObservesAsync @ChangeKind.Filter(ChangeKind.FAILED) StateChanged event) {
+        unregisterLogWatch(event.getProcess().getId());
+    }
+
     private void unregisterLogWatch(String id) {
         var watch = podWatches.remove(id);
         watch.close();
-    }
-
-    void unregisterOnFail(@ObservesAsync @ChangeKind.Filter(ChangeKind.FAILED) StateChanged event) {
-        unregisterLogWatch(event.getProcess().getId());
     }
 
 
@@ -211,6 +263,16 @@ class KubernetesWatcher {
             return;
         }
         logEvent(action, resource);
+        handleDeploymentEvent(action, resource, id);
+    }
+
+    private void ingressEventReceived(Watcher.Action action, Ingress resource) {
+        var id = getDeploymentId(resource);
+        if (id == null) {
+            return;
+        }
+        logEvent(action, resource);
+        handleIngressEvent(action, resource, id);
     }
 
     private String getDeploymentId(HasMetadata resource) {
@@ -222,15 +284,38 @@ class KubernetesWatcher {
         return id;
     }
 
-    private void ingressEventReceived(Watcher.Action action, Ingress resource) {
-        var id = getDeploymentId(resource);
-        if (id == null) {
-            return;
-        }
-        logEvent(action, resource);
+
+    protected void logEvent(Watcher.Action action, HasMetadata resource) {
+        LOGGER.info(resource.getKind() + " " + action + "\n" + Serialization.asJson(resource));
     }
 
-    private void logEvent(Watcher.Action action, HasMetadata resource) {
-        LOGGER.info(resource.getKind() + " " + action + "\n" + Serialization.asJson(resource));
+    protected void logLog(String id, ObjectMeta podMeta, byte[] chunk) {
+        // what will it throw when this is not valid UTF_8 sequence?
+        String string = utf8String(chunk);
+        LOGGER.info("Log for " + id + ":" + string);
+    }
+
+    private static String utf8String(byte[] chunk) {
+        return new String(chunk, StandardCharsets.UTF_8);
+    }
+
+    class WatchedPod {
+        final LogWatch logWatch;
+        final ObjectMeta podMeta;
+
+        WatchedPod(Pod resource) {
+            this.podMeta = resource.getMetadata();
+            this.logWatch = client.pods()
+                    .inNamespace(resource.getMetadata().getNamespace())
+                    .withName(resource.getMetadata().getName()).watchLog();
+        }
+
+        void close() {
+            this.logWatch.close();
+        }
+
+        InputStream getOutput() {
+            return this.logWatch.getOutput();
+        }
     }
 }

@@ -104,8 +104,12 @@ public class ProcessObserver {
     }
 
     public void await(ChangeKind kind) {
+        await(kind, 5, TimeUnit.SECONDS);
+    }
+
+    public void await(ChangeKind kind, long timeOut, TimeUnit unit) {
         try {
-            assertTrue("Event "+kind+" should be fired within short time", eventLatches.get(kind).await(5, TimeUnit.SECONDS));
+            assertTrue("Event "+kind+" should be fired within "+timeOut+" "+unit, eventLatches.get(kind).await(timeOut, unit));
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while waiting for "+kind, e);
         }

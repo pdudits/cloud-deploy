@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -36,47 +36,23 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.process;
+package fish.payara.cloud.deployer.kubernetes;
 
-import javax.json.bind.annotation.JsonbPropertyOrder;
-import javax.json.bind.annotation.JsonbTransient;
-import javax.json.bind.config.PropertyOrderStrategy;
+import org.junit.Test;
 
-/**
- * Asynchronous event about change of deployment process state.
- * Event is quantified with {@link ChangeKind.Filter} with its {@link ChangeKind.Filter#value() value} equal to {@link #getKind()}
- */
-@JsonbPropertyOrder(PropertyOrderStrategy.ANY)
-public class StateChanged {
-    @JsonbTransient
-    private final DeploymentProcessState process;
-    private final ChangeKind kind;
-    private final int atVersion;
+import java.io.IOException;
+import java.nio.file.Path;
 
-    StateChanged(DeploymentProcessState process, ChangeKind kind) {
-        this.process = process;
-        this.kind = kind;
-        this.atVersion = process.getVersion();
-    }
+import static org.junit.Assert.assertTrue;
 
-    public DeploymentProcessState getProcess() {
-        return process;
-    }
+public class StoredLogTest {
+    @Test
+    public void readStored() throws IOException {
+        StoredLog log = StoredLog.parse(Path.of("src/test/resources","single-app-1.log"));
 
-    public ChangeKind getKind() {
-        return kind;
-    }
-
-    public int getAtVersion() {
-        return atVersion;
-    }
-
-    public boolean isLastEvent() {
-        return atVersion == process.getVersion();
-    }
-
-    @Override
-    public String toString() {
-        return "StateChanged(id="+getProcess().getId()+", kind="+kind+", atVersion="+atVersion+")";
+        assertTrue(log.hasStream("Deployment"));
+        assertTrue(log.hasStream("Ingress"));
+        assertTrue(log.hasStream("Pod"));
+        assertTrue(log.hasStream("68a78ed6-41da-11ea-95a2-920d8d1d0d91"));
     }
 }
