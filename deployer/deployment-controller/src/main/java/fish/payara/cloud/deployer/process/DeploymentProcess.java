@@ -74,7 +74,7 @@ public class DeploymentProcess {
 
     DeploymentProcessState start(DeploymentProcessState processState) {
         runningProcesses.put(processState.getId(), processState);
-        processState.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
+        fireAsync(processState.start());
         return processState;
     }
 
@@ -152,6 +152,10 @@ public class DeploymentProcess {
             storedProcess.fireAsync(deploymentEvent, ChangeKind.PROVISION_FINISHED);
         }
         return storedProcess;
+    }
+
+    CompletionStage<StateChanged> fireAsync(StateChanged changeEvent) {
+        return deploymentEvent.select(changeEvent.getKind().asFilter()).fireAsync(changeEvent);
     }
 
     /**

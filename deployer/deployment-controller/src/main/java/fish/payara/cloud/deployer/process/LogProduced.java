@@ -35,59 +35,25 @@
  *  only if the new code is made subject to such option by the copyright
  *  holder.
  */
-package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.process.ChangeKind;
-import fish.payara.cloud.deployer.process.StateChanged;
+package fish.payara.cloud.deployer.process;
 
-import java.util.concurrent.ConcurrentHashMap;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.ObservesAsync;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.sse.OutboundSseEvent;
-import javax.ws.rs.sse.Sse;
-import javax.ws.rs.sse.SseBroadcaster;
-import javax.ws.rs.sse.SseEventSink;
+public class LogProduced extends StateChanged {
+    private final String chunk;
 
-/**
- *
- * @author jonathan coustick
- */
-@ApplicationScoped
-class DeploymentObserver {
-
-    private ConcurrentHashMap<String, SseBroadcaster> broadcasts;
-    private Jsonb jsonb;
-
-    @Context
-    Sse sse;
-
-    protected DeploymentObserver() {
-        broadcasts = new ConcurrentHashMap<>();
-        jsonb = JsonbBuilder.create();
+    LogProduced(DeploymentProcessState process, String logChunk) {
+        super(process, ChangeKind.OUTPUT_LOGGED);
+        this.chunk = logChunk;
     }
 
-    public void addRequest(SseEventSink eventSink, String processID) {
-        SseBroadcaster broadcaster = broadcasts.computeIfAbsent(processID, p -> sse.newBroadcaster());
-        broadcaster.register(eventSink);
+    public String getChunk() {
+        return chunk;
     }
 
-    void eventListener(@ObservesAsync StateChanged event) {
-        String processID = event.getProcess().getId();
-
-        var broadcaster = broadcasts.get(processID);
-        if (broadcaster == null) {
-            return;
-        }
-        OutboundSseEvent outboundEvent = sse.newEvent(jsonb.toJson(event));
-        broadcaster.broadcast(outboundEvent);
-        if (event.getKind().isTerminal()) {
-            broadcasts.get(processID).close();
-            broadcasts.remove(processID);
-        }
-
+    @Override
+    public String toString() {
+        return "LogProduced{" +
+                super.toString() +
+                '}';
     }
-
 }

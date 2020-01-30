@@ -139,6 +139,14 @@ public enum ChangeKind {
         return new FilterLiteral(this);
     }
 
+    public boolean isTerminal() {
+        return this == FAILED || this == PROVISION_FINISHED;
+    }
+
+    StateChanged createEvent(DeploymentProcessState state) {
+        return new StateChanged(state, this);
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     @Qualifier
     public @interface Filter {

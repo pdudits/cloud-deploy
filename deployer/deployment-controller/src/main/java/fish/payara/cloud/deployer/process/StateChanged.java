@@ -67,10 +67,15 @@ public class StateChanged {
         return kind;
     }
 
+    public boolean isTerminal() {
+        return kind.isTerminal();
+    }
+
     public int getAtVersion() {
         return atVersion;
     }
 
+    @JsonbTransient
     public boolean isLastEvent() {
         return atVersion == process.getVersion();
     }
