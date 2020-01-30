@@ -43,7 +43,9 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -137,19 +139,21 @@ public class DeploymentProcess {
         updateProcess(process, p -> p.fail(message, exception));
     }
 
-    private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, ChangeKind> update) {
+    private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, StateChanged> update) {
         var storedProcess = runningProcesses.get(process.getId());
-        ChangeKind eventKind = null;
+        StateChanged event = null;
         boolean isReady = false;
+        boolean wasReady = false;
         synchronized (storedProcess) {
-            eventKind = update.apply(storedProcess);
+            wasReady = storedProcess.isReady();
+            event = update.apply(storedProcess);
             isReady = storedProcess.isReady();
         }
-        if (eventKind != null) {
-            storedProcess.fireAsync(deploymentEvent, eventKind);
+        if (event != null) {
+            fireAsync(event);
         }
-        if (isReady) {
-            storedProcess.fireAsync(deploymentEvent, ChangeKind.PROVISION_FINISHED);
+        if (isReady && !wasReady) {
+            return updateProcess(process, DeploymentProcessState::provisionFinished);
         }
         return storedProcess;
     }

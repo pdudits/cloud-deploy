@@ -84,7 +84,6 @@ class DirectProvisioner implements Provisioner {
             var uri = provisionIngress(naming);
             process.endpointDetermined(deployment, uri);
             LOGGER.info("Provisioned " + deployment.getId() + " at "+uri);
-            process.provisioningFinished(deployment);
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
