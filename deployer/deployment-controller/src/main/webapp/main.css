@@ -116,3 +116,10 @@ progress {
     width: 50%;
     margin: auto;
 }
+
+#log {
+    width: 100%;
+    background: transparent;
+    color: #0f9;
+    border: 1px solid #f0981b;
+}

@@ -45,13 +45,13 @@
         <nav>
         <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
         </nav>
-        <main id="status">
+        <main><div id="status">
         <c:choose>
             <c:when test="#{deployment.failed}">
                 <h3>Failed</h3>
                 <p>#{deployment.completionMessage}</p>
             </c:when>
-            <c:when test="#{deployment.complete and !deployment.failed}">
+            <c:when test="#{deployment.ready}">
                 <h3>Success!</h3>
                 <p>#{deployment.completionMessage}</p>
                 <div class="result">
@@ -64,29 +64,46 @@
             <c:otherwise>
                 <progress/>
                 <p>Deploying...</p>
+                <p>#{deployment.lastStatusChange} #{deployment.lastChange}</p>
             </c:otherwise>
         </c:choose>
 
-        <p>#{deployment.lastStatusChange} #{deployment.lastChange}</p>
+        </div>
+
+        <textarea id="log" readonly="readonly" rows="25" style="visibility: hidden">
+
+        </textarea>
+
         <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get">
             <button id="refresh" type="submit">Refresh</button>
         </form>
         </main>
+
       <script type="text/javascript">
         //<![CDATA[
             try {
                 const eventStream = new EventSource(window.location);
                 eventStream.onmessage = (event) => {
                     if (event.data) {
+                        // untyped event represent deployment event, let's refresh
                         console.log(event);
-                        const payload = JSON.parse(event.data);
-                        if (payload.complete) {
-                            eventStream.close();
-                        } else {
-                            document.getElementById("refresh").click();
-                        }
+                        document.getElementById("refresh").click();
                     }
-                } 
+                }
+                eventStream.addEventListener("state", (event) => {
+                    console.log("state event",event);
+                    const payload = JSON.parse(event.data);
+                    if (payload.complete) {
+                        eventStream.close();
+                    }
+                })
+                eventStream.addEventListener("log", (event) => {
+                    console.log("log event", event);
+                    const el = document.getElementById('log');
+                    el.style.visibility = "visible";
+                    el.value = el.value+event.data;
+                    el.scrollTop = el.scrollHeight;
+                });
             } catch(e) {
                 console.log("Could not connect to SSE stream");
             }
