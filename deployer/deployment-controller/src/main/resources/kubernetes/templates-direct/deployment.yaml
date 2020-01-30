@@ -55,7 +55,7 @@ spec:
           - mountPath: /opt/payara/deployments
             name: deployments
         # DNS cluster mode allows for instances of same app cluster themselves without need for Kubernetes API access
-        args: ["--deploymentDir", "/opt/payara/deployments", "--clustermode", "dns:$(ID)-datagrid:6900"]
+        args: ["--deploymentDir", "/opt/payara/deployments", "--clustermode", "dns:$(NAME)-datagrid:6900"]
         resources:
           # Allocate quarter of CPU at rest, allow for use up to 1 CPU.
           requests:
