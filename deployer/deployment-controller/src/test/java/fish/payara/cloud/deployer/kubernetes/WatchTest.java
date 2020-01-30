@@ -51,6 +51,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -87,6 +88,7 @@ public class WatchTest {
             watcher.client = mockServer.getClient();
             watcher.executorService = Executors.newSingleThreadScheduledExecutor();
             watcher.process = deploymentProcess;
+            watcher.pumpInterval = Duration.ofMillis(50);
             watcher.startWatching();
 
             var observer = MockDeploymentProcess.observer();
