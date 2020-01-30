@@ -68,7 +68,7 @@ public class ProvisionTimeoutIT {
                 .addClass(ArtifactStorage.class)
                 .addClass(TempArtifactStorage.class)
                 .addClass(ManagedConcurrencyProducer.class)
-                .addAsResource(new StringAsset("provision.timeout=PT2S"), "META-INF/microprofile-config.properties");
+                .addAsResource(new StringAsset("provisioning.timeout=PT2S"), "META-INF/microprofile-config.properties");
     }
 
     @Inject
