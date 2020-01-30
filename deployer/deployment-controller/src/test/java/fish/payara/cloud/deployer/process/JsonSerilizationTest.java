@@ -47,6 +47,7 @@ import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguratio
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -54,6 +55,7 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,56 +65,14 @@ import org.junit.Test;
  */
 public class JsonSerilizationTest {
     
-    private static final String CONTEXT_START = "{\"TESTMODULE\":{\"keys\":[{\"name\"";
-    private static final String CONTEXT_KEYS_1 = "{\"name\":\"context-root\",\"required\":false,\"default\":\"TEXTCONTEXT\"}";
-    private static final String CONTEXT_KEYS_2 = "{\"name\":\"app-name\",\"required\":false,\"default\":\"TESTAPP\"}";
-    private static final String CONTEXT_VALUES = "\"values\":{\"context-root\":\"TEXTCONTEXT\",\"app-name\":\"TESTAPP\"}}}";
-    
-    private static final String SIMPLE_START = "{\"TESTID\":{\"keys\":[{\"name\":";
-    private static final String SIMPLE_KEYS_1 = "{\"name\":\"key1\",\"required\":false,\"default\":\"DEFAULT\"}";
-    private static final String SIMPLE_KEYS_2 = "{\"name\":\"key2\",\"required\":false,\"default\":\"DEFAULT\"}";
-    private static final String SIMPLE_KEYS_3 = "{\"name\":\"key3\",\"required\":false,\"default\":\"DEFAULT\"}";
-    private static final String SIMPLE_VALUES = "\"values\":{\"key1\":\"Value1\",\"key2\":\"value2\",\"key3\":\"value3\"}}}";
-    
     @Test
-    public void contextRootconfigTest() {
-        Configuration config = new ContextRootConfiguration("TESTMODULE", "TESTAPP", "TEXTCONTEXT");
-        ConfigurationSerializer serialiser = new ConfigurationSerializer();
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try (JsonGenerator generator = Json.createGenerator(stream)) {
-            serialiser.serialize(config, generator, null);
-        }
-        String result = stream.toString();
-        System.out.println(result);
-        Assert.assertTrue(result.contains(CONTEXT_START));
-        Assert.assertTrue(result.contains(CONTEXT_KEYS_1));
-        Assert.assertTrue(result.contains(CONTEXT_KEYS_2));
-        Assert.assertTrue(result.contains(CONTEXT_VALUES));
-    }
-    
-    @Test
-    public void simpleConfigTest() {
-        Configuration config = new SimpleConfiguration();
-        ConfigurationSerializer serialiser = new ConfigurationSerializer();
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        try (JsonGenerator generator = Json.createGenerator(stream)) {
-            serialiser.serialize(config, generator, null);
-        }
-        String result = stream.toString();
-        System.out.println(result);
-        Assert.assertTrue(result.contains(SIMPLE_START));
-        Assert.assertTrue(result.contains(SIMPLE_KEYS_1));
-        Assert.assertTrue(result.contains(SIMPLE_KEYS_2));
-        Assert.assertTrue(result.contains(SIMPLE_KEYS_3));
-        Assert.assertTrue(result.contains(SIMPLE_VALUES));
-    }
-    
-    @Test
-    public void deploymentConfigTest() throws IOException {
+    public void testConfigBean() throws IOException {
         DeploymentProcessState state = new DeploymentProcessState(new Namespace("foo", "bar"), "foobar", File.createTempFile("abc", null));
         SimpleConfiguration config = new SimpleConfiguration();
         ProcessAccessor.addConfiguration(state, config);
-        JsonObject jsonConfig = state.getJsonConfiguration();
+        JsonParser jsonParser = Json.createParser(new StringReader(state.getConfigurationAsJson()));
+        jsonParser.next();
+        JsonObject jsonConfig = jsonParser.getObject();
         System.out.println(jsonConfig.toString());
         
         Assert.assertNotNull(jsonConfig.getString("deployment")); //will be a UUID
@@ -122,6 +82,7 @@ public class JsonSerilizationTest {
         Assert.assertEquals("TEST", orderObject.getString("kind"));
         Assert.assertEquals("TESTID", orderObject.getString("id"));
         JsonObject configObject = jsonConfig.getJsonObject("kind").getJsonObject("TEST").getJsonObject("TESTID");
+        Assert.assertNotNull(configObject);
         JsonArray keyArray = configObject.getJsonArray("keys");
         Assert.assertEquals(3, keyArray.size());
         JsonObject aKeyObject = keyArray.getJsonObject(0);
@@ -159,7 +120,6 @@ public class JsonSerilizationTest {
             return Optional.of("DEFAULT");
         }
     
-    }
-    
+    }   
     
 }
