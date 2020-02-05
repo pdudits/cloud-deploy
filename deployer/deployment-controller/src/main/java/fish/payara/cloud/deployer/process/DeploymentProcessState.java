@@ -49,6 +49,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
+import javax.json.bind.JsonbConfig;
 import javax.json.bind.annotation.JsonbPropertyOrder;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.config.PropertyOrderStrategy;
@@ -85,12 +88,17 @@ public class DeploymentProcessState {
     private Instant lastStatusChange = Instant.now();
     private ChangeKind lastChange = ChangeKind.PROCESS_STARTED;
     private boolean configurable;
+    
+    @JsonbTransient
+    private Jsonb jsonb;
 
     DeploymentProcessState(Namespace target, String name, File tempLocation) {
         this.id = UUID.randomUUID().toString();
         this.namespace = target;
         this.name = name;
         this.tempLocation = tempLocation;
+        JsonbConfig jsonbConfig = new JsonbConfig();//.withSerializers(new ConfigurationSerializer());
+        jsonb = JsonbBuilder.create(jsonbConfig);
     }
 
     /**
@@ -197,6 +205,22 @@ public class DeploymentProcessState {
      */
     public Set<Configuration> getConfigurations() {
         return Collections.unmodifiableSet(configurations);
+    }
+    
+    /**
+     * Configuration of artifact as JSON format
+     * @return representation of the config
+     */    
+    public String getConfigurationAsJson() {
+        ConfigBean configBean = new ConfigBean();
+        configBean.setDeploymentId(id);
+        for (Configuration config : getConfigurations()) {
+            System.out.println(config.toString());
+            configBean.addConfig(config);
+        }
+        System.out.println(configBean.order.size());
+        String configJson = jsonb.toJson(configBean, ConfigBean.class);
+        return configJson;
     }
 
     /**
