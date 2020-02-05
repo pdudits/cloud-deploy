@@ -42,28 +42,52 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.ApplicationPath;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.process.ConfigBean;
+import fish.payara.cloud.deployer.process.ConfigBean.Config;
+import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 
 /**
- * JAX-RS endpoints activator
+ * JAX-RS endpoint for dealing with the application configuration
  * @author jonathan coustick
  */
-@ApplicationPath("/api")
-public class Application extends javax.ws.rs.core.Application {
-
-    @Override
-    public Set<Class<?>> getClasses() {
-        HashSet<Class<?>> classes = new HashSet<>();
-        classes.add(ConfigurationResource.class);
-        classes.add(DeploymentResource.class);
-        classes.add(MultiPartFeature.class);
-        classes.add(Version.class);
-        return classes;
+@Path("/deployment/{id}/configuration/")
+@ApplicationScoped
+public class ConfigurationResource {
+    
+    @Inject
+    DeploymentProcess process;
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public String getConfiguration(@PathParam("id") String id) {
+        DeploymentProcessState state = process.getProcessState(id);
+        return state.getConfigurationAsJson();
     }
     
-    
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void setConfiguration(@PathParam("id") String id, @QueryParam("submit") boolean submit, ConfigBean body) {
+        DeploymentProcessState state = process.getProcessState(id);
+        if (submit) {
+            // ???
+        } else {
+            state.clearConfigurations();
+        }
+    }
     
 }

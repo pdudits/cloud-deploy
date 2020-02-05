@@ -222,6 +222,13 @@ public class DeploymentProcessState {
         String configJson = jsonb.toJson(configBean, ConfigBean.class);
         return configJson;
     }
+    
+    /**
+     * Removes all configuration
+     */
+    public void clearConfigurations() {
+       configurations.clear();
+    }
 
     /**
      * Remote endpoint of completed deployment.
