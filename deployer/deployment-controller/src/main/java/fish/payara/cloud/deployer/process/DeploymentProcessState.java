@@ -267,7 +267,13 @@ public class DeploymentProcessState {
         return transition(ChangeKind.FAILED);
     }
 
-    ChangeKind addConfiguration(Configuration configuration) {
+    /**
+     * Adds a configuration to the deployment process
+     * @param configuration configuration to add
+     * @return A ChangeKind of type {@link ChangeKind#CONFIGURATION_ADDED}
+     * @throws IllegalArgumentException if a matching configuration is already present
+     */
+    public ChangeKind addConfiguration(Configuration configuration) {
         if (configurations.contains(configuration)) {
             throw new IllegalArgumentException("Matching configuration is already present");
         }

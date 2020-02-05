@@ -60,34 +60,54 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 /**
  * JAX-RS endpoint for dealing with the application configuration
+ *
  * @author jonathan coustick
  */
 @Path("/deployment/{id}/configuration/")
 @ApplicationScoped
 public class ConfigurationResource {
-    
+
     @Inject
     DeploymentProcess process;
-    
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public String getConfiguration(@PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         return state.getConfigurationAsJson();
     }
-    
+
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public void setConfiguration(@PathParam("id") String id, @QueryParam("submit") boolean submit, ConfigBean body) {
+    public Response setConfiguration(@PathParam("id") String id, @QueryParam("submit") boolean submit, ConfigBean body) {
         DeploymentProcessState state = process.getProcessState(id);
         if (submit) {
-            // ???
+            for (Entry<String, Map<String, Config>> entryKind : body.getKind().entrySet()) {
+                if (entryKind.getKey().equals(ContextRootConfiguration.KIND)) {
+                    for (Entry<String, Config> configEntry : entryKind.getValue().entrySet()) {
+                        try {
+                            Map<String, String> configValues = configEntry.getValue().getValues();
+                            Configuration config = new ContextRootConfiguration(configEntry.getKey(),
+                                    configValues.get(ContextRootConfiguration.APP_NAME), configValues.get(ContextRootConfiguration.CONTEXT_ROOT));
+                            state.addConfiguration(config);
+                            return Response.ok(getConfiguration(id)).build();
+                        } catch (IllegalArgumentException | NullPointerException e) {
+                            return Response.status(Response.Status.BAD_REQUEST).build();
+                        }
+                    }
+                }
+            }
         } else {
             state.clearConfigurations();
+            return Response.ok().build();
         }
+        //Other kinds of Config??
+        return Response.status(Response.Status.BAD_REQUEST).build();
     }
-    
+
 }
