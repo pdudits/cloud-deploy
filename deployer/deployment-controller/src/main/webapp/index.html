@@ -46,7 +46,7 @@
     </head>
     <body>
         <header>
-            <h1>Payara Cloud Deploy</h1>
+            <h1><img src="images/logo.svg" alt="Payara"/>Cloud Deploy</h1>
         </header>
         <h2>
             What shall we deploy?
@@ -58,8 +58,8 @@
                 <label for="stage">Stage</label>
                 <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
                 <label for="artifact">Artifact</label>
-                <input type="file" accept=".war" id="artifact" name="artifact">
-                <input type="submit" value="Deploy">
+                <input type="file" accept=".war" id="artifact" name="artifact" class="button">
+                <input type="submit" value="Deploy" class="button highlight">
             </form>
         </main>
     </body>

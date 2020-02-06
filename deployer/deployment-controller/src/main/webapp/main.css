@@ -117,6 +117,25 @@ progress {
     margin: auto;
 }
 
+.button {
+    color: #101012;
+    background-color: #dae0e2;
+    border-radius: 3px;
+    font-size: 16px;
+    line-height: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 12px 24px;
+    transition-delay: 0.1;
+    box-shadow: 0 -1px 0 0 rgba(134,151,156,128) inset;
+        
+}
+
+.button.highlight {
+    background-color: #F0981B;
+    box-shadow: 0 -1px 0 0 rgba(128,74,0,128) inset;
+}
+
 #log {
     width: 100%;
     background: transparent;
