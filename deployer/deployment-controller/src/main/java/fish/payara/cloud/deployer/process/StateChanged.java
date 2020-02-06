@@ -67,12 +67,21 @@ public class StateChanged {
         return kind;
     }
 
+    public boolean isTerminal() {
+        return kind.isTerminal();
+    }
+
     public int getAtVersion() {
         return atVersion;
     }
 
+    @JsonbTransient
     public boolean isLastEvent() {
         return atVersion == process.getVersion();
     }
 
+    @Override
+    public String toString() {
+        return "StateChanged(id="+getProcess().getId()+", kind="+kind+", atVersion="+atVersion+")";
+    }
 }

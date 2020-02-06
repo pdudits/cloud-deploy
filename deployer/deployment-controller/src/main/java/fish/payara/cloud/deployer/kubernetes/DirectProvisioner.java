@@ -46,11 +46,10 @@ import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
@@ -64,7 +63,8 @@ import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
 class DirectProvisioner implements Provisioner {
     public static final Logger LOGGER = Logger.getLogger(DirectProvisioner.class.getName());
 
-    private DefaultKubernetesClient client;
+    @Inject
+    NamespacedKubernetesClient client;
 
     @Inject
     @ConfigProperty(name="kubernetes.direct.ingressdomain")
@@ -73,12 +73,6 @@ class DirectProvisioner implements Provisioner {
     @Inject
     DeploymentProcess process;
 
-    @PostConstruct
-    void connectApiServer() {
-        client = new DefaultKubernetesClient();
-        var version = client.getVersion();
-        LOGGER.info("Successfully connected to API Server version "+version.getMajor()+"."+version.getMinor());
-    }
 
     public void provision(DeploymentProcessState deployment) throws ProvisioningException {
         var naming = new Naming(deployment);
@@ -90,7 +84,6 @@ class DirectProvisioner implements Provisioner {
             var uri = provisionIngress(naming);
             process.endpointDetermined(deployment, uri);
             LOGGER.info("Provisioned " + deployment.getId() + " at "+uri);
-            process.provisioningFinished(deployment);
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }

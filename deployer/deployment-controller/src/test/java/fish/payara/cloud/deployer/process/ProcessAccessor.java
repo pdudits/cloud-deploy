@@ -57,16 +57,15 @@ public class ProcessAccessor {
         if (kind == null) {
             return null;
         }
-        process.transition(kind);
-        return new StateChanged(process, kind);
+        return process.transition(kind);
     }
 
     public static StateChanged setPersistentLocation(DeploymentProcessState process, URI location) {
-        return makeEvent(process, process.setPersistentLocation(location));
+        return process.setPersistentLocation(location);
     }
 
     public static StateChanged addConfiguration(DeploymentProcessState process, Configuration configuration) {
-        return makeEvent(process, process.addConfiguration(configuration));
+        return process.addConfiguration(configuration);
     }
 
     public static DeploymentProcessState createProcessWithName(String name) {

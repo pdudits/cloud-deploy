@@ -64,7 +64,7 @@ class ProvisioningController {
     private static final Logger LOGGER = Logger.getLogger(ProvisioningController.class.getName());
 
     @Inject
-    @ConfigProperty(name = "provision.timeout", defaultValue = "PT30S")
+    @ConfigProperty(name = "provisioning.timeout", defaultValue = "PT30S")
     Duration inactivityTimeout;
 
     @Inject
@@ -175,14 +175,7 @@ class ProvisioningController {
                 this.lastVersion = event.getAtVersion();
                 versionTimestamp = Instant.now();
             }
-            switch(event.getKind()) {
-                case FAILED:
-                case PROVISION_FINISHED:
-                case CLEANUP_STARTED:
-                    return false; // do not monitor further
-                default:
-                    return true;
-            }
+            return !event.getKind().isTerminal();
         }
 
         Duration inactivityDuration() {

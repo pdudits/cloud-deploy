@@ -97,9 +97,24 @@ public enum ChangeKind {
     POD_CREATED,
 
     /**
+     * Application container started.
+     */
+    DEPLOYMENT_READY,
+
+    /**
+     * Log output was captured
+     */
+    OUTPUT_LOGGED,
+
+    /**
      * HTTP Mapping was created
      */
     INGRESS_CREATED,
+
+    /**
+     * HTTP Mapping is created
+     */
+    INGRESS_READY,
 
     /**
      * Provisioning finished, process complete.
@@ -122,6 +137,14 @@ public enum ChangeKind {
 
     public Filter asFilter() {
         return new FilterLiteral(this);
+    }
+
+    public boolean isTerminal() {
+        return this == FAILED || this == PROVISION_FINISHED;
+    }
+
+    StateChanged createEvent(DeploymentProcessState state) {
+        return new StateChanged(state, this);
     }
 
     @Retention(RetentionPolicy.RUNTIME)

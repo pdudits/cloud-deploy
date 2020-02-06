@@ -38,6 +38,7 @@
 package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.process.ChangeKind;
+import fish.payara.cloud.deployer.process.LogProduced;
 import fish.payara.cloud.deployer.process.StateChanged;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,13 +82,25 @@ class DeploymentObserver {
         if (broadcaster == null) {
             return;
         }
-        OutboundSseEvent outboundEvent = sse.newEvent(jsonb.toJson(event));
+        OutboundSseEvent outboundEvent = createEvent(event);
         broadcaster.broadcast(outboundEvent);
-        if (event.getKind().equals(ChangeKind.FAILED) || event.getKind().equals(ChangeKind.PROVISION_FINISHED)) {
+        if (event.getKind().isTerminal()) {
             broadcasts.get(processID).close();
             broadcasts.remove(processID);
         }
 
     }
+
+    private OutboundSseEvent createEvent(StateChanged event) {
+        if (event instanceof LogProduced) {
+            return createLogEvent((LogProduced)event);
+        }
+        return sse.newEvent(jsonb.toJson(event));
+    }
+
+    private OutboundSseEvent createLogEvent(LogProduced event) {
+        return sse.newEvent("log", event.getChunk());
+    }
+
 
 }
