@@ -41,7 +41,6 @@ package fish.payara.cloud.deployer.inspection;
 import fish.payara.cloud.deployer.process.Configuration;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;

@@ -40,6 +40,7 @@ package fish.payara.cloud.deployer.process;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Map;
 import java.util.UUID;
 
 public class ProcessAccessor {
@@ -69,5 +70,9 @@ public class ProcessAccessor {
 
     public static DeploymentProcessState createProcessWithName(String name) {
         return new DeploymentProcessState(new Namespace("test", "dev"), name, null);
+    }
+    
+    public static void updateConfiguration(Configuration config, Map<String, String> values) {
+        config.updateConfiguration(values);
     }
 }
