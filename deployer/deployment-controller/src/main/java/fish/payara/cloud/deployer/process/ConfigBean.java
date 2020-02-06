@@ -109,27 +109,29 @@ public class ConfigBean {
         this.deploymentId = deploymentId;
     }
     
-    public void addConfig(Configuration config) {
-        ConfigId id = new ConfigId(config.getKind(), config.getId());
+    public void addConfig(Configuration domainObject) {
+        ConfigId id = new ConfigId(domainObject.getKind(), domainObject.getId());
         order.add(id);
-        Map<String, Config> configKind = kind.get(config.getKind());
+        Map<String, Config> configKind = kind.get(domainObject.getKind());
         if (configKind == null) {
             configKind = new HashMap<>();
-            kind.put(config.getKind(), configKind);
+            kind.put(domainObject.getKind(), configKind);
         }
-        Config acutalConfig = new Config();
-        for (String key : config.getKeys()) {
+        Config representation = new Config();
+        for (String key : domainObject.getKeys()) {
             Key keyDetails = new Key();
             keyDetails.setName(key);
-            keyDetails.setRequired(config.isRequired(key));
-            keyDetails.setDefaultValue(config.getDefaultValue(key));
-            acutalConfig.keydetails.add(keyDetails);
-            Optional<String> value = config.getValue(key);
+            keyDetails.setRequired(domainObject.isRequired(key));
+            keyDetails.setDefaultValue(domainObject.getDefaultValue(key));
+            representation.keydetails.add(keyDetails);
+            Optional<String> value = domainObject.getValue(key);
             if (value.isPresent()) {
-                acutalConfig.values.put(key, config.getValue(key).get());
+                representation.values.put(key, domainObject.getValue(key).get());
             }
         }
-        configKind.put(config.getId(), acutalConfig);
+        representation.setSubmitted(domainObject.isSubmitted());
+        representation.setComplete(domainObject.isComplete());
+        configKind.put(domainObject.getId(), representation);
     }
     
     
@@ -168,6 +170,9 @@ public class ConfigBean {
         List<Key> keydetails = new ArrayList<>();
         Map<String, String> values = new HashMap<>();
 
+        boolean submitted;
+        private boolean complete;
+
         public List<Key> getKeydetails() {
             return keydetails;
         }
@@ -184,6 +189,21 @@ public class ConfigBean {
             this.values = values;
         }
 
+        public boolean isSubmitted() {
+            return submitted;
+        }
+
+        public void setSubmitted(boolean submitted) {
+            this.submitted = submitted;
+        }
+
+        public void setComplete(boolean complete) {
+            this.complete = complete;
+        }
+
+        public boolean getComplete() {
+            return complete;
+        }
     }
     
     public static class Key {

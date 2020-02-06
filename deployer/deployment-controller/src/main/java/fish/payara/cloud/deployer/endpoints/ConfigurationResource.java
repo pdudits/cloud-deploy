@@ -42,18 +42,18 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
 import fish.payara.cloud.deployer.process.ConfigBean;
-import fish.payara.cloud.deployer.process.ConfigBean.Config;
-import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.ConfigurationValidationException;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import java.util.Map;
-import java.util.Map.Entry;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -61,14 +61,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 
 /**
  * JAX-RS endpoint for dealing with the application configuration
  *
  * @author jonathan coustick
  */
-@Path("/deployment/{id}/configuration/")
+@Path("/deployment/{deploymentId}/configuration/")
 @ApplicationScoped
 public class ConfigurationResource {
 
@@ -77,37 +76,46 @@ public class ConfigurationResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public String getConfiguration(@PathParam("id") String id) {
+    public ConfigBean getConfiguration(@PathParam("deploymentId") String id) {
         DeploymentProcessState state = process.getProcessState(id);
-        return state.getConfigurationAsJson();
+        return ConfigBean.forDeploymentProcess(state);
     }
 
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public ConfigBean submitAll(@PathParam("deploymentId") String deploymentId, @QueryParam("submit") boolean submit) {
+        DeploymentProcessState state = process.getProcessState(deploymentId);
+        if (state == null) {
+            throw new NotFoundException();
+        }
+        if (submit) {
+            state = process.submitConfigurations(state);
+        } else {
+            state = process.resetConfigurations(state);
+        }
+        return ConfigBean.forDeploymentProcess(state);
+    }
+
+    @Path("{kind}/{id}/values")
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response setConfiguration(@PathParam("id") String id, @QueryParam("submit") boolean submit, ConfigBean body) {
-        DeploymentProcessState state = process.getProcessState(id);
-        if (submit) {
-            for (Entry<String, Map<String, Config>> entryKind : body.getKind().entrySet()) {
-                if (entryKind.getKey().equals(ContextRootConfiguration.KIND)) {
-                    for (Entry<String, Config> configEntry : entryKind.getValue().entrySet()) {
-                        try {
-                            Map<String, String> configValues = configEntry.getValue().getValues();
-                            Configuration config = new ContextRootConfiguration(configEntry.getKey(),
-                                    configValues.get(ContextRootConfiguration.APP_NAME), configValues.get(ContextRootConfiguration.CONTEXT_ROOT));
-                            state.addConfiguration(config);
-                            return Response.ok(getConfiguration(id)).build();
-                        } catch (IllegalArgumentException | NullPointerException e) {
-                            return Response.status(Response.Status.BAD_REQUEST).build();
-                        }
-                    }
-                }
-            }
-        } else {
-            state.clearConfigurations();
-            return Response.ok().build();
+    public ConfigBean setConfiguration(@PathParam("id") String id,
+                                     @PathParam("kind") String kind,
+                                     @PathParam("deploymentId") String deploymentId,
+                                     @QueryParam("submit") boolean submit, Map<String,String> values) {
+
+        DeploymentProcessState state = process.getProcessState(deploymentId);
+        if (state == null) {
+            throw new NotFoundException();
         }
-        //Other kinds of Config??
-        return Response.status(Response.Status.BAD_REQUEST).build();
+        try {
+            state = process.setConfiguration(state, kind, id, submit, values);
+            return ConfigBean.forConfiguration(state.getConfigurations(), state.getId());
+        } catch (ConfigurationValidationException e) {
+            throw new BadRequestException(Response.ok(e.getValidationErrors()).build());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            throw new BadRequestException(e);
+        }
     }
 
 }

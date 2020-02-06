@@ -224,6 +224,11 @@ public abstract class Configuration {
         this.submitted = submitted;
     }
 
+    void reset() {
+        setSubmitted(false);
+        updatedValues.clear();
+    }
+
     /**
      * The context of the update. Method {@link #checkUpdate(UpdateContext)} utilize this class to validate fields
      * and report validation errors.

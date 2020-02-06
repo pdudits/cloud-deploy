@@ -323,4 +323,11 @@ public class DeploymentProcessState {
         this.completion = Instant.now();
         return transition(ChangeKind.PROVISION_FINISHED);
     }
+
+    ChangeKind resetConfigurations() {
+        for (Configuration configuration : configurations) {
+            configuration.reset();
+        }
+        return transition(ChangeKind.CONFIGURATION_SET);
+    }
 }
