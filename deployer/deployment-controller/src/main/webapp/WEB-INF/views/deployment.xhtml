@@ -35,63 +35,86 @@
   ~  and therefore, elected the GPL Version 2 license, then the option applies
   ~  only if the new code is made subject to such option by the copyright
   ~  holder.
-  -->
+-->
 <ui:composition template="layout.xhtml" xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
-      xmlns:f="http://xmlns.jcp.org/jsf/core">
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/cloud-deploy">
     <ui:define name="main">
         <h2>Deployment #{deployment.name}</h2>
         <nav>
-        <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
+            <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
         </nav>
-        <main><div id="status">
-        <c:choose>
-            <c:when test="#{deployment.failed}">
-                <h3>Failed</h3>
-                <p>#{deployment.completionMessage}</p>
-            </c:when>
-            <c:when test="#{deployment.ready}">
-                <h3>Success!</h3>
-                <p>#{deployment.completionMessage}</p>
-                <div class="result">
-                    <a href="#{deployment.endpoint}" target="_blank">#{deployment.endpoint}</a>
-                </div>
-            </c:when>
-            <c:when test="#{deployment.configurable}">
-                <p>Configuration pending</p>
-            </c:when>
-            <c:otherwise>
-                <progress/>
-                <p>Deploying...</p>
-                <p>#{deployment.lastStatusChange} #{deployment.lastChange}</p>
-            </c:otherwise>
-        </c:choose>
+        <main>
+            <div id="status">
+                <c:choose>
+                    <c:when test="#{deployment.failed}">
+                        <h3>Failed</h3>
+                        <p>#{deployment.completionMessage}</p>
+                    </c:when>
+                    <c:when test="#{deployment.ready}">
+                        <h3>Success!</h3>
+                        <p>#{deployment.completionMessage}</p>
+                        <div class="result">
+                            <a href="#{deployment.endpoint}" target="_blank">#{deployment.endpoint}</a>
+                        </div>
+                    </c:when>
+                    <c:when test="#{deployment.configurable}">
+                        <h3>Configuration pending</h3>
+                        <c:choose>
+                            <c:when test="${deployment.configurationComplete}">
+                                <form action="configuration/submit" method="post" up-target="#status"><button>Confirm configured values</button></form>
+                            </c:when> 
+                            <c:otherwise>
+                                <p>Some of configuration objects below need your attention</p>
+                            </c:otherwise>
+                        </c:choose>
 
-        </div>
 
-        <textarea id="log" readonly="readonly" rows="25" style="visibility: hidden">
+                        <c:forEach items="${config.order}" var="configKey">
+                            <comp:view-single-config config-id="${configKey.id}" kind="${configKey.kind}"
+                                                     config="${config.kind[configKey.kind][configKey.id]}"
+                                                     />
+                        </c:forEach>
+                    </c:when>
+                    <c:otherwise>
+                        <progress/>
+                        <p>Deploying...</p>
+                        <p>#{lastStateTimestamp} #{deployment.lastChange}</p>
+                    </c:otherwise>
+                </c:choose>
 
-        </textarea>
+            </div>
 
-        <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get">
-            <button id="refresh" type="submit">Refresh</button>
-        </form>
+            <textarea id="log" readonly="readonly" rows="25" style="visibility: hidden">
+
+            </textarea>
+
+            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get">
+                <button id="refresh" type="submit">Refresh</button>
+            </form>
         </main>
 
-      <script type="text/javascript">
-        //<![CDATA[
+        <script type="text/javascript">
+            //<![CDATA[
             try {
                 const eventStream = new EventSource(window.location);
                 eventStream.onmessage = (event) => {
                     if (event.data) {
-                        // untyped event represent deployment event, let's refresh
+                        // untyped event represent deployment event
+                        const payload = JSON.parse(event.data);
                         console.log(event);
+                        if (payload.kind === "CONFIGURATION_SET") {
+                            // with configuration set this handler clashes with
+                            // form submission, therefore we skip this
+                            return;
+                        }
                         document.getElementById("refresh").click();
                     }
                 }
                 eventStream.addEventListener("state", (event) => {
-                    console.log("state event",event);
+                    console.log("state event", event);
                     const payload = JSON.parse(event.data);
                     if (payload.complete) {
                         eventStream.close();
@@ -101,13 +124,13 @@
                     console.log("log event", event);
                     const el = document.getElementById('log');
                     el.style.visibility = "visible";
-                    el.value = el.value+event.data;
+                    el.value = el.value + event.data;
                     el.scrollTop = el.scrollHeight;
                 });
-            } catch(e) {
+            } catch (e) {
                 console.log("Could not connect to SSE stream");
             }
-        //]]>
-     </script>
+            //]]>
+        </script>
     </ui:define>
 </ui:composition>

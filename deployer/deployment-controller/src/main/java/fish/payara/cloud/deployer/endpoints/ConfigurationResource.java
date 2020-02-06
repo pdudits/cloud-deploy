@@ -47,8 +47,10 @@ import fish.payara.cloud.deployer.process.ConfigurationValidationException;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import java.util.Map;
+import static java.util.stream.Collectors.toMap;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.mvc.Controller;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -59,8 +61,13 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilderException;
+import javax.ws.rs.core.UriInfo;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 
 /**
  * JAX-RS endpoint for dealing with the application configuration
@@ -73,6 +80,9 @@ public class ConfigurationResource {
 
     @Inject
     DeploymentProcess process;
+    
+    @Inject
+    MvcModels models;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -84,16 +94,21 @@ public class ConfigurationResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     public ConfigBean submitAll(@PathParam("deploymentId") String deploymentId, @QueryParam("submit") boolean submit) {
-        DeploymentProcessState state = process.getProcessState(deploymentId);
-        if (state == null) {
-            throw new NotFoundException();
-        }
+        DeploymentProcessState state = findDeployment(deploymentId);
         if (submit) {
             state = process.submitConfigurations(state);
         } else {
             state = process.resetConfigurations(state);
         }
         return ConfigBean.forDeploymentProcess(state);
+    }
+
+    private DeploymentProcessState findDeployment(String deploymentId) throws NotFoundException {
+        DeploymentProcessState state = process.getProcessState(deploymentId);
+        if (state == null) {
+            throw new NotFoundException();
+        }
+        return state;
     }
 
     @Path("{kind}/{id}/values")
@@ -104,10 +119,7 @@ public class ConfigurationResource {
                                      @PathParam("deploymentId") String deploymentId,
                                      @QueryParam("submit") boolean submit, Map<String,String> values) {
 
-        DeploymentProcessState state = process.getProcessState(deploymentId);
-        if (state == null) {
-            throw new NotFoundException();
-        }
+        DeploymentProcessState state = findDeployment(deploymentId);
         try {
             state = process.setConfiguration(state, kind, id, submit, values);
             return ConfigBean.forConfiguration(state.getConfigurations(), state.getId());
@@ -118,4 +130,72 @@ public class ConfigurationResource {
         }
     }
 
+    @Path("{kind}/{id}")
+    @GET
+    @Controller
+    @Produces(MediaType.TEXT_HTML)
+    public String showConfigurationForm(@PathParam("id") String id,
+                                     @PathParam("kind") String kind,
+                                     @PathParam("deploymentId") String deploymentId) {
+        DeploymentProcessState state = findDeployment(deploymentId);                            
+        models.setDeployment(state);
+        models.setConfigKind(kind);
+        models.setConfigId(id);
+        return "edit-configuration.xhtml";
+    }
+    
+    @Path("{kind}/{id}")
+    @POST
+    @Controller
+    @Produces(MediaType.TEXT_HTML)
+    public Response editConfiguration(@PathParam("id") String id,
+                                     @PathParam("kind") String kind,
+                                     @PathParam("deploymentId") String deploymentId,
+                                     Form form,
+                                     @Context UriInfo uriInfo) {
+        DeploymentProcessState state = findDeployment(deploymentId);             
+        Map<String, String> values = form.asMap().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().get(0)));
+        
+        process.setConfiguration(state, kind, id, false, values);
+        return redirectToDeployment(uriInfo, state);
+    }  
+    
+    @Path("{kind}/{id}")
+    @POST
+    @Controller
+    @Produces(MediaType.TEXT_HTML)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response editConfigurationMultipart(@PathParam("id") String id,
+                                     @PathParam("kind") String kind,
+                                     @PathParam("deploymentId") String deploymentId,
+                                     FormDataMultiPart form,
+                                     @Context UriInfo uriInfo) {
+        DeploymentProcessState state = findDeployment(deploymentId);             
+        Map<String, String> values = form.getFields().entrySet().stream().collect(toMap(Map.Entry::getKey, e -> e.getValue().get(0).getValue()));
+        
+        process.setConfiguration(state, kind, id, false, values);
+        return redirectToDeployment(uriInfo, state);
+    }      
+
+    private static Response redirectToDeployment(UriInfo uriInfo, DeploymentProcessState state) throws UriBuilderException, IllegalArgumentException {
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path("deployment/{id}/").build(state.getId())).build();
+    }
+    
+    @Path("submit")
+    @POST
+    @Controller
+    public Response submitAllConfiguration(@PathParam("deploymentId") String deploymentId,@Context UriInfo uriInfo) {
+        DeploymentProcessState state = findDeployment(deploymentId);    
+        process.submitConfigurations(state);
+        return redirectToDeployment(uriInfo, state);
+    }
+    
+    @Path("reset")
+    @POST
+    @Controller
+    public Response resetAllConfiguration(@PathParam("deploymentId") String deploymentId,@Context UriInfo uriInfo) {
+        DeploymentProcessState state = findDeployment(deploymentId);    
+        process.resetConfigurations(state);
+        return redirectToDeployment(uriInfo, state);
+    }    
 }

@@ -190,7 +190,7 @@ public class DeploymentResource {
     
     @GET
     @Path("{id}")
-    public Response displayDeployment(@PathParam("id") String id, @Context UriInfo uriInfo) {
+    public Response redirectToDeploymentDir(@PathParam("id") String id, @Context UriInfo uriInfo) {
         // redirect to {id}/
         return Response.seeOther(uriInfo.resolve(URI.create(id+"/"))).build();
     }    
