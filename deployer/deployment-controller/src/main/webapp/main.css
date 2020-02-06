@@ -108,14 +108,46 @@ img {
 form {
     background-color: #dae0e2;
     color: #434445;
-    margin-top: : 56px;
+    margin-top: 56px;
     padding: 48px;
     display: grid;
-    grid-template-columns: 5em [main] auto;
-    grid-gap: 0.5em
+    grid-template-rows: 5em [main] auto;
 }
-input[type=submit] {
-    grid-column: main;
+input {
+    grid-column: main auto;
+}
+
+label {
+    color: #434445;
+    font-size: 16px;
+    font-weight: 500;
+    grid-column: main auto;
+    margin-bottom: 8px;
+}
+
+sup {
+    color: #9B1200;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.hint {
+    background-color: #4E5A5E;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 3px;
+    padding: 4px;
+    margin: 12px;
+    cursor: pointer;
+    transition-delay: 0.3s;
+    transition-property: transform;
+    transition-timing-function: ease-out;
+}
+
+.hint:hover {
+    transform: rotate(45deg);
 }
 
 progress {

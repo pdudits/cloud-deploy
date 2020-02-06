@@ -53,11 +53,11 @@
         </h2>
         <main>
             <form enctype="multipart/form-data" action="/api/deployment" method="post">
-                <p><label for="project">Project</label></p>
+                <p><label for="project">Project <sup>(required)</sup></label><a class="hint">?</a></p>
                 <input id="project" name="project" required type="text" pattern="[a-zA-Z0-9-]{4,30}" placeholder="DNS-like name, at least 4 characters (required)">
-                <p><label for="stage">Stage</label></p>
+                <p><label for="stage">Stage <sup>(required)</sup></label><a class="hint">?</a></p>
                 <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
-                <p><label for="artifact">Artifact</label></p>
+                <p><label for="artifact">Artifact <sup>(required)</sup></label><a class="hint">?</a></p>
                 <input type="file" accept=".war" id="artifact" name="artifact" class="button" required multiple/>
                 <input type="submit" value="Deploy" class="button highlight">
             </form>
