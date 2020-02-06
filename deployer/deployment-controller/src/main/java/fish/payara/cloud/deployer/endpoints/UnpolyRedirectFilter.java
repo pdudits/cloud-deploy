@@ -42,62 +42,29 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.process.ConfigBean;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
-import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.Model;
-import javax.enterprise.inject.Produces;
+import java.io.IOException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Response;
 
 /**
  *
  * @author patrik
  */
-@RequestScoped
-class MvcModels {
-    private DeploymentProcessState deployment;
-    private ConfigBean config;
-    private String configKind;
-    private String configId;
+public class UnpolyRedirectFilter implements ContainerResponseFilter {
 
-    @Produces @Model
-    public DeploymentProcessState getDeployment() {
-        return deployment;
+    @Override
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+        if (responseContext.getStatusInfo().equals(Response.Status.SEE_OTHER) && requestContext.getHeaders().containsKey("X-Up-Target")) {
+            // If it is a redirect response to request made by Unpoly, flag this in Matrix parameter
+            var location = responseContext.getHeaderString("Location");
+            responseContext.getHeaders().putSingle("Location", location+REDIRECT_FLAG);
+        } else if (requestContext.getUriInfo().getPath().contains(REDIRECT_FLAG)) {
+            // if it is subsequent request from above, add X-Up-Loadtion so unpoly keeps correct header
+            responseContext.getHeaders().putSingle("X-Up-Location", requestContext.getUriInfo().getRequestUri().toString().replace(REDIRECT_FLAG, ""));
+        }
     }
-
-    public void setDeployment(DeploymentProcessState deployment) {
-        this.deployment = deployment;
-    }
-
-    @Produces @Model
-    public ConfigBean getConfig() {
-        return deployment == null ? null : ConfigBean.forDeploymentProcess(deployment);
-    }
-
-    @Produces @Model
-    public String getConfigKind() {
-        return configKind;
-    }
-
-    public void setConfigKind(String configKind) {
-        this.configKind = configKind;
-    }
-
-    @Produces @Model
-    public String getConfigId() {
-        return configId;
-    }
-
-    public void setConfigId(String configId) {
-        this.configId = configId;
-    }
+    private static final String REDIRECT_FLAG = ";redirected=true";
     
-    private static final DateTimeFormatter SHORT_TIME = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).withZone(ZoneId.systemDefault());
-    
-    @Produces @Model
-    public String lastStateTimestamp() {
-        return deployment == null || deployment.getLastStatusChange() == null ? null : SHORT_TIME.format(deployment.getLastStatusChange());
-    }
 }
