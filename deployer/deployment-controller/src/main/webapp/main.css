@@ -57,9 +57,16 @@ header, header h1 a, header h1 {
     
 }
 
-header {
+header, footer {
     background-color: #002c3e;
     border-bottom: 2px solid #ae6e2b
+}
+
+footer {
+    text-align: center;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
 }
 
 header h1, h2, div.result {
