@@ -47,10 +47,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.json.bind.annotation.JsonbProperty;
 
 /**
- * Because Patrik says.
+ * Frontend-friendly representation of set of configuration objects
  * @author jonathan
  */
 public class ConfigBean {
@@ -60,6 +61,24 @@ public class ConfigBean {
     
     List<ConfigId> order;
     Map<String, Map<String, Config>> kind;
+
+    public static ConfigBean forConfiguration(Set<Configuration> configurationSet) {
+        return forConfiguration(configurationSet, null);
+    }
+
+
+    public static ConfigBean forConfiguration(Set<Configuration> configurationSet, String deploymentId) {
+        ConfigBean configBean = new ConfigBean();
+        configBean.setDeploymentId(deploymentId);
+        for (Configuration config : configurationSet) {
+            configBean.addConfig(config);
+        }
+        return configBean;
+    }
+
+    public static ConfigBean forDeploymentProcess(DeploymentProcessState state) {
+        return forConfiguration(state.getConfigurations(), state.getId());
+    }
 
     public List<ConfigId> getOrder() {
         return order;
@@ -114,7 +133,7 @@ public class ConfigBean {
     }
     
     
-    public class ConfigId {
+    public static class ConfigId {
         String kind;
         String id;
         
@@ -142,23 +161,8 @@ public class ConfigBean {
         
         
     }
-    
-    public class Kind {
-        
-        @JsonbProperty(value = "")
-        Map<String, Config> kindsMap = new HashMap<>();
 
-        public Map<String, Config> getKindsMap() {
-            return kindsMap;
-        }
-
-        public void setKindsMap(Map<String, Config> kindsMap) {
-            this.kindsMap = kindsMap;
-        }
-        
-    }
-    
-    public class Config {
+    public static class Config {
 
         @JsonbProperty("keys")
         List<Key> keydetails = new ArrayList<>();
@@ -182,7 +186,7 @@ public class ConfigBean {
 
     }
     
-    public class Key {
+    public static class Key {
         String name;
         boolean required;
         @JsonbProperty("default")
