@@ -48,10 +48,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.concurrent.CompletionStage;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.json.bind.JsonbConfig;
 import javax.json.bind.annotation.JsonbPropertyOrder;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbTypeAdapter;
@@ -334,7 +330,7 @@ public class DeploymentProcessState {
         return transition(ChangeKind.PROVISION_FINISHED);
     }
 
-    ChangeKind resetConfigurations() {
+    StateChanged resetConfigurations() {
         for (Configuration configuration : configurations) {
             configuration.reset();
         }
