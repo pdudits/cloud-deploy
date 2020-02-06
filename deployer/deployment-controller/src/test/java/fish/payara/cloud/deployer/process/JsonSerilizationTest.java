@@ -48,12 +48,15 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 import org.junit.Assert;
@@ -66,16 +69,19 @@ import org.junit.Test;
 public class JsonSerilizationTest {
     
     @Test
-    public void testConfigBean() throws IOException {
+    public void testConfigBeanSerialization() throws IOException {
         DeploymentProcessState state = new DeploymentProcessState(new Namespace("foo", "bar"), "foobar", File.createTempFile("abc", null));
         SimpleConfiguration config = new SimpleConfiguration();
         ProcessAccessor.addConfiguration(state, config);
-        JsonParser jsonParser = Json.createParser(new StringReader(state.getConfigurationAsJson()));
+        Jsonb jsonb = JsonbBuilder.create();
+        String serializedState = jsonb.toJson(state);
+        JsonParser jsonParser = Json.createParser(new StringReader(serializedState));
         jsonParser.next();
-        JsonObject jsonConfig = jsonParser.getObject();
-        System.out.println(jsonConfig.toString());
-        
-        Assert.assertNotNull(jsonConfig.getString("deployment")); //will be a UUID
+        JsonObject deploymentState = jsonParser.getObject();
+        System.out.println(deploymentState.toString());
+        Assert.assertNotNull(deploymentState.getString("id")); //will be a UUID
+
+        JsonObject jsonConfig = deploymentState.getJsonObject("configurations");
         JsonArray order = jsonConfig.getJsonArray("order");
         Assert.assertEquals(1, order.size());
         JsonObject orderObject = order.getJsonObject(0);
@@ -94,7 +100,43 @@ public class JsonSerilizationTest {
         Assert.assertEquals("value2", valuesObject.getString("key2"));
         Assert.assertEquals("value3", valuesObject.getString("key3"));
     }
-    
+
+
+    @Test
+    public void testConfigBeanDeserialization() throws IOException {
+        DeploymentProcessState state = new DeploymentProcessState(new Namespace("foo", "bar"), "foobar", File.createTempFile("abc", null));
+        SimpleConfiguration config = new SimpleConfiguration();
+        ProcessAccessor.addConfiguration(state, config);
+        Jsonb jsonb = JsonbBuilder.create();
+        String serializedState = jsonb.toJson(state);
+        JsonParser jsonParser = Json.createParser(new StringReader(serializedState));
+        jsonParser.next();
+        JsonObject deploymentState = jsonParser.getObject();
+        System.out.println(deploymentState.toString());
+        Assert.assertNotNull(deploymentState.getString("id")); //will be a UUID
+
+        JsonObject jsonConfig = deploymentState.getJsonObject("configurations");
+
+
+        ConfigBean deserialized = jsonb.fromJson(jsonConfig.toString(), ConfigBean.class);
+
+        Assert.assertEquals(1, deserialized.getOrder().size());
+        ConfigBean.ConfigId orderObject = deserialized.getOrder().get(0);
+        Assert.assertEquals("TEST", orderObject.getKind());
+        Assert.assertEquals("TESTID", orderObject.getId());
+        ConfigBean.Config configObject = deserialized.getKind().get("TEST").get("TESTID");
+        Assert.assertNotNull(configObject);
+        List<ConfigBean.Key> keyArray = configObject.getKeydetails();
+        Assert.assertEquals(3, keyArray.size());
+        ConfigBean.Key aKeyObject = keyArray.get(0);
+        Assert.assertTrue(aKeyObject.getName().contains("key"));
+        Assert.assertFalse(aKeyObject.isRequired());
+        Assert.assertEquals("DEFAULT", aKeyObject.getDefaultValue().get());
+        Map<String, String> valuesObject = configObject.getValues();
+        Assert.assertEquals("Value1", valuesObject.get("key1"));
+        Assert.assertEquals("value2", valuesObject.get("key2"));
+        Assert.assertEquals("value3", valuesObject.get("key3"));
+    }
     
     private class SimpleConfiguration extends Configuration {
         

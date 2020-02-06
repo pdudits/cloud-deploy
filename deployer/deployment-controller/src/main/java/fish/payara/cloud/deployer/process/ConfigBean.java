@@ -47,10 +47,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.json.bind.annotation.JsonbProperty;
 
 /**
- * Because Patrik says.
+ * Frontend-friendly representation of set of configuration objects
  * @author jonathan
  */
 public class ConfigBean {
@@ -60,6 +61,24 @@ public class ConfigBean {
     
     List<ConfigId> order;
     Map<String, Map<String, Config>> kind;
+
+    public static ConfigBean forConfiguration(Set<Configuration> configurationSet) {
+        return forConfiguration(configurationSet, null);
+    }
+
+
+    public static ConfigBean forConfiguration(Set<Configuration> configurationSet, String deploymentId) {
+        ConfigBean configBean = new ConfigBean();
+        configBean.setDeploymentId(deploymentId);
+        for (Configuration config : configurationSet) {
+            configBean.addConfig(config);
+        }
+        return configBean;
+    }
+
+    public static ConfigBean forDeploymentProcess(DeploymentProcessState state) {
+        return forConfiguration(state.getConfigurations(), state.getId());
+    }
 
     public List<ConfigId> getOrder() {
         return order;
@@ -90,31 +109,33 @@ public class ConfigBean {
         this.deploymentId = deploymentId;
     }
     
-    public void addConfig(Configuration config) {
-        ConfigId id = new ConfigId(config.getKind(), config.getId());
+    public void addConfig(Configuration domainObject) {
+        ConfigId id = new ConfigId(domainObject.getKind(), domainObject.getId());
         order.add(id);
-        Map<String, Config> configKind = kind.get(config.getKind());
+        Map<String, Config> configKind = kind.get(domainObject.getKind());
         if (configKind == null) {
             configKind = new HashMap<>();
-            kind.put(config.getKind(), configKind);
+            kind.put(domainObject.getKind(), configKind);
         }
-        Config acutalConfig = new Config();
-        for (String key : config.getKeys()) {
+        Config representation = new Config();
+        for (String key : domainObject.getKeys()) {
             Key keyDetails = new Key();
             keyDetails.setName(key);
-            keyDetails.setRequired(config.isRequired(key));
-            keyDetails.setDefaultValue(config.getDefaultValue(key));
-            acutalConfig.keydetails.add(keyDetails);
-            Optional<String> value = config.getValue(key);
+            keyDetails.setRequired(domainObject.isRequired(key));
+            keyDetails.setDefaultValue(domainObject.getDefaultValue(key));
+            representation.keydetails.add(keyDetails);
+            Optional<String> value = domainObject.getValue(key);
             if (value.isPresent()) {
-                acutalConfig.values.put(key, config.getValue(key).get());
+                representation.values.put(key, domainObject.getValue(key).get());
             }
         }
-        configKind.put(config.getId(), acutalConfig);
+        representation.setSubmitted(domainObject.isSubmitted());
+        representation.setComplete(domainObject.isComplete());
+        configKind.put(domainObject.getId(), representation);
     }
     
     
-    public class ConfigId {
+    public static class ConfigId {
         String kind;
         String id;
         
@@ -142,27 +163,15 @@ public class ConfigBean {
         
         
     }
-    
-    public class Kind {
-        
-        @JsonbProperty(value = "")
-        Map<String, Config> kindsMap = new HashMap<>();
 
-        public Map<String, Config> getKindsMap() {
-            return kindsMap;
-        }
-
-        public void setKindsMap(Map<String, Config> kindsMap) {
-            this.kindsMap = kindsMap;
-        }
-        
-    }
-    
-    public class Config {
+    public static class Config {
 
         @JsonbProperty("keys")
         List<Key> keydetails = new ArrayList<>();
         Map<String, String> values = new HashMap<>();
+
+        boolean submitted;
+        private boolean complete;
 
         public List<Key> getKeydetails() {
             return keydetails;
@@ -180,9 +189,24 @@ public class ConfigBean {
             this.values = values;
         }
 
+        public boolean isSubmitted() {
+            return submitted;
+        }
+
+        public void setSubmitted(boolean submitted) {
+            this.submitted = submitted;
+        }
+
+        public void setComplete(boolean complete) {
+            this.complete = complete;
+        }
+
+        public boolean getComplete() {
+            return complete;
+        }
     }
     
-    public class Key {
+    public static class Key {
         String name;
         boolean required;
         @JsonbProperty("default")

@@ -98,9 +98,10 @@ public class DeploymentProcess {
      * @param values values to set
      * @throws IllegalArgumentException when such configuration is not present
      * @throws ConfigurationValidationException when values are not valid
+     * @return
      */
-    public void setConfiguration(DeploymentProcessState process, String kind, String id, Map<String,String> values) {
-        setConfiguration(process, kind, id, true, values);
+    public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, Map<String,String> values) {
+        return setConfiguration(process, kind, id, true, values);
     }
 
     /**
@@ -112,21 +113,24 @@ public class DeploymentProcess {
      * @param values values to set
      * @throws IllegalArgumentException when such configuration is not present
      * @throws ConfigurationValidationException when values are not valid
+     * @return
      */
-    public void setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String,String> values) {
-        updateProcess(process, p -> p.setConfiguration(kind, id, submit, values));
+    public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String,String> values) {
+        process = updateProcess(process, p -> p.setConfiguration(kind, id, submit, values));
         if (submit) {
-            updateProcess(process, p -> p.submitConfigurations(false));
+            process = updateProcess(process, p -> p.submitConfigurations(false));
         }
+        return process;
     }
 
     /**
      * Submit all configurations of a process.
      * @param process process to update
      * @throws IllegalStateException when some of the configurations are incomplete
+     * @return
      */
-    public void submitConfigurations(DeploymentProcessState process) {
-        updateProcess(process, p -> p.submitConfigurations(true));
+    public DeploymentProcessState submitConfigurations(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.submitConfigurations(true));
     }
 
     /**
@@ -213,6 +217,10 @@ public class DeploymentProcess {
         return updateProcess(process, p -> p.provisionFinished());
     }
 
+    public DeploymentProcessState resetConfigurations(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.resetConfigurations());
+    }
+  
     public DeploymentProcessState endpointActivated(DeploymentProcessState process) {
         return updateProcess(process, p -> p.endpointActivated());
     }
