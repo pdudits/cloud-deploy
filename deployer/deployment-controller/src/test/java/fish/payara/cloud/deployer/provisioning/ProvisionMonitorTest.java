@@ -100,11 +100,6 @@ public class ProvisionMonitorTest {
         verifyFail(after(150).never());
     }
 
-    @Test
-    public void cleanupStartedCancelsMonitoring() {
-        controller.monitorProgress(makeEvent(process, ChangeKind.CLEANUP_STARTED));
-        verifyFail(after(150).never());
-    }
 
     private void verifyFail(VerificationMode mode) {
         verify(controller.process, mode).fail(eq(process), any(), any());

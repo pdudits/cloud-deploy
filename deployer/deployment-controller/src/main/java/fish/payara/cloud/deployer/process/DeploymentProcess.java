@@ -43,7 +43,9 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -69,8 +71,12 @@ public class DeploymentProcess {
      */
     public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
         var processState = new DeploymentProcessState(target, name, artifactLocation);
+        return start(processState);
+    }
+
+    DeploymentProcessState start(DeploymentProcessState processState) {
         runningProcesses.put(processState.getId(), processState);
-        processState.fireAsync(deploymentEvent, ChangeKind.PROCESS_STARTED);
+        fireAsync(processState.start());
         return processState;
     }
 
@@ -133,16 +139,27 @@ public class DeploymentProcess {
         updateProcess(process, p -> p.fail(message, exception));
     }
 
-    private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, ChangeKind> update) {
+    private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, StateChanged> update) {
         var storedProcess = runningProcesses.get(process.getId());
-        ChangeKind eventKind = null;
+        StateChanged event = null;
+        boolean isReady = false;
+        boolean wasReady = false;
         synchronized (storedProcess) {
-            eventKind = update.apply(storedProcess);
+            wasReady = storedProcess.isReady();
+            event = update.apply(storedProcess);
+            isReady = storedProcess.isReady();
         }
-        if (eventKind != null) {
-            storedProcess.fireAsync(deploymentEvent, eventKind);
+        if (event != null) {
+            fireAsync(event);
+        }
+        if (isReady && !wasReady) {
+            return updateProcess(process, DeploymentProcessState::provisionFinished);
         }
         return storedProcess;
+    }
+
+    CompletionStage<StateChanged> fireAsync(StateChanged changeEvent) {
+        return deploymentEvent.select(changeEvent.getKind().asFilter()).fireAsync(changeEvent);
     }
 
     /**
@@ -194,5 +211,22 @@ public class DeploymentProcess {
 
     public DeploymentProcessState provisioningFinished(DeploymentProcessState process) {
         return updateProcess(process, p -> p.provisionFinished());
+    }
+
+    public DeploymentProcessState endpointActivated(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.endpointActivated());
+    }
+
+    public DeploymentProcessState deploymentFinished(DeploymentProcessState process) {
+        return updateProcess(process, p -> p.deploymentFinished());
+    }
+
+
+    public DeploymentProcessState podCreated(DeploymentProcessState process, String namespace, String name) {
+        return updateProcess(process, p -> p.podCreated(namespace+"/"+name));
+    }
+
+    public DeploymentProcessState outputLogged(DeploymentProcessState process, String logChunk) {
+        return updateProcess(process, p -> p.logged(logChunk));
     }
 }

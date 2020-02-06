@@ -62,15 +62,15 @@ public class ConfigurationTest {
 
     @Test
     public void addingConfigurationBroadcastsEvent() {
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf));
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(new MockConfiguration("other-mock")));
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(simple));
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf).getKind());
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(new MockConfiguration("other-mock")).getKind());
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(simple).getKind());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void addingDuplicateConfigurationFails() {
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf));
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf));
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf).getKind());
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf).getKind());
     }
 
     @Test
@@ -143,8 +143,8 @@ public class ConfigurationTest {
     @Test
     public void allConfigsCanBeSubmitted() {
         var otherMock = new MockConfiguration("other-mock");
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf));
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(otherMock));
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf).getKind());
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(otherMock).getKind());
         var update = Map.of("required", "value");
         processState.setConfiguration("mock", "id", false, update);
         processState.setConfiguration("mock", "other-mock", false, update);
@@ -160,8 +160,8 @@ public class ConfigurationTest {
     @Test
     public void configsAreSubmittedAtomically() {
         var otherMock = new MockConfiguration("other-mock");
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf));
-        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(otherMock));
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(conf).getKind());
+        assertEquals(ChangeKind.CONFIGURATION_ADDED, processState.addConfiguration(otherMock).getKind());
         var update = Map.of("required", "value");
         processState.setConfiguration("mock", "id", false, update);
         try {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
+ * Copyright (c) 2020 Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -36,90 +36,18 @@
  *  holder.
  */
 
-html,body {
-    font-family: 'IBM Plex Sans', sans-serif;
-    padding: 0;
-    margin: 0;
-    height: 100%;
-    background-color: #002c3e;
-    color: #dae0e2;
-}
+package fish.payara.cloud.deployer.process;
 
-body {
-    margin: auto;
-    width: 40rem;
-}
+/**
+ * Structured logging of deployment process.
+ * Raw log from app server should be parsed to identify deployment errors and completion of deployment process
+ */
+public class DeploymentProcessLogOutput {
 
-.light {
-    font-weight: 300;
-}
+    private String output;
 
-.primary-blue {
-    color: #002c3e;
-}
-
-header, header h1 a, header h1 {
-    background-color: #f0981b;
-    color:  #1b2c3d;
-}
-
-header {
-    border-bottom: 2px solid #ae6e2b
-}
-
-header, h2, div.result {
-    margin: 0;
-    padding: 1rem;
-}
-
-main {
-    margin-top: 2rem;
-}
-
-h1,h2,h3,.primary-orange,h1 a {
-    color: #f0981b
-}
-
-h2, div.result {
-    background-color:  #e8eff2;
-    background: linear-gradient(white 40%, #bfd3db)
-}
-
-h1 a {
-    text-decoration: none;
-}
-
-.secondary-blue {
-    color: #0096d6;
-}
-
-.secondary-light {
-    color: #dae0e2;
-}
-
-
-.secondary-dark {
-    color: #434445;
-}
-
-form {
-    display: grid;
-    grid-template-columns: 5em [main] auto;
-    grid-gap: 0.5em
-}
-input[type=submit] {
-    grid-column: main;
-}
-
-progress {
-    display: block;
-    width: 50%;
-    margin: auto;
-}
-
-#log {
-    width: 100%;
-    background: transparent;
-    color: #0f9;
-    border: 1px solid #f0981b;
+    void add(String chunk) {
+        // we'll eventually get to parsing stuff.
+        output = output == null ? chunk : output+chunk;
+    }
 }

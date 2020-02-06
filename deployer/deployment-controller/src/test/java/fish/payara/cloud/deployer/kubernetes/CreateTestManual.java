@@ -38,13 +38,31 @@
 
 package fish.payara.cloud.deployer.kubernetes;
 
+import com.google.common.base.Charsets;
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
+import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.Watcher;
+import io.fabric8.kubernetes.client.utils.Serialization;
 import org.junit.Test;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.concurrent.Executors;
 
 import static org.mockito.Mockito.mock;
 
@@ -54,6 +72,8 @@ import static org.mockito.Mockito.mock;
  *
  */
 public class CreateTestManual {
+    private DefaultKubernetesClient client;
+
     @Test
     public void createDirectly() throws ProvisioningException {
         var process = ProcessAccessor.createProcessWithName("ROOT.war");
@@ -62,12 +82,100 @@ public class CreateTestManual {
         var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
         ProcessAccessor.addConfiguration(process, contextRoot);
 
+        DirectProvisioner provisoner = setupProvisioner();
+        provisoner.provision(process);
+    }
+
+    @Test
+    public void inspectWatches() throws ProvisioningException, InterruptedException, IOException {
+        var process = ProcessAccessor.createProcessWithName("ROOT.war");
+        ProcessAccessor.setPersistentLocation(process, URI.create("https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"));
+
+        var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
+        ProcessAccessor.addConfiguration(process, contextRoot);
+
+        DirectProvisioner provisoner = setupProvisioner();
+
+        var watcher = new StructuredWatcher("src/test/resources", "single-app");
+        watcher.client = setupClient();
+        watcher.executorService = Executors.newScheduledThreadPool(2);
+        watcher.startWatching();
+
+        provisoner.provision(process);
+
+        Thread.sleep(60000);
+        watcher.close();
+    }
+
+    private DirectProvisioner setupProvisioner() {
         var provisoner = new DirectProvisioner();
         provisoner.domain = "9ba44192900145a88bfb.westeurope.aksapp.io";
         provisoner.process = mock(DeploymentProcess.class);
+        provisoner.client = setupClient();
+        return provisoner;
+    }
 
-        provisoner.connectApiServer();
+    private DefaultKubernetesClient setupClient() {
+        if (client != null) {
+            return client;
+        }
+        var client = new KubernetesClient();
+        client.connectApiServer();
+        this.client = client.client;
+        return client.client;
+    }
 
-        provisoner.provision(process);
+    // we create more structured output that we can replay in a test
+    static class StructuredWatcher extends KubernetesWatcher {
+        private final PrintWriter output;
+
+        StructuredWatcher(String basePath, String name) throws IOException {
+            var dir = Files.createDirectories(Paths.get(basePath));
+            Path out = Files.createFile(
+                    dir.resolve(name + Instant.now().toString().replaceAll(":","")+".log"));
+            output = new PrintWriter(new FileWriter(out.toFile(), StandardCharsets.UTF_8));
+        }
+
+        @Override
+        protected void handlePodEvent(Watcher.Action action, Pod resource, String id) {
+
+        }
+
+        @Override
+        protected void handleDeploymentEvent(Watcher.Action action, Deployment resource, String id) {
+
+        }
+
+        @Override
+        protected void handleIngressEvent(Watcher.Action action, Ingress resource, String id) {
+
+        }
+
+        @Override
+        protected void logEvent(Watcher.Action action, HasMetadata resource) {
+            super.logEvent(action, resource);
+            output.println(Instant.now());
+            output.println("Event");
+            output.println(resource.getKind());
+            output.println(action);
+            output.println(Serialization.asJson(resource));
+        }
+
+        @Override
+        protected void logLog(String id, ObjectMeta podMeta, byte[] chunk) {
+            super.logLog(id, podMeta, chunk);
+            output.println(Instant.now());
+            output.println("Log");
+            output.println(podMeta.getUid());
+            var stringChunk = new String(chunk, StandardCharsets.UTF_8);
+            output.println(stringChunk.length());
+            output.println(stringChunk);
+        }
+
+        @Override
+        public void close() {
+            super.close();
+            output.close();
+        }
     }
 }

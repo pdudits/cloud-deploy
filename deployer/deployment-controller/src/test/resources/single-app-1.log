@@ -1,0 +1,377 @@
+2020-01-28T14:28:19.840748100Z
+Event
+Deployment
+ADDED
+{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"payara.cloud/artifact":"ui","payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war","payara.cloud/domain":"9ba44192900145a88bfb.westeurope.aksapp.io","payara.cloud/project":"test","payara.cloud/stage":"dev"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772470","selfLink":"/apis/apps/v1/namespaces/test-dev/deployments/ui","uid":"689b7d39-41da-11ea-95a2-920d8d1d0d91"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"6a94c593-7061-4fe6-94de-6bca574077a7","namespace":"test-dev"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"}]}}},"status":{}}
+2020-01-28T14:28:19.849746300Z
+Event
+Deployment
+MODIFIED
+{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","payara.cloud/artifact":"ui","payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war","payara.cloud/domain":"9ba44192900145a88bfb.westeurope.aksapp.io","payara.cloud/project":"test","payara.cloud/stage":"dev"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772472","selfLink":"/apis/apps/v1/namespaces/test-dev/deployments/ui","uid":"689b7d39-41da-11ea-95a2-920d8d1d0d91"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"6a94c593-7061-4fe6-94de-6bca574077a7","namespace":"test-dev"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"}]}}},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:10Z","lastUpdateTime":"2020-01-28T14:28:10Z","message":"Created new replica set \"ui-77867f97dc\"","reason":"NewReplicaSetCreated","status":"True","type":"Progressing"}]}}
+2020-01-28T14:28:19.871746Z
+Event
+Pod
+ADDED
+{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"creationTimestamp":"2020-01-28T14:28:10Z","generateName":"ui-77867f97dc-","labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7","pod-template-hash":"77867f97dc"},"name":"ui-77867f97dc-7lg5n","namespace":"test-dev","ownerReferences":[{"apiVersion":"apps/v1","kind":"ReplicaSet","blockOwnerDeletion":true,"controller":true,"name":"ui-77867f97dc","uid":"689f3573-41da-11ea-95a2-920d8d1d0d91"}],"resourceVersion":"4772474","selfLink":"/api/v1/namespaces/test-dev/pods/ui-77867f97dc-7lg5n","uid":"68a78ed6-41da-11ea-95a2-920d8d1d0d91"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m","memory":"512Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"dnsPolicy":"ClusterFirst","enableServiceLinks":true,"initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"priority":0,"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"default","serviceAccountName":"default","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoExecute","key":"node.kubernetes.io/not-ready","operator":"Exists","tolerationSeconds":300},{"effect":"NoExecute","key":"node.kubernetes.io/unreachable","operator":"Exists","tolerationSeconds":300}],"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"},{"name":"default-token-g769z","secret":{"defaultMode":420,"secretName":"default-token-g769z"}}]},"status":{"phase":"Pending","qosClass":"Burstable"}}
+2020-01-28T14:28:19.889745100Z
+Event
+Pod
+MODIFIED
+{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"creationTimestamp":"2020-01-28T14:28:10Z","generateName":"ui-77867f97dc-","labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7","pod-template-hash":"77867f97dc"},"name":"ui-77867f97dc-7lg5n","namespace":"test-dev","ownerReferences":[{"apiVersion":"apps/v1","kind":"ReplicaSet","blockOwnerDeletion":true,"controller":true,"name":"ui-77867f97dc","uid":"689f3573-41da-11ea-95a2-920d8d1d0d91"}],"resourceVersion":"4772475","selfLink":"/api/v1/namespaces/test-dev/pods/ui-77867f97dc-7lg5n","uid":"68a78ed6-41da-11ea-95a2-920d8d1d0d91"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m","memory":"512Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"dnsPolicy":"ClusterFirst","enableServiceLinks":true,"initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"nodeName":"aks-nodepool1-18286783-vmss000000","priority":0,"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"default","serviceAccountName":"default","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoExecute","key":"node.kubernetes.io/not-ready","operator":"Exists","tolerationSeconds":300},{"effect":"NoExecute","key":"node.kubernetes.io/unreachable","operator":"Exists","tolerationSeconds":300}],"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"},{"name":"default-token-g769z","secret":{"defaultMode":420,"secretName":"default-token-g769z"}}]},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:10Z","status":"True","type":"PodScheduled"}],"phase":"Pending","qosClass":"Burstable"}}
+2020-01-28T14:28:19.896746300Z
+Event
+Deployment
+MODIFIED
+{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","payara.cloud/artifact":"ui","payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war","payara.cloud/domain":"9ba44192900145a88bfb.westeurope.aksapp.io","payara.cloud/project":"test","payara.cloud/stage":"dev"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772478","selfLink":"/apis/apps/v1/namespaces/test-dev/deployments/ui","uid":"689b7d39-41da-11ea-95a2-920d8d1d0d91"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"6a94c593-7061-4fe6-94de-6bca574077a7","namespace":"test-dev"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"}]}}},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:10Z","lastUpdateTime":"2020-01-28T14:28:10Z","message":"Created new replica set \"ui-77867f97dc\"","reason":"NewReplicaSetCreated","status":"True","type":"Progressing"},{"lastTransitionTime":"2020-01-28T14:28:10Z","lastUpdateTime":"2020-01-28T14:28:10Z","message":"Deployment does not have minimum availability.","reason":"MinimumReplicasUnavailable","status":"False","type":"Available"}],"observedGeneration":1,"unavailableReplicas":1}}
+2020-01-28T14:28:19.935744600Z
+Event
+Deployment
+MODIFIED
+{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","payara.cloud/artifact":"ui","payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war","payara.cloud/domain":"9ba44192900145a88bfb.westeurope.aksapp.io","payara.cloud/project":"test","payara.cloud/stage":"dev"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772481","selfLink":"/apis/apps/v1/namespaces/test-dev/deployments/ui","uid":"689b7d39-41da-11ea-95a2-920d8d1d0d91"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"6a94c593-7061-4fe6-94de-6bca574077a7","namespace":"test-dev"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"}]}}},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:10Z","lastUpdateTime":"2020-01-28T14:28:10Z","message":"Deployment does not have minimum availability.","reason":"MinimumReplicasUnavailable","status":"False","type":"Available"},{"lastTransitionTime":"2020-01-28T14:28:10Z","lastUpdateTime":"2020-01-28T14:28:10Z","message":"ReplicaSet \"ui-77867f97dc\" is progressing.","reason":"ReplicaSetUpdated","status":"True","type":"Progressing"}],"observedGeneration":1,"replicas":1,"unavailableReplicas":1,"updatedReplicas":1}}
+2020-01-28T14:28:19.960746200Z
+Event
+Ingress
+ADDED
+{"apiVersion":"extensions/v1beta1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"addon-http-application-routing"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"ingress","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772483","selfLink":"/apis/extensions/v1beta1/namespaces/test-dev/ingresses/ui","uid":"68b774a0-41da-11ea-95a2-920d8d1d0d91"},"spec":{"rules":[{"host":"test-dev.9ba44192900145a88bfb.westeurope.aksapp.io","http":{"paths":[{"backend":{"serviceName":"ui","servicePort":80},"path":"/"}]}}]},"status":{"loadBalancer":{}}}
+2020-01-28T14:28:20.023742300Z
+Event
+Pod
+MODIFIED
+{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"creationTimestamp":"2020-01-28T14:28:10Z","generateName":"ui-77867f97dc-","labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7","pod-template-hash":"77867f97dc"},"name":"ui-77867f97dc-7lg5n","namespace":"test-dev","ownerReferences":[{"apiVersion":"apps/v1","kind":"ReplicaSet","blockOwnerDeletion":true,"controller":true,"name":"ui-77867f97dc","uid":"689f3573-41da-11ea-95a2-920d8d1d0d91"}],"resourceVersion":"4772485","selfLink":"/api/v1/namespaces/test-dev/pods/ui-77867f97dc-7lg5n","uid":"68a78ed6-41da-11ea-95a2-920d8d1d0d91"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m","memory":"512Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"dnsPolicy":"ClusterFirst","enableServiceLinks":true,"initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"nodeName":"aks-nodepool1-18286783-vmss000000","priority":0,"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"default","serviceAccountName":"default","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoExecute","key":"node.kubernetes.io/not-ready","operator":"Exists","tolerationSeconds":300},{"effect":"NoExecute","key":"node.kubernetes.io/unreachable","operator":"Exists","tolerationSeconds":300}],"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"},{"name":"default-token-g769z","secret":{"defaultMode":420,"secretName":"default-token-g769z"}}]},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:10Z","message":"containers with incomplete status: [download-app]","reason":"ContainersNotInitialized","status":"False","type":"Initialized"},{"lastTransitionTime":"2020-01-28T14:28:10Z","message":"containers with unready status: [micro]","reason":"ContainersNotReady","status":"False","type":"Ready"},{"lastTransitionTime":"2020-01-28T14:28:10Z","message":"containers with unready status: [micro]","reason":"ContainersNotReady","status":"False","type":"ContainersReady"},{"lastTransitionTime":"2020-01-28T14:28:10Z","status":"True","type":"PodScheduled"}],"containerStatuses":[{"image":"payara/micro:jdk11","imageID":"","lastState":{},"name":"micro","ready":false,"restartCount":0,"state":{"waiting":{"reason":"PodInitializing"}}}],"hostIP":"10.240.0.4","initContainerStatuses":[{"image":"curlimages/curl:latest","imageID":"","lastState":{},"name":"download-app","ready":false,"restartCount":0,"state":{"waiting":{"reason":"PodInitializing"}}}],"phase":"Pending","qosClass":"Burstable","startTime":"2020-01-28T14:28:10Z"}}
+2020-01-28T14:28:23.779954900Z
+Event
+Pod
+MODIFIED
+{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"creationTimestamp":"2020-01-28T14:28:10Z","generateName":"ui-77867f97dc-","labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7","pod-template-hash":"77867f97dc"},"name":"ui-77867f97dc-7lg5n","namespace":"test-dev","ownerReferences":[{"apiVersion":"apps/v1","kind":"ReplicaSet","blockOwnerDeletion":true,"controller":true,"name":"ui-77867f97dc","uid":"689f3573-41da-11ea-95a2-920d8d1d0d91"}],"resourceVersion":"4772495","selfLink":"/api/v1/namespaces/test-dev/pods/ui-77867f97dc-7lg5n","uid":"68a78ed6-41da-11ea-95a2-920d8d1d0d91"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m","memory":"512Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"dnsPolicy":"ClusterFirst","enableServiceLinks":true,"initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"nodeName":"aks-nodepool1-18286783-vmss000000","priority":0,"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"default","serviceAccountName":"default","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoExecute","key":"node.kubernetes.io/not-ready","operator":"Exists","tolerationSeconds":300},{"effect":"NoExecute","key":"node.kubernetes.io/unreachable","operator":"Exists","tolerationSeconds":300}],"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"},{"name":"default-token-g769z","secret":{"defaultMode":420,"secretName":"default-token-g769z"}}]},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:14Z","status":"True","type":"Initialized"},{"lastTransitionTime":"2020-01-28T14:28:10Z","message":"containers with unready status: [micro]","reason":"ContainersNotReady","status":"False","type":"Ready"},{"lastTransitionTime":"2020-01-28T14:28:10Z","message":"containers with unready status: [micro]","reason":"ContainersNotReady","status":"False","type":"ContainersReady"},{"lastTransitionTime":"2020-01-28T14:28:10Z","status":"True","type":"PodScheduled"}],"containerStatuses":[{"image":"payara/micro:jdk11","imageID":"","lastState":{},"name":"micro","ready":false,"restartCount":0,"state":{"waiting":{"reason":"PodInitializing"}}}],"hostIP":"10.240.0.4","initContainerStatuses":[{"containerID":"docker://d6246ad734471fcad4d2d92edd7a828b219d346bfc9e5291eaaa0abe50ad7862","image":"curlimages/curl:latest","imageID":"docker-pullable://curlimages/curl@sha256:99a8e9629b3ae26efb977e1a98f4786d6bd730c5ab4dea64632e297d7c3e7151","lastState":{},"name":"download-app","ready":true,"restartCount":0,"state":{"terminated":{"containerID":"docker://d6246ad734471fcad4d2d92edd7a828b219d346bfc9e5291eaaa0abe50ad7862","exitCode":0,"finishedAt":"2020-01-28T14:28:13Z","reason":"Completed","startedAt":"2020-01-28T14:28:13Z"}}}],"phase":"Pending","podIP":"10.244.0.191","qosClass":"Burstable","startTime":"2020-01-28T14:28:10Z"}}
+2020-01-28T14:28:24.843075400Z
+Event
+Pod
+MODIFIED
+{"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"creationTimestamp":"2020-01-28T14:28:10Z","generateName":"ui-77867f97dc-","labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7","pod-template-hash":"77867f97dc"},"name":"ui-77867f97dc-7lg5n","namespace":"test-dev","ownerReferences":[{"apiVersion":"apps/v1","kind":"ReplicaSet","blockOwnerDeletion":true,"controller":true,"name":"ui-77867f97dc","uid":"689f3573-41da-11ea-95a2-920d8d1d0d91"}],"resourceVersion":"4772501","selfLink":"/api/v1/namespaces/test-dev/pods/ui-77867f97dc-7lg5n","uid":"68a78ed6-41da-11ea-95a2-920d8d1d0d91"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m","memory":"512Mi"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"dnsPolicy":"ClusterFirst","enableServiceLinks":true,"initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"},{"mountPath":"/var/run/secrets/kubernetes.io/serviceaccount","name":"default-token-g769z","readOnly":true}]}],"nodeName":"aks-nodepool1-18286783-vmss000000","priority":0,"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"serviceAccount":"default","serviceAccountName":"default","terminationGracePeriodSeconds":30,"tolerations":[{"effect":"NoExecute","key":"node.kubernetes.io/not-ready","operator":"Exists","tolerationSeconds":300},{"effect":"NoExecute","key":"node.kubernetes.io/unreachable","operator":"Exists","tolerationSeconds":300}],"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"},{"name":"default-token-g769z","secret":{"defaultMode":420,"secretName":"default-token-g769z"}}]},"status":{"conditions":[{"lastTransitionTime":"2020-01-28T14:28:14Z","status":"True","type":"Initialized"},{"lastTransitionTime":"2020-01-28T14:28:15Z","status":"True","type":"Ready"},{"lastTransitionTime":"2020-01-28T14:28:15Z","status":"True","type":"ContainersReady"},{"lastTransitionTime":"2020-01-28T14:28:10Z","status":"True","type":"PodScheduled"}],"containerStatuses":[{"containerID":"docker://86d523560ba8e5bcff407e73eda58ffdfd2bc41ba54ceeec952578a0a8ad55d3","image":"payara/micro:jdk11","imageID":"docker-pullable://payara/micro@sha256:eef7d1eacf09429485a04192389ba6ac493905bcfa34309fa03d68e6884704f2","lastState":{},"name":"micro","ready":true,"restartCount":0,"state":{"running":{"startedAt":"2020-01-28T14:28:14Z"}}}],"hostIP":"10.240.0.4","initContainerStatuses":[{"containerID":"docker://d6246ad734471fcad4d2d92edd7a828b219d346bfc9e5291eaaa0abe50ad7862","image":"curlimages/curl:latest","imageID":"docker-pullable://curlimages/curl@sha256:99a8e9629b3ae26efb977e1a98f4786d6bd730c5ab4dea64632e297d7c3e7151","lastState":{},"name":"download-app","ready":true,"restartCount":0,"state":{"terminated":{"containerID":"docker://d6246ad734471fcad4d2d92edd7a828b219d346bfc9e5291eaaa0abe50ad7862","exitCode":0,"finishedAt":"2020-01-28T14:28:13Z","reason":"Completed","startedAt":"2020-01-28T14:28:13Z"}}}],"phase":"Running","podIP":"10.244.0.191","qosClass":"Burstable","startTime":"2020-01-28T14:28:10Z"}}
+2020-01-28T14:28:24.902074300Z
+Event
+Deployment
+MODIFIED
+{"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{"deployment.kubernetes.io/revision":"1","payara.cloud/artifact":"ui","payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war","payara.cloud/domain":"9ba44192900145a88bfb.westeurope.aksapp.io","payara.cloud/project":"test","payara.cloud/stage":"dev"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772505","selfLink":"/apis/apps/v1/namespaces/test-dev/deployments/ui","uid":"689b7d39-41da-11ea-95a2-920d8d1d0d91"},"spec":{"progressDeadlineSeconds":600,"replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"}},"strategy":{"rollingUpdate":{"maxSurge":"25%","maxUnavailable":"25%"},"type":"RollingUpdate"},"template":{"metadata":{"annotations":{"payara.cloud/artifact-url":"https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"},"labels":{"app.kubernetes.io/component":"payara-app","app.kubernetes.io/instance":"ui","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"6a94c593-7061-4fe6-94de-6bca574077a7","namespace":"test-dev"},"spec":{"containers":[{"args":["--deploymentDir","/opt/payara/deployments","--clustermode","dns:6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900"],"image":"payara/micro:jdk11","imagePullPolicy":"IfNotPresent","name":"micro","ports":[{"containerPort":8080,"name":"http","protocol":"TCP"},{"containerPort":6900,"name":"datagrid","protocol":"TCP"}],"resources":{"limits":{"cpu":"1","memory":"512Mi"},"requests":{"cpu":"250m"}},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/opt/payara/deployments","name":"deployments"}]}],"dnsPolicy":"ClusterFirst","initContainers":[{"args":["-c","cd /deployments && curl -O `cat /podinfo/url`"],"command":["sh"],"image":"curlimages/curl:latest","imagePullPolicy":"Always","name":"download-app","resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File","volumeMounts":[{"mountPath":"/deployments","name":"deployments"},{"mountPath":"/podinfo","name":"podinfo"}]}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30,"volumes":[{"emptyDir":{},"name":"deployments"},{"downwardAPI":{"defaultMode":420,"items":[{"fieldRef":{"apiVersion":"v1","fieldPath":"metadata.annotations['payara.cloud/artifact-url']"},"path":"url"}]},"name":"podinfo"}]}}},"status":{"availableReplicas":1,"conditions":[{"lastTransitionTime":"2020-01-28T14:28:15Z","lastUpdateTime":"2020-01-28T14:28:15Z","message":"Deployment has minimum availability.","reason":"MinimumReplicasAvailable","status":"True","type":"Available"},{"lastTransitionTime":"2020-01-28T14:28:10Z","lastUpdateTime":"2020-01-28T14:28:15Z","message":"ReplicaSet \"ui-77867f97dc\" has successfully progressed.","reason":"NewReplicaSetAvailable","status":"True","type":"Progressing"}],"observedGeneration":1,"readyReplicas":1,"replicas":1,"updatedReplicas":1}}
+2020-01-28T14:28:26.082791800Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+763
+[2020-01-28T14:28:16.305+0000] [] [[1;93mWARNING[0m] [] [[1;94mPayaraMicro[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221696305] [levelValue: 900] Payara Micro Runtime directory is located in a temporary file location which can be cleaned by system processes.
+
+[2020-01-28T14:28:16.427+0000] [] [[1;92mINFO[0m] [] [[1;94mPayaraMicro[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221696427] [levelValue: 800] Payara Micro Runtime directory is located at /tmp/payaramicro-rt501868735241456950tmp
+
+[2020-01-28T14:28:16.493+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.micro.boot.runtime.PayaraMicroRuntimeBuilder[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221696493] [levelValue: 800] Built Payara Micro Runtime
+
+
+2020-01-28T14:28:28.084943100Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+283
+[2020-01-28T14:28:18.458+0000] [] [[1;92mINFO[0m] [NCLS-CORE-00046] [[1;94mjavax.enterprise.system.core[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221698458] [levelValue: 800] Cannot find javadb client jar file, derby jdbc driver will not be available by default.
+
+
+2020-01-28T14:28:30.088426100Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+[2020-01-28T14:28:19.734+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.boot.runtime.BootCommand[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221699734] [levelValue: 800] [[
+  Boot Command set returned with result SUCCESS : PlainTextActionReporterSUCCESSDescription: set AdminCommandnull
+    configs.config.server-config.hazelcast-config-specific-configuration.lite=false
+]]
+
+[2020-01-28T14:28:19.803+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.boot.runtime.BootCommand[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221699803] [levelValue: 800] [[
+  Boot Command set returned with result SUCCESS : PlainTextActionReporterSUCCESSDescription: set AdminCommandnull
+    hazelcast-runtime-configuration.host-aware-partitioning=true
+]]
+
+[2020-01-28T14:28:19.815+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.boot.runtime.BootCommand[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221699815] [levelValue: 800] [[
+  Boot Command set returned with result SUCCESS : PlainTextActionRepo
+2020-01-28T14:28:31.090991200Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+892
+rterSUCCESSDescription: set AdminCommandnull
+    hazelcast-runtime-configuration.dns-members=6a94c593-7061-4fe6-94de-6bca574077a7-datagrid:6900
+]]
+
+[2020-01-28T14:28:19.829+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.boot.runtime.BootCommand[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221699829] [levelValue: 800] [[
+  Boot Command set returned with result SUCCESS : PlainTextActionReporterSUCCESSDescription: set AdminCommandnull
+    hazelcast-runtime-configuration.discovery-mode=dns
+]]
+
+[2020-01-28T14:28:21.407+0000] [] [[1;92mINFO[0m] [] [[1;94morg.glassfish.ha.store.spi.BackingStoreFactoryRegistry[0m] [tid: _ThreadID=20 _ThreadName=RunLevelControllerThread-1580221699906] [timeMillis: 1580221701407] [levelValue: 800] Registered fish.payara.ha.hazelcast.store.HazelcastBackingStoreFactoryProxy for persistence-type = hazelcast in BackingStoreFactoryRegistry
+
+
+2020-01-28T14:28:32.094527900Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+900
+[2020-01-28T14:28:22.309+0000] [] [[1;92mINFO[0m] [NCLS-CORE-00101] [[1;94mjavax.enterprise.system.core[0m] [tid: _ThreadID=21 _ThreadName=RunLevelControllerThread-1580221699909] [timeMillis: 1580221702309] [levelValue: 800] Network Listener http-listener started in: 87ms - bound to [/0.0.0.0:8080]
+
+[2020-01-28T14:28:22.336+0000] [] [[1;92mINFO[0m] [NCLS-CORE-00058] [[1;94mjavax.enterprise.system.core[0m] [tid: _ThreadID=21 _ThreadName=RunLevelControllerThread-1580221699909] [timeMillis: 1580221702336] [levelValue: 800] Network listener https-listener on port 8443 disabled per domain.xml
+
+[2020-01-28T14:28:22.339+0000] [] [[1;92mINFO[0m] [NCLS-CORE-00087] [[1;94mjavax.enterprise.system.core[0m] [tid: _ThreadID=21 _ThreadName=RunLevelControllerThread-1580221699909] [timeMillis: 1580221702339] [levelValue: 800] Grizzly 2.4.3 started in: 1,856ms - bound to [http-listener:8080]
+
+
+2020-01-28T14:28:35.098271800Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+[2020-01-28T14:28:25.097+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221705097] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:25.108+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221705108] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:25.132+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221705132] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:25.173+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.n
+2020-01-28T14:28:36.101005200Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+ucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221705173] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:25.254+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221705254] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:25.415+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221705415] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:25.736+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=23 _ThreadName=RunLev
+2020-01-28T14:28:37.102201700Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+elControllerThread-1580221699924] [timeMillis: 1580221705736] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:26.306+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221706306] [levelValue: 800] Hazelcast Instance Bound to JNDI at payara/Hazelcast
+
+[2020-01-28T14:28:26.309+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221706309] [levelValue: 800] JSR107 Caching Provider Bound to JNDI at payara/CachingProvider
+
+[2020-01-28T14:28:26.310+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=23 _ThreadName=RunLevelControllerThread-1580221699924] [timeMillis: 1580221706310] [levelValue: 800] JSR107 Default Cache Manager Bound to JNDI at payara/CacheMan
+2020-01-28T14:28:38.103269200Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+ager
+
+[2020-01-28T14:28:26.625+0000] [] [[1;92mINFO[0m] [NCLS-CORE-00017] [[1;94mjavax.enterprise.system.core[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221706625] [levelValue: 800] Payara Micro  5.194 #badassmicrofish (327) startup time : Embedded (3,403ms), startup services(6,724ms), total(10,127ms)
+
+[2020-01-28T14:28:26.994+0000] [] [[1;92mINFO[0m] [NCLS-JMX-00006] [[1;94mjavax.enterprise.system.jmx[0m] [tid: _ThreadID=72 _ThreadName=Thread-6] [timeMillis: 1580221706994] [levelValue: 800] JMXStartupService has disabled JMXConnector system
+
+[2020-01-28T14:28:27.987+0000] [] [[1;93mWARNING[0m] [NCLS-SECURITY-05054] [[1;94mjavax.enterprise.system.security.ssl[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221707987] [levelValue: 900] [[
+  The SSL certificate has expired: [
+[
+  Version: V3
+  Subject: CN=Entrust.net Certification Authority (2048), OU=(c) 1999 Entrust.net Limited, OU=www.entrust.net/CPS_2048 incorp. by ref. (limits liab.), O=Entrust.net
+  Signature Algorithm: 
+2020-01-28T14:28:39.105033800Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+SHA1withRSA, OID = 1.2.840.113549.1.1.5
+
+  Key:  Sun RSA public key, 2048 bits
+  params: null
+  modulus: 21877342614735064986586094209008949861633415438321046094865735894101046869669024974234189221129376235137504163448391667494521959302368300673495711648664420351966300087244240539893392975177816108541817252818998001932142985065266407504518566289301698937041931668276581800733716890145024940625536991682725365140451115767110550542345758164504698636529042078537609343076050570785483670809094993963575569689277704991843533760219663288836022206035538841969109577376809337618824179167781883694301066738001489513517818892302945620562766589172426570508291886401623875028645352783701438149952282706361006848685772598444243814369
+  public exponent: 65537
+  Validity: [From: Fri Dec 24 17:50:51 GMT 1999,
+               To: Tue Dec 24 18:20:51 GMT 2019]
+  Issuer: CN=Entrust.net Certification Authority (2048), OU=(c) 1999 Entrust.net Limited, OU=www.entrust.net/CPS_2048 incorp. by ref. (limits liab.), O=Entrust.net
+  SerialNumber
+2020-01-28T14:28:40.106688700Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+: [    3863b966]
+
+Certificate Extensions: 4
+[1]: ObjectId: 1.2.840.113533.7.65.0 Criticality=false
+Extension unknown: DER encoded OCTET string =
+0000: 04 10 30 0E 1B 08 56 35   2E 30 3A 34 2E 30 03 02  ..0...V5.0:4.0..
+0010: 04 90                                              ..
+
+
+[2]: ObjectId: 2.5.29.35 Criticality=false
+AuthorityKeyIdentifier [
+KeyIdentifier [
+0000: 55 E4 81 D1 11 80 BE D8   89 B9 08 A3 31 F9 A1 24  U...........1..$
+0010: 09 16 B9 70                                        ...p
+]
+]
+
+[3]: ObjectId: 2.16.840.1.113730.1.1 Criticality=false
+NetscapeCertType [
+   SSL CA
+   S/MIME CA
+   Object Signing CA]
+
+[4]: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 55 E4 81 D1 11 80 BE D8   89 B9 08 A3 31 F9 A1 24  U...........1..$
+0010: 09 16 B9 70                                        ...p
+]
+]
+
+]
+  Algorithm: [SHA1withRSA]
+  Signature:
+0000: 59 47 AC 21 84 8A 17 C9   9C 89 53 1E BA 80 85 1A  YG.!......S.....
+0010: C6 3C 4E 3E B1 9C B6 7C   C6 92 5D 18 64 02 E3 D3  .<
+2020-01-28T14:28:41.108856200Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+N>......].d...
+0020: 06 08 11 61 7C 63 E3 2B   9D 31 03 70 76 D2 A3 28  ...a.c.+.1.pv..(
+0030: A0 F4 BB 9A 63 73 ED 6D   E5 2A DB ED 14 A9 2B C6  ....cs.m.*....+.
+0040: 36 11 D0 2B EB 07 8B A5   DA 9E 5C 19 9D 56 12 F5  6..+......\..V..
+0050: 54 29 C8 05 ED B2 12 2A   8D F4 03 1B FF E7 92 10  T).....*........
+0060: 87 B0 3A B5 C3 9D 05 37   12 A3 C7 F4 15 B9 D5 A4  ..:....7........
+0070: 39 16 9B 53 3A 23 91 F1   A8 82 A2 6A 88 68 C1 79  9..S:#.....j.h.y
+0080: 02 22 BC AA A6 D6 AE DF   B0 14 5F B8 87 D0 DD 7C  ."........_.....
+0090: 7F 7B FF AF 1C CF E6 DB   07 AD 5E DB 85 9D D0 2B  ..........^....+
+00A0: 0D 33 DB 04 D1 E6 49 40   13 2B 76 FB 3E E9 9C 89  .3....I@.+v.>...
+00B0: 0F 15 CE 18 B0 85 78 21   4F 6B 4F 0E FA 36 67 CD  ......x!OkO..6g.
+00C0: 07 F2 FF 08 D0 E2 DE D9   BF 2A AF B8 87 86 21 3C  .........*....!<
+00D0: 04 CA B7 94 68 7F CF 3C   E9 98 D7 38 FF EC C0 D9  ....h..<...8....
+00E0: 50 F0 2E 4B 58 AE 46 6F   D0 2E C3 60 DA 72 55 72  P..KX.Fo...`.rUr
+00F0: BD 4C 45 9E 61 BA BF 84   81 92 03 D1 D2 
+2020-01-28T14:28:42.109848500Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+69 7C C5  .LE.a........i..
+
+]]]
+
+[2020-01-28T14:28:28.032+0000] [] [[1;92mINFO[0m] [NCLS-SECURITY-01002] [[1;94mjavax.enterprise.system.core.security[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221708032] [levelValue: 800] Java security manager is disabled.
+
+[2020-01-28T14:28:28.081+0000] [] [[1;92mINFO[0m] [NCLS-SECURITY-01010] [[1;94mjavax.enterprise.system.core.security[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221708081] [levelValue: 800] Entering Security Startup Service.
+
+[2020-01-28T14:28:28.091+0000] [] [[1;92mINFO[0m] [NCLS-SECURITY-01143] [[1;94mjavax.enterprise.system.core.security[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221708091] [levelValue: 800] Loading policy provider com.sun.enterprise.security.jacc.provider.SimplePolicyProvider.
+
+[2020-01-28T14:28:28.136+0000] [] [[1;92mINFO[0m] [NCLS-SECURITY-01011] [[1;94mjavax.enterprise.system.core.security[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221708136] [levelValue: 800] Se
+2020-01-28T14:28:43.111720100Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+curity Service(s) started successfully.
+
+[2020-01-28T14:28:28.908+0000] [] [[1;92mINFO[0m] [AS-WEB-GLUE-00198] [[1;94mjavax.enterprise.web[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221708908] [levelValue: 800] Created HTTP listener http-listener on host/port 0.0.0.0:8080
+
+[2020-01-28T14:28:28.985+0000] [] [[1;92mINFO[0m] [AS-WEB-GLUE-00200] [[1;94mjavax.enterprise.web[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221708985] [levelValue: 800] Created virtual server server
+
+[2020-01-28T14:28:29.709+0000] [] [[1;92mINFO[0m] [AS-WEB-GLUE-00201] [[1;94mjavax.enterprise.web[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221709709] [levelValue: 800] Virtual server server loaded default web module 
+
+[2020-01-28T14:28:33.407+0000] [] [[1;92mINFO[0m] [] [[1;94mjavax.enterprise.system.core[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713407] [levelValue: 800] ROOT was successfully deployed in 5,908 milliseconds.
+
+[2020-01-28T14:28:33.411+0000] [] [[1;92
+2020-01-28T14:28:44.112584400Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+mINFO[0m] [] [[1;94mPayaraMicro[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713411] [levelValue: 800] Deployed 1 archive(s)
+
+[2020-01-28T14:28:33.488+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713488] [levelValue: 800] Hazelcast Instance Unbound from JNDI at payara/Hazelcast
+
+[2020-01-28T14:28:33.489+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713489] [levelValue: 800] JSR107 Caching Provider Unbound from JNDI at payara/CachingProvider
+
+[2020-01-28T14:28:33.489+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713489] [levelValue: 800] JSR107 Cache Manager Unbound from JNDI at payara/CacheManager
+
+[2020-01-28T14:28:33.538+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[
+2020-01-28T14:28:45.113470Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713538] [levelValue: 800] Shutdown Hazelcast
+
+[2020-01-28T14:28:33.597+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713597] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:33.608+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713608] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:33.628+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713628] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:33.669+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.
+2020-01-28T14:28:46.114681900Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713669] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:33.750+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713750] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:33.914+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221713914] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca574077a7-datagrid
+
+[2020-01-28T14:28:34.235+0000] [] [[1;93mWARNING[0m] [] [[1;94mfish.payara.nucleus.hazelcast.DnsDiscoveryService[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221714235] [levelValue: 900] Unable to find DNS record for 6a94c593-7061-4fe6-94de-6bca5
+2020-01-28T14:28:47.116744700Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+74077a7-datagrid
+
+[2020-01-28T14:28:34.738+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221714738] [levelValue: 800] Hazelcast Instance Bound to JNDI at payara/Hazelcast
+
+[2020-01-28T14:28:34.739+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221714739] [levelValue: 800] JSR107 Caching Provider Bound to JNDI at payara/CachingProvider
+
+[2020-01-28T14:28:34.740+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.hazelcast.HazelcastCore[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221714740] [levelValue: 800] JSR107 Default Cache Manager Bound to JNDI at payara/CacheManager
+
+[2020-01-28T14:28:34.743+0000] [] [[1;92mINFO[0m] [] [[1;94mfish.payara.nucleus.cluster.PayaraCluster[0m] [tid: _ThreadID=97 _ThreadName=Executor-Service-11] [timeMillis: 1580221714743] [levelValue: 800] [[
+  Data Grid Status 
+Payara 
+2020-01-28T14:28:48.117054Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1024
+Data Grid State: DG Version: 35 DG Name: development DG Size: 1
+Instances: {
+ DataGrid: development Instance Group: MicroShoal Name: Bamboozled-Pufferfish Lite: false This: true UUID: 14b131eb-cb0c-4b8b-a704-1201e720db3d Address: /10.244.0.191:6900
+}]]
+
+[2020-01-28T14:28:34.782+0000] [] [[1;92mINFO[0m] [AS-WEB-GLUE-00130] [[1;94mjavax.enterprise.web[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221714782] [levelValue: 800] Invalid Session Management Configuration for non-distributable app [ROOT] - defaulting to memory: persistence-type = [hazelcast] / persistenceFrequency = [web-method] / persistenceScope = [modified-session]
+
+[2020-01-28T14:28:34.995+0000] [] [[1;92mINFO[0m] [AS-WEB-GLUE-00172] [[1;94mjavax.enterprise.web[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221714995] [levelValue: 800] Loading application [ROOT] at [/]
+
+[2020-01-28T14:28:35.203+0000] [] [[1;92mINFO[0m] [] [[1;94mPayaraMicro[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221715203] [levelV
+2020-01-28T14:28:49.119086500Z
+Log
+68a78ed6-41da-11ea-95a2-920d8d1d0d91
+1010
+alue: 800] [[
+  
+{
+    "Instance Configuration": {
+        "Host": "ui-77867f97dc-7lg5n",
+        "Http Port(s)": "8080",
+        "Https Port(s)": "",
+        "Instance Name": "Bamboozled-Pufferfish",
+        "Instance Group": "MicroShoal",
+        "Hazelcast Member UUID": "14b131eb-cb0c-4b8b-a704-1201e720db3d",
+        "Deployed": [
+            {
+                "Name": "ROOT",
+                "Type": "war",
+                "Context Root": "/"
+            }
+        ]
+    }
+}]]
+
+[2020-01-28T14:28:35.214+0000] [] [[1;92mINFO[0m] [] [[1;94mPayaraMicro[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221715214] [levelValue: 800] [[
+  
+Payara Micro URLs:
+http://ui-77867f97dc-7lg5n:8080/
+
+'ROOT' REST Endpoints:
+GET	/openapi/
+GET	/openapi/application.wadl
+
+]]
+
+[2020-01-28T14:28:35.214+0000] [] [[1;92mINFO[0m] [] [[1;94mPayaraMicro[0m] [tid: _ThreadID=1 _ThreadName=main] [timeMillis: 1580221715214] [levelValue: 800] Payara Micro  5.194 #badassmicrofish (build 327) ready in 19,002 (ms)
+
+
+2020-01-28T14:29:16.997991700Z
+Event
+Ingress
+MODIFIED
+{"apiVersion":"extensions/v1beta1","kind":"Ingress","metadata":{"annotations":{"kubernetes.io/ingress.class":"addon-http-application-routing"},"creationTimestamp":"2020-01-28T14:28:10Z","generation":1,"labels":{"app.kubernetes.io/component":"ingress","app.kubernetes.io/managed-by":"payara-cloud","app.kubernetes.io/name":"ui","app.kubernetes.io/part-of":"6a94c593-7061-4fe6-94de-6bca574077a7"},"name":"ui","namespace":"test-dev","resourceVersion":"4772578","selfLink":"/apis/extensions/v1beta1/namespaces/test-dev/ingresses/ui","uid":"68b774a0-41da-11ea-95a2-920d8d1d0d91"},"spec":{"rules":[{"host":"test-dev.9ba44192900145a88bfb.westeurope.aksapp.io","http":{"paths":[{"backend":{"serviceName":"ui","servicePort":80},"path":"/"}]}}]},"status":{"loadBalancer":{"ingress":[{"ip":"51.124.89.195"}]}}}

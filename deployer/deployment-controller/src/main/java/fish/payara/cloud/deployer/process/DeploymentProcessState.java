@@ -38,7 +38,6 @@
 
 package fish.payara.cloud.deployer.process;
 
-import javax.enterprise.event.Event;
 import java.io.File;
 import java.net.URI;
 import java.time.Instant;
@@ -48,6 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.concurrent.CompletionStage;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
@@ -88,7 +88,11 @@ public class DeploymentProcessState {
     private Instant lastStatusChange = Instant.now();
     private ChangeKind lastChange = ChangeKind.PROCESS_STARTED;
     private boolean configurable;
-    
+    private Instant endpointDeterminedAt;
+    private Instant endpointActivatedAt;
+    private Instant deploymentCompletedAt;
+    private DeploymentProcessLogOutput logOutput;
+   
     @JsonbTransient
     private Jsonb jsonb;
 
@@ -99,6 +103,13 @@ public class DeploymentProcessState {
         this.tempLocation = tempLocation;
         JsonbConfig jsonbConfig = new JsonbConfig();//.withSerializers(new ConfigurationSerializer());
         jsonb = JsonbBuilder.create(jsonbConfig);
+    }
+
+    DeploymentProcessState(String id, Namespace target, String name, File tempLocation) {
+        this.id = id;
+        this.namespace = target;
+        this.name = name;
+        this.tempLocation = tempLocation;
     }
 
     /**
@@ -246,12 +257,12 @@ public class DeploymentProcessState {
     public Instant getCompletion() {
         return completion;
     }
-    
-    CompletionStage<StateChanged> fireAsync(Event<StateChanged> event, ChangeKind kind) {
-        return event.select(kind.asFilter()).fireAsync(new StateChanged(this, kind));
-    }
 
-    ChangeKind fail(String message, Throwable exception) {
+    StateChanged start() {
+        return new StateChanged(this, ChangeKind.PROCESS_STARTED);
+    }
+    
+    StateChanged fail(String message, Throwable exception) {
         this.completionMessage = message;
         this.failureCause = exception;
         this.complete = true;
@@ -260,7 +271,7 @@ public class DeploymentProcessState {
         return transition(ChangeKind.FAILED);
     }
 
-    ChangeKind addConfiguration(Configuration configuration) {
+    StateChanged addConfiguration(Configuration configuration) {
         if (configurations.contains(configuration)) {
             throw new IllegalArgumentException("Matching configuration is already present");
         }
@@ -269,7 +280,7 @@ public class DeploymentProcessState {
         return transition(ChangeKind.CONFIGURATION_ADDED);
     }
 
-    ChangeKind setConfiguration(String kind, String id, boolean submit, Map<String, String> values) {
+    StateChanged setConfiguration(String kind, String id, boolean submit, Map<String, String> values) {
         var config = findConfiguration(kind, id);
         if (config.isPresent()) {
             config.get().updateConfiguration(values);
@@ -286,14 +297,19 @@ public class DeploymentProcessState {
         return configurations.stream().filter(c -> c.getKind().equals(kind) && c.getId().equals(id)).findAny();
     }
     
-    ChangeKind transition(ChangeKind target) {
-        version++;
-        lastStatusChange = Instant.now();
-        lastChange = target;
-        return target;
+    StateChanged transition(ChangeKind target) {
+        return transition(target::createEvent);
     }
 
-    ChangeKind submitConfigurations(boolean force) {
+    StateChanged transition(Function<DeploymentProcessState, StateChanged> eventSupplier) {
+        version++;
+        StateChanged event = eventSupplier.apply(this);
+        lastStatusChange = Instant.now();
+        lastChange = event.getKind();
+        return event;
+    }
+
+    StateChanged submitConfigurations(boolean force) {
         if (isConfigurationComplete()) {
             configurations.stream().forEach(c -> c.setSubmitted(true));
             configurable = false;
@@ -309,13 +325,13 @@ public class DeploymentProcessState {
         return configurations.stream().allMatch(Configuration::isComplete);
     }
 
-    ChangeKind removePersistentLocation() {
+    StateChanged removePersistentLocation() {
         version++;
         persistentLocation = null;
         return null; // no event broadcasted
     }
 
-    ChangeKind setPersistentLocation(URI location) {
+    StateChanged setPersistentLocation(URI location) {
         this.persistentLocation = location;
         return transition(ChangeKind.ARTIFACT_STORED);
     }
@@ -328,14 +344,41 @@ public class DeploymentProcessState {
         return getConfigValue(kind, getName(), key);
     }
 
-    ChangeKind setEndpoint(URI endpoint) {
+    StateChanged setEndpoint(URI endpoint) {
         this.endpoint = endpoint;
         return transition(ChangeKind.INGRESS_CREATED);
     }
 
-    ChangeKind provisionFinished() {
+    StateChanged provisionFinished() {
         this.complete = true;
         this.completion = Instant.now();
         return transition(ChangeKind.PROVISION_FINISHED);
+    }
+
+    StateChanged podCreated(String podName) {
+        this.podName = podName;
+        return transition(ChangeKind.POD_CREATED);
+    }
+
+    StateChanged logged(String chunk) {
+        if (logOutput == null) {
+            logOutput = new DeploymentProcessLogOutput();
+        }
+        logOutput.add(chunk);
+        return transition(state -> new LogProduced(state, chunk));
+    }
+
+    StateChanged deploymentFinished() {
+        deploymentCompletedAt = Instant.now();
+        return transition(ChangeKind.DEPLOYMENT_READY);
+    }
+
+    StateChanged endpointActivated() {
+        endpointActivatedAt = Instant.now();
+        return transition(ChangeKind.INGRESS_READY);
+    }
+
+    public boolean isReady() {
+        return endpointActivatedAt != null && deploymentCompletedAt != null;
     }
 }

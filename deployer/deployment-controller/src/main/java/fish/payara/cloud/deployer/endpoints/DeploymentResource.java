@@ -156,7 +156,7 @@ public class DeploymentResource {
         }
         if (state.isComplete()) {
             try (eventSink) {
-                eventSink.send(sse.newEvent(jsonb.toJson(process.getProcessState(id))));
+                eventSink.send(sse.newEvent("state", jsonb.toJson(process.getProcessState(id))));
                 return;
             }
         }
