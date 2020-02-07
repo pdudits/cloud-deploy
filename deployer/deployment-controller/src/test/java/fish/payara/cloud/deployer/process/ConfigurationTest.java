@@ -225,6 +225,59 @@ public class ConfigurationTest {
         conf.updateConfiguration(Map.of("optional","odd","number", "3", "biggerNumber","1"));
     }
 
+    @Test
+    public void unknownKeysAreRejectedWhenAdditionalKeysNotSupported() {
+        thrown.expectMessage("unknown: Unsupported configuration key");
+        conf.updateConfiguration(Map.of("optional","odd", "unknown", "boom!"));
+    }
+
+    @Test
+    public void additionalKeysAreAccepted() {
+        var extensible = new ExtensibleConfiguration();
+        extensible.updateConfiguration(Map.of("one", "1", "three", "3"));
+        assertTrue(extensible.getKeys().contains("three"));
+        assertTrue(extensible.getValue("three").isPresent());
+    }
+
+    @Test
+    public void updateKeysCanBeRejectedByCheckUpdate() {
+        var extensible = new ExtensibleConfiguration();
+        extensible.updateConfiguration(Map.of("unwanted", "ignored", "two", "also ignored"));
+        assertFalse(extensible.getKeys().contains("unwanted"));
+        assertFalse(extensible.getValue("unwanted").isPresent());
+        assertFalse(extensible.getValue("two").isPresent());
+    }
+
+    static class ExtensibleConfiguration extends Configuration {
+        public ExtensibleConfiguration() {
+            super("extensible");
+        }
+
+        @Override
+        public String getKind() {
+            return "extensible";
+        }
+
+        static final Set<String> BASE_KEYS = Set.of("one","two");
+        @Override
+        public Set<String> getKeys() {
+            return additionalKeysAnd(BASE_KEYS);
+        }
+
+        @Override
+        public boolean supportsAdditionalKeys() {
+            return true;
+        }
+
+        @Override
+        protected void checkUpdate(UpdateContext context) {
+            assertFalse("All updates to this contain additonal keys", context.additonalKeys().isEmpty());
+            context.remove("unwanted");
+            // up for consideration - can a base key be silently rejected?
+            context.remove("two");
+        }
+    }
+
     static class MockConfiguration extends Configuration {
         static final Set<String> KEYS = Set.of("required", "defaulted", "optional", "number", "biggerNumber");
 
@@ -259,6 +312,7 @@ public class ConfigurationTest {
 
         @Override
         protected void checkUpdate(UpdateContext context) {
+            super.checkUpdate(context);
             var number = context.key("number").convert(Integer::parseInt);
             var biggerNumber = context.key("biggerNumber")
                     .convertAndCheck(Integer::parseInt, bigger -> checkBigger(bigger, number));

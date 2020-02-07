@@ -40,12 +40,16 @@ package fish.payara.cloud.deployer.process;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Base class for deployment configuration.
@@ -63,6 +67,7 @@ public abstract class Configuration {
     private final String id;
     private boolean submitted;
     private final Map<String,String> updatedValues = new HashMap<>();
+    private final Set<String> additionalKeys = new HashSet<>();
 
     /**
      * Create configuration with given id.
@@ -110,6 +115,29 @@ public abstract class Configuration {
      * @return unmodifiable collection of keys
      */
     public abstract Set<String> getKeys();
+
+    /**
+     * Concatenate set of base keys with additonal keys
+     * This is helper method for configurations {@linkplain #supportsAdditionalKeys() supporting additonal keys} to
+     * include additional keys in return value of {@link #getKeys()}
+     * @param baseKeys base keys of the configuration
+     * @return concatenation of baseKeys and additonal keys
+     */
+    protected Set<String> additionalKeysAnd(Set<String> baseKeys) {
+        if (additionalKeys.isEmpty()) {
+            return baseKeys;
+        } else {
+            return Stream.concat(baseKeys.stream(), additionalKeys.stream()).collect(Collectors.toSet());
+        }
+    }
+
+    /**
+     * Indicate whether additional keys can be specified in update operation
+     * @return true if keys different to those reported by {@link #getKeys()} can be updated
+     */
+    public boolean supportsAdditionalKeys() {
+        return false;
+    }
 
     /**
      * Determine if a key is required in this configuration.
@@ -168,12 +196,18 @@ public abstract class Configuration {
      * During check operation, {@link #getValue(String)} method will return previous value for the key. To obtain
      * updated value, use {@link UpdateContext#getValue(String)}.
      * Runtime exceptions thrown from this method are added as validation errors in context active at time of throw.
+     * Default implementation reports error when unknown keys are present and {@link #supportsAdditionalKeys()} is false
      * @param context the context of the update
      * @see UpdateContext#convertAndCheck(Function, Consumer)
      * @see UpdateContext#key(String)
      * @see UpdateContext#addValidationError(String)
      */
     protected void checkUpdate(UpdateContext context) {
+        if (!supportsAdditionalKeys() && !context.additonalKeys().isEmpty()) {
+            context.additonalKeys().forEach(key -> {
+               context.key(key).addValidationError("Unsupported configuration key");
+            });
+        }
     }
 
 
@@ -188,7 +222,8 @@ public abstract class Configuration {
             ctx.addValidationError(t.getMessage());
         }
         if (ctx.isValid()) {
-            updatedValues.putAll(values);
+            updatedValues.putAll(ctx.updateValues);
+            additionalKeys.addAll(ctx.additionalKeys);
         } else {
             throw new ConfigurationValidationException(getKind(), getId(), ctx.mainValidationError, ctx.validationErrors);
         }
@@ -239,12 +274,15 @@ public abstract class Configuration {
     protected class UpdateContext {
         private final Map<String, String> updateValues;
         private final Map<String, String> validationErrors = new HashMap<>();
+        private final HashSet<String> additionalKeys;
         private String mainValidationError;
         private String validationContext;
 
 
         private UpdateContext(Map<String,String> values) {
-            this.updateValues = Collections.unmodifiableMap(Objects.requireNonNull(values, "values are required for update"));
+            this.updateValues = new HashMap<>(Objects.requireNonNull(values, "values are required for update"));
+            this.additionalKeys = new HashSet<>(values.keySet());
+            additionalKeys.removeAll(getKeys());
         }
 
         /**
@@ -275,6 +313,13 @@ public abstract class Configuration {
         }
 
         /**
+         * List of keys not listed in {@link Configuration#getKeys()}
+         */
+        public Set<String> additonalKeys() {
+            return additionalKeys;
+        }
+
+        /**
          * Check if value is updated in this operation
          * @param key key to check
          * @return true if value is updated in this operation
@@ -294,6 +339,18 @@ public abstract class Configuration {
             } else {
                 return Configuration.this.getValue(key);
             }
+        }
+
+        /**
+         * Remove a key from updated keys.
+         * Configuration can accept additional keys, but may ignore some of them and decide not to store them.
+         * In such case a key can be removed
+         * @param key key to remove
+         * @return true if key was present in updated keys
+         */
+        public boolean remove(String key) {
+            additionalKeys.remove(key);
+            return updateValues.remove(key) != null;
         }
 
         /**
