@@ -67,7 +67,8 @@ public interface Inspection {
         boolean isDirectory();
         Optional<ArtifactEntry> getParent();
 
-        boolean matches(String regExp);
+        boolean pathMatches(String regExp);
+        boolean classpathMatches(String regExp);
 
         InputStream getInputStream() throws IOException;
     }
