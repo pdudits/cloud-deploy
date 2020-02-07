@@ -43,7 +43,6 @@ import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,7 +56,7 @@ import java.util.function.Function;
  */
 @ApplicationScoped
 public class DeploymentProcess {
-    private ConcurrentHashMap<String, DeploymentProcessState> runningProcesses = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, DeploymentProcessState> runningProcesses = new ConcurrentHashMap<>();
 
     @Inject
     Event<StateChanged> deploymentEvent;
@@ -73,6 +72,11 @@ public class DeploymentProcess {
         var processState = new DeploymentProcessState(target, name, artifactLocation);
         return start(processState);
     }
+    
+    public DeploymentProcessState startWithDefaultConfiguration(File artifactLocation, String name, Namespace target) {
+        var processState = new DeploymentProcessState(target, name, artifactLocation, true);
+        return start(processState);
+    }    
 
     DeploymentProcessState start(DeploymentProcessState processState) {
         runningProcesses.put(processState.getId(), processState);

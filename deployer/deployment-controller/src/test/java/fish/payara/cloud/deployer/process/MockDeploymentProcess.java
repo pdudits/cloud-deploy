@@ -114,6 +114,6 @@ public class MockDeploymentProcess {
     }
 
     public static DeploymentProcessState startFixedIDProcess(String id, String name, Namespace namespace, File tempLocation) {
-        return get().start(new DeploymentProcessState(id, namespace, name, tempLocation));
+        return get().start(new DeploymentProcessState(id, namespace, name, tempLocation, false));
     }
 }

@@ -59,6 +59,9 @@
                 <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
                 <label for="artifact">Artifact</label>
                 <input type="file" accept=".war" id="artifact" name="artifact">
+                <fieldset>
+                    <input type="checkbox" id="defaultConfig" name="defaultConfig" value="true"> <label for="defaultConfig">Use default configuration</label>
+                </fieldset>
                 <input type="submit" value="Deploy">
             </form>
         </main>

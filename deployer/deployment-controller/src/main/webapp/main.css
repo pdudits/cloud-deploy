@@ -107,8 +107,13 @@ form {
     grid-template-columns: 5em [main] auto;
     grid-gap: 0.5em
 }
-input[type=submit] {
+input[type=submit], fieldset {
     grid-column: main;
+}
+
+fieldset {
+    border: 0 none;
+    padding-left: 0;
 }
 
 progress {
