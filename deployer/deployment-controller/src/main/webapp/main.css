@@ -41,7 +41,11 @@ html,body {
     padding: 0;
     margin: 0;
     height: 100%;
-    color: #dae0e2;
+}
+
+body {
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 .light {
@@ -63,7 +67,9 @@ header, footer {
 }
 
 footer {
+    color: #FFFFFF;
     text-align: center;
+    margin-top: 112px;
     width: 100%;
     position: fixed;
     bottom: 0;
@@ -82,7 +88,7 @@ main {
 }
 
 h1,h2,h3,.primary-orange,h1 a {
-    color: #f0981b
+    color: #f0981b;
 }
 
 h2, div.result {
@@ -112,23 +118,22 @@ img {
     color: #434445;
 }
 
+.secondary-white {
+    color: #FFFFFF;
+}
+
 form {
     background-color: #dae0e2;
     color: #434445;
     margin-top: 56px;
-    padding: 48px;
+    padding: 0px 48px 56px 48px;
     display: grid;
-    grid-template-rows: 5em [main] auto;
-}
-input {
-    grid-column: main auto;
 }
 
 label {
     color: #434445;
     font-size: 16px;
     font-weight: 500;
-    grid-column: main auto;
     margin-bottom: 8px;
 }
 
@@ -187,9 +192,58 @@ progress {
     transform: translate(0px, 2px);
 }
 
+.pending {
+    background-color: #4E5A5E;
+}
+
+.success {
+    background-color: #006729;
+}
+
+.failed {
+    background-color: #9B1200;
+}
+
 #log {
     width: 100%;
     background: transparent;
     color: #0f9;
     border: 1px solid #f0981b;
+}
+
+p {
+    margin-top: 1.5rem;
+}
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.625rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+h4, h5, h6 {
+    font-size: 1rem;
+}
+
+checkbox, radio {
+    border-color: #86979c;
+    border-radius: 3px;
+    border-style: solid;
+    border-width: 1px;
+    height: 24px;
+    width: 24px;
+}
+
+checkbox:hover, radio:hover {
+    border-color: #b5bfc2;
+}
+
+checkbox:focus, radio:focus {
+    border-color: #FFFFFF;
+    box-shadow: 0 0 0 2px #008fcb;
 }

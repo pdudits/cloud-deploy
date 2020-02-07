@@ -42,28 +42,29 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core">
     <ui:define name="main">
         <h2>Deployment #{deployment.name}</h2>
-        <nav>
+        <main>
         <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
-        </nav>
-        <main><div id="status">
+        <div id="status">
         <c:choose>
             <c:when test="#{deployment.failed}">
                 <h3>Failed</h3>
                 <p>#{deployment.completionMessage}</p>
             </c:when>
             <c:when test="#{deployment.ready}">
+                <div class="success secondary-white">
                 <h3>Success!</h3>
                 <p>#{deployment.completionMessage}</p>
-                <div class="result">
+                <div class="result secondary-white">
                     <a href="#{deployment.endpoint}" target="_blank">#{deployment.endpoint}</a>
+                </div>
                 </div>
             </c:when>
             <c:when test="#{deployment.configurable}">
-                <p>Configuration pending</p>
+                <p class="pending secondary-white">Configuration pending</p>
             </c:when>
             <c:otherwise>
                 <progress/>
-                <p>Deploying...</p>
+                <p class="pending secondary-white">Deploying...</p>
                 <p>#{deployment.lastStatusChange} #{deployment.lastChange}</p>
             </c:otherwise>
         </c:choose>
