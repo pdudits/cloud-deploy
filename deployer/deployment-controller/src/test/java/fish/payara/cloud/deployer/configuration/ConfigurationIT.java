@@ -96,4 +96,14 @@ public class ConfigurationIT {
         deployment.submitConfigurations(process);
         observer.await(ChangeKind.CONFIGURATION_FINISHED);
     }
+    
+    @Test
+    public void configurationIsAutomaticallySubmittedWhenUsingDefaults() {
+        var testFile = write(ShrinkWrap.create(WebArchive.class)
+                .addAsManifestResource(new StringAsset("artifactId=maven-artifact"), "maven/fish.payara.cloud.test/test/pom.properties"));
+        observer.reset();
+        var process = deployment.startWithDefaultConfiguration(testFile, "test-app.war", new Namespace("test","dev"));
+        observer.await(ChangeKind.CONFIGURATION_STARTED);
+        observer.await(ChangeKind.CONFIGURATION_FINISHED);
+    }    
 }

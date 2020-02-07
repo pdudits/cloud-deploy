@@ -68,6 +68,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -110,9 +111,10 @@ public class DeploymentResource {
     @Consumes({MediaType.APPLICATION_OCTET_STREAM, "application/java-archive"})
     @Path("{project}/{stage}/{name}")
     public Response uploadWar(@PathParam("project") String project, @PathParam("stage") String stage,
-                              @PathParam("name") String name, InputStream uploadWar) {
+                              @PathParam("name") String name, @QueryParam("defaultConfig") boolean useDefaultConfiguration, 
+                              InputStream uploadWar) {
         try {
-            DeploymentProcessState state = startDeployment(project, stage, name, uploadWar);
+            DeploymentProcessState state = startDeployment(project, stage, name, uploadWar, useDefaultConfiguration);
 
             return Response.status(Response.Status.CREATED).entity(state.getId()).build();
         } catch (IOException ex) {
@@ -121,23 +123,28 @@ public class DeploymentResource {
         }
     }
 
-    private DeploymentProcessState startDeployment(String project, String stage, String name, InputStream uploadWar) throws IOException {
+    private DeploymentProcessState startDeployment(String project, String stage, String name, InputStream uploadWar, boolean useDefaultConfiguration) throws IOException {
         java.nio.file.Path tempFile = Files.createTempFile("upload", ".war");
         long bytesRead = Files.copy(uploadWar, tempFile, StandardCopyOption.REPLACE_EXISTING);
         if (bytesRead == 0) {
             throw new BadRequestException("Empty file");
         }
 
-        return process.start(tempFile.toFile(), name, new Namespace(project, stage));
+        if (useDefaultConfiguration) {
+            return process.startWithDefaultConfiguration(tempFile.toFile(), name, new Namespace(project, stage));
+        } else {
+            return process.start(tempFile.toFile(), name, new Namespace(project, stage));
+        }
     }
 
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response uploadWarForm(@FormDataParam("project") String project, @FormDataParam("stage") String stage,
+                                  @FormDataParam("defaultConfig") boolean useDefaultConfiguration,
                                   @FormDataParam("artifact") InputStream artifact,
                                   @FormDataParam("artifact") FormDataContentDisposition fileDisposition, @Context UriInfo uri) {
         try {
-            var state = startDeployment(project, stage, fileDisposition.getFileName(), artifact);
+            var state = startDeployment(project, stage, fileDisposition.getFileName(), artifact, useDefaultConfiguration);
             return Response.seeOther(uri.resolve(URI.create("deployment/"+state.getId()+"/"))).build();
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Error in file upload", e);
