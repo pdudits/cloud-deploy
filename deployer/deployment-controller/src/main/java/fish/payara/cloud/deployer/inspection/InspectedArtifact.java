@@ -138,8 +138,16 @@ public class InspectedArtifact {
         }
 
         @Override
-        public boolean matches(String regExp) {
+        public boolean pathMatches(String regExp) {
             return getName().matches(regExp);
+        }
+
+        private static final String WAR_CLASS_ROOT="WEB-INF/classes/";
+
+        @Override
+        public boolean classpathMatches(String regExp) {
+            // for now we hardcode .war file path
+            return getName().startsWith(WAR_CLASS_ROOT) && getName().substring(WAR_CLASS_ROOT.length()).matches(regExp);
         }
     }
 }

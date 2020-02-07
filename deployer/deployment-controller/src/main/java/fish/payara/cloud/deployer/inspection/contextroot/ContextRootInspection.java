@@ -41,17 +41,12 @@ package fish.payara.cloud.deployer.inspection.contextroot;
 import fish.payara.cloud.deployer.inspection.InspectedArtifact;
 import fish.payara.cloud.deployer.inspection.Inspection;
 import fish.payara.cloud.deployer.inspection.InspectionException;
-import org.w3c.dom.NodeList;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.enterprise.context.Dependent;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathEvaluationResult;
 import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathNodes;
 import java.io.IOException;
@@ -72,9 +67,9 @@ class ContextRootInspection implements Inspection {
 
     @Override
     public void inspect(ArtifactEntry entry, InspectedArtifact artifact) throws IOException {
-        if (entry.matches("META-INF/maven/[^/]+/[^/]+/pom.properties")) {
+        if (entry.pathMatches("META-INF/maven/[^/]+/[^/]+/pom.properties")) {
             inspectPomProperties(entry);
-        } else if (entry.matches("WEB-INF/glassfish-web.xml")) {
+        } else if (entry.pathMatches("WEB-INF/glassfish-web.xml")) {
             inspectGlassfishDescriptor(entry);
         }
     }
