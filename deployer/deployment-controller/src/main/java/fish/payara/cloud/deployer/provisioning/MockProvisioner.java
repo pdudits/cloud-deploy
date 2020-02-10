@@ -70,4 +70,9 @@ class MockProvisioner implements Provisioner {
     private void failDeployment(DeploymentProcessState deployment) {
         process.fail(deployment, "Provisioning is not enabled in this configuration", null);
     }
+
+    @Override
+    public boolean delete(DeploymentProcessState deployment) {
+        return false;
+    }
 }

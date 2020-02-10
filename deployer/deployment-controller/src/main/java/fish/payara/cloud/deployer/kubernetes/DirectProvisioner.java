@@ -57,6 +57,7 @@ import java.net.URI;
 import java.util.logging.Logger;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
+import java.util.logging.Level;
 
 @DirectProvisioning
 @ApplicationScoped
@@ -74,6 +75,7 @@ class DirectProvisioner implements Provisioner {
     DeploymentProcess process;
 
 
+    @Override
     public void provision(DeploymentProcessState deployment) throws ProvisioningException {
         var naming = new Naming(deployment);
         try {
@@ -83,7 +85,7 @@ class DirectProvisioner implements Provisioner {
             provisionDeployment(naming);
             var uri = provisionIngress(naming);
             process.endpointDetermined(deployment, uri);
-            LOGGER.info("Provisioned " + deployment.getId() + " at "+uri);
+            LOGGER.log(Level.INFO, "Provisioned {0} at {1}", new Object[]{deployment.getId(), uri});
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
@@ -118,6 +120,13 @@ class DirectProvisioner implements Provisioner {
         var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
         var namespacedClient = namespace == null ? client : client.inNamespace(namespace);
         return namespacedClient.resource((HasMetadata) Serialization.unmarshal(resource, KubernetesResource.class)).createOrReplace();
+    }
+
+    @Override
+    public boolean delete(DeploymentProcessState deployment) {
+        var naming = new Naming(deployment);
+        var serverNamespace = client.namespaces().withName(naming.getNamespace()).get();
+        return client.namespaces().delete(serverNamespace);
     }
 
     class Naming {

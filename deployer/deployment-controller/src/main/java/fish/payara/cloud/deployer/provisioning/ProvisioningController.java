@@ -155,6 +155,10 @@ class ProvisioningController {
             }
         }
     }
+    
+    void deleteProvision(@ObservesAsync @ChangeKind.Filter(ChangeKind.DELETE_STARTED) StateChanged event) {
+        provisioner.delete(event.getProcess());
+    }
 
     static class DeploymentInProvisioning {
         private final DeploymentProcessState process;

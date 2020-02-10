@@ -60,4 +60,11 @@ public interface Provisioner {
      * @throws ProvisioningException in case of deployment misconfiguration or backend error
      */
     void provision(DeploymentProcessState deployment) throws ProvisioningException;
+    
+    /**
+     * Unprovision the deployment.
+     * @param deployment deployment to delete
+     * @return true if the deployment was successfully unprovisioned.
+     */
+    boolean delete(DeploymentProcessState deployment);
 }
