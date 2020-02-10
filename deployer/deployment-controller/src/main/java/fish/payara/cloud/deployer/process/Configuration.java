@@ -222,11 +222,18 @@ public abstract class Configuration {
             ctx.addValidationError(t.getMessage());
         }
         if (ctx.isValid()) {
-            updatedValues.putAll(ctx.updateValues);
             additionalKeys.addAll(ctx.additionalKeys);
+            updatedValues.putAll(ctx.updateValues);
+            ctx.removedKeys.forEach(updatedValues::remove);
+            ctx.removedAdditionalKeys.forEach(additionalKeys::remove);
+            removeDefaultValues();
         } else {
             throw new ConfigurationValidationException(getKind(), getId(), ctx.mainValidationError, ctx.validationErrors);
         }
+    }
+
+    private void removeDefaultValues() {
+        updatedValues.entrySet().removeIf(entry -> Objects.equals(entry.getValue(), getDefaultValue(entry.getKey()).orElse(null)));
     }
 
     /**
@@ -264,6 +271,10 @@ public abstract class Configuration {
         updatedValues.clear();
     }
 
+    public boolean hasOverrides() {
+        return !updatedValues.isEmpty();
+    }
+
     /**
      * The context of the update. Method {@link #checkUpdate(UpdateContext)} utilize this class to validate fields
      * and report validation errors.
@@ -274,15 +285,28 @@ public abstract class Configuration {
     protected class UpdateContext {
         private final Map<String, String> updateValues;
         private final Map<String, String> validationErrors = new HashMap<>();
-        private final HashSet<String> additionalKeys;
+        private final HashSet<String> additionalKeys = new HashSet<>();
+        private final HashSet<String> removedAdditionalKeys = new HashSet<>();
+        private final HashSet<String> removedKeys = new HashSet<>();
         private String mainValidationError;
         private String validationContext;
 
 
         private UpdateContext(Map<String,String> values) {
             this.updateValues = new HashMap<>(Objects.requireNonNull(values, "values are required for update"));
-            this.additionalKeys = new HashSet<>(values.keySet());
-            additionalKeys.removeAll(getKeys());
+            this.updateValues.entrySet().forEach(entry -> {
+                var key = entry.getKey();
+                boolean isAdditionalKey = Configuration.this.additionalKeys.contains(key) || !getKeys().contains(key);
+                if (isAdditionalKey) {
+                    additionalKeys.add(key);
+                }
+                if (entry.getValue() == null) {
+                    removedKeys.add(key);
+                    if (isAdditionalKey) {
+                        removedAdditionalKeys.add(key);
+                    }
+                }
+            });
         }
 
         /**

@@ -42,6 +42,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -104,10 +105,12 @@ public class ConfigurationTest {
     public void configWithRequiredFieldsOverridenIsComplete() {
         conf.updateConfiguration(Map.of("required", "value"));
         assertTrue("Configuration with required fields filled should be complete", conf.isComplete());
+        assertTrue("Presence of overriden value is reported", conf.hasOverrides());
     }
 
     @Test
     public void configWithNoRequiredFieldsIsComplete() {
+        assertFalse("No overriden values are reported", conf.hasOverrides());
         assertTrue("Configuration with no required fields should be complete", simple.isComplete());
     }
 
@@ -246,6 +249,27 @@ public class ConfigurationTest {
         assertFalse(extensible.getKeys().contains("unwanted"));
         assertFalse(extensible.getValue("unwanted").isPresent());
         assertFalse(extensible.getValue("two").isPresent());
+    }
+
+    @Test
+    public void updatingToDefaultValueClearsOverrideFlag() {
+        assertFalse("Clean configuration should not have any overrides", conf.hasOverrides());
+        conf.updateConfiguration(Map.of("defaulted","otherValue"));
+        assertTrue("Adding an override is reflected in flag", conf.hasOverrides());
+        conf.updateConfiguration(Map.of("defaulted", "DefaultValue"));
+        assertFalse("Reverting to default value should clean override flag", conf.hasOverrides());
+    }
+
+    @Test
+    public void nullValueForAdditionalKeyRemovesKey() {
+        var extensible = new ExtensibleConfiguration();
+        extensible.updateConfiguration(Map.of("three", "3"));
+        assertTrue("Changing only additonal key is an override", extensible.hasOverrides());
+        var removingMap = new HashMap<String,String>();
+        removingMap.put("three", null); // Map.of doesn't support null values
+        extensible.updateConfiguration(removingMap);
+        assertFalse("Setting null value should remove additonal key", extensible.getKeys().contains("three"));
+        assertFalse(extensible.hasOverrides());
     }
 
     static class ExtensibleConfiguration extends Configuration {
