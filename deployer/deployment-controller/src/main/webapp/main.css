@@ -105,7 +105,7 @@ h1 a {
     color: #0096d6;
 }
 
-img {
+img.logo {
     width: 10em;
 }
 
@@ -230,7 +230,7 @@ h4, h5, h6 {
     font-size: 1rem;
 }
 
-checkbox, radio {
+input[type=checkbox], input[type=radio] {
     border-color: #86979c;
     border-radius: 3px;
     border-style: solid;
