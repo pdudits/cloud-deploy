@@ -41,13 +41,11 @@ html,body {
     padding: 0;
     margin: 0;
     height: 100%;
-    background-color: #002c3e;
-    color: #dae0e2;
 }
 
 body {
-    margin: auto;
-    width: 40rem;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 .light {
@@ -59,30 +57,44 @@ body {
 }
 
 header, header h1 a, header h1 {
-    background-color: #f0981b;
-    color:  #1b2c3d;
+    color: #F0981B;
+    
 }
 
-header {
+header, footer {
+    background-color: #002c3e;
     border-bottom: 2px solid #ae6e2b
 }
 
-header, h2, div.result {
-    margin: 0;
+footer {
+    color: #FFFFFF;
+    text-align: center;
+    margin-top: 112px;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+}
+
+header h1, h2, div.result {
+    margin: auto;
+    width: 40rem;
     padding: 1rem;
 }
 
 main {
+    margin: auto;
+    width: 40rem;
     margin-top: 2rem;
 }
 
 h1,h2,h3,.primary-orange,h1 a {
-    color: #f0981b
+    color: #f0981b;
 }
 
 h2, div.result {
-    background-color:  #e8eff2;
-    background: linear-gradient(white 40%, #bfd3db)
+    margin-top: 24px;
+    text-align: center;
+    color: #002c3e;
 }
 
 h1 a {
@@ -91,6 +103,10 @@ h1 a {
 
 .secondary-blue {
     color: #0096d6;
+}
+
+img.logo {
+    width: 10em;
 }
 
 .secondary-light {
@@ -102,13 +118,48 @@ h1 a {
     color: #434445;
 }
 
-form {
-    display: grid;
-    grid-template-columns: 5em [main] auto;
-    grid-gap: 0.5em
+.secondary-white {
+    color: #FFFFFF;
 }
-input[type=submit] {
-    grid-column: main;
+
+form {
+    background-color: #dae0e2;
+    color: #434445;
+    margin-top: 56px;
+    padding: 0px 48px 56px 48px;
+    display: grid;
+}
+
+label {
+    color: #434445;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+sup {
+    color: #9B1200;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.hint {
+    background-color: #4E5A5E;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 3px;
+    padding: 4px;
+    margin: 12px;
+    cursor: pointer;
+    transition-delay: 0.3s;
+    transition-property: transform;
+    transition-timing-function: ease-out;
+}
+
+.hint:hover {
+    transform: rotate(45deg);
 }
 
 progress {
@@ -117,9 +168,82 @@ progress {
     margin: auto;
 }
 
+.button {
+    color: #101012;
+    background-color: #dae0e2;
+    border-radius: 3px;
+    font-size: 16px;
+    line-height: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 12px 24px;
+    transition-delay: 0.1s;
+    transition-property: transform;
+    box-shadow: 0 -1px 0 0 rgba(134,151,156,128) inset;
+        
+}
+
+.button.highlight {
+    background-color: #F0981B;
+    box-shadow: 0 -1px 0 0 rgba(128,74,0,128) inset;
+}
+
+.button:hover {
+    transform: translate(0px, 2px);
+}
+
+.pending {
+    background-color: #4E5A5E;
+}
+
+.success {
+    background-color: #006729;
+}
+
+.failed {
+    background-color: #9B1200;
+}
+
 #log {
     width: 100%;
     background: transparent;
     color: #0f9;
     border: 1px solid #f0981b;
+}
+
+p {
+    margin-top: 1.5rem;
+}
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.625rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+h4, h5, h6 {
+    font-size: 1rem;
+}
+
+input[type=checkbox], input[type=radio] {
+    border-color: #86979c;
+    border-radius: 3px;
+    border-style: solid;
+    border-width: 1px;
+    height: 24px;
+    width: 24px;
+}
+
+checkbox:hover, radio:hover {
+    border-color: #b5bfc2;
+}
+
+checkbox:focus, radio:focus {
+    border-color: #FFFFFF;
+    box-shadow: 0 0 0 2px #008fcb;
 }

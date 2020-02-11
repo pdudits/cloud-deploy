@@ -46,21 +46,24 @@
     </head>
     <body>
         <header>
-            <h1>Payara Cloud Deploy</h1>
+            <h1><img src="images/logo.svg" alt="Payara" class="logo"/>Cloud Deploy</h1>
         </header>
         <h2>
             What shall we deploy?
         </h2>
         <main>
-            <form enctype="multipart/form-data" action="/api/deployment" method="post">
-                <label for="project">Project</label>
+            <form enctype="multipart/form-data" action="api/deployment" method="post">
+                <p><label for="project">Project <sup>(required)</sup></label><a class="hint">?</a></p>
                 <input id="project" name="project" required type="text" pattern="[a-zA-Z0-9-]{4,30}" placeholder="DNS-like name, at least 4 characters (required)">
-                <label for="stage">Stage</label>
+                <p><label for="stage">Stage <sup>(required)</sup></label><a class="hint">?</a></p>
                 <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
-                <label for="artifact">Artifact</label>
-                <input type="file" accept=".war" id="artifact" name="artifact">
-                <input type="submit" value="Deploy">
+                <p><label for="artifact">Artifact <sup>(required)</sup></label><a class="hint">?</a></p>
+                <input type="file" accept=".war" id="artifact" name="artifact" class="button" required/>
+                <input type="submit" value="Deploy" class="button highlight">
             </form>
         </main>
+        <footer>
+            &#169; 2020 Payara Services Ltd.
+        </footer>
     </body>
 </html>

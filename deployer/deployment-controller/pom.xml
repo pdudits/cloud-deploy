@@ -230,6 +230,7 @@
                                     <value>${project.build.directory}/micro-root</value>
                                 </option>
                             </commandLineOptions>
+                            <skip>${skipTests}</skip>
                         </configuration>
                     </execution>
                     <execution>
