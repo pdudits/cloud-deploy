@@ -135,7 +135,7 @@ section {
     border-radius: 6px;
 }
 
-main > form, form.block {
+main > form, form.block, .form {
     background-color: rgba(218,224,226,0.5);
     color: #434445;
     display: grid;

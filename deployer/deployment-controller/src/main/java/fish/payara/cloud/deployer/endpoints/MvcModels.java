@@ -47,6 +47,7 @@ import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.Optional;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Model;
 import javax.enterprise.inject.Produces;
@@ -73,7 +74,13 @@ class MvcModels {
 
     @Produces @Model
     public ConfigBean getConfig() {
-        return deployment == null ? null : ConfigBean.forDeploymentProcess(deployment);
+        if (config != null) {
+            return config;
+        }
+        if (deployment != null) {
+            return ConfigBean.forDeploymentProcess(deployment);
+        }
+        return null;
     }
 
     @Produces @Model
@@ -99,5 +106,9 @@ class MvcModels {
     @Produces @Model
     public String lastStateTimestamp() {
         return deployment == null || deployment.getLastStatusChange() == null ? null : SHORT_TIME.format(deployment.getLastStatusChange());
+    }
+
+    void setConfig(ConfigBean configBean) {
+        config = configBean;
     }
 }

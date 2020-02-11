@@ -65,6 +65,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Form;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.UriInfo;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
@@ -102,6 +103,53 @@ public class ConfigurationResource {
         }
         return ConfigBean.forDeploymentProcess(state);
     }
+    
+    @GET
+    @Produces(MediaType.TEXT_HTML)
+    @Controller
+    public Response getConfiguration(@PathParam("deploymentId") String id, @Context UriInfo uriInfo) {
+        // you might get here when refreshing invalid input.
+        DeploymentProcessState state = process.getProcessState(id);
+        return redirectToDeployment(uriInfo, state);
+    }    
+    
+    @POST
+    @Produces(MediaType.TEXT_HTML)
+    @Controller
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public Response configAll(@PathParam("deploymentId") String deploymentId, FormDataMultiPart form, @Context UriInfo uriInfo) {
+        DeploymentProcessState state = findDeployment(deploymentId);
+        
+        Map<String,String> singleValues = form.getFields().entrySet().stream()
+                .collect(toMap(e -> e.getKey(), e -> e.getValue().get(0).getValue()));
+        
+        var configBean = ConfigBean.forDeploymentProcess(state);
+        
+        configBean.applyValuesFrom(singleValues);
+        
+        state = configBean.configStream().filter(ConfigBean.Config::hasUpdates)
+                .reduce(state, 
+                        (st, config) -> {
+                            try {
+                                return process.setConfiguration(st, config.getId().getKind(), config.getId().getId(), false, config.updates());
+                            } catch (ConfigurationValidationException cve) {
+                                config.setMessages(cve);
+                                return st;
+                            }
+                        },
+                        (s1, s2) -> s1.getVersion() > s2.getVersion() ? s1 : s2);
+        
+        if (configBean.hasErrors()) {
+            models.setConfig(configBean);
+            models.setDeployment(state);
+            return Response.status(Status.BAD_REQUEST).entity("deployment.xhtml").build();
+        } else {
+            if (state.isConfigurationComplete()) {
+                process.submitConfigurations(state);
+            }
+            return redirectToDeployment(uriInfo, state);
+        }
+    }    
 
     private DeploymentProcessState findDeployment(String deploymentId) throws NotFoundException {
         DeploymentProcessState state = process.getProcessState(deploymentId);
