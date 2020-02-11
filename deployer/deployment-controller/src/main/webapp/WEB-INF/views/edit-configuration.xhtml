@@ -46,11 +46,13 @@
         <main>
             <c:set var="elementId" value="config-${configKind}-${configId.replace('.','-')}"/>
             <div id="${elementId}">
-                <form method="post" up-target="#${elementId}" enctype="application/x-www-form-urlencoded">
+                <form method="post" up-target="#${elementId}" enctype="application/x-www-form-urlencoded" class="block">
                 <c:set var="currentConfig" value="${config.kind[configKind][configId]}"/>
                 <c:forEach items="${currentConfig.keydetails}" var="key">
+                    <div class="field">
                     <label for="${key.name}">${key.name}</label>
                     <input id="${key.name}" name="${key.name}" value="${currentConfig.values[key.name]}"/>
+                    </div>
                 </c:forEach>
                 <input type="submit" value="Save"/>
             </form>

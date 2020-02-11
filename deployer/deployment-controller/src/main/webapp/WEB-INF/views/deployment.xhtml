@@ -61,7 +61,7 @@
                 </div>
                     </c:when>
                     <c:when test="#{deployment.configurable}">
-                <p class="pending secondary-white">Configuration pending</p>
+                        <section class="pending secondary-white"><h3>Configuration pending</h3>
                         <c:choose>
                             <c:when test="${deployment.configurationComplete}">
                                 <form action="configuration/submit" method="post" up-target="#status"><button>Confirm configured values</button></form>
@@ -70,12 +70,15 @@
                                 <p>Some of configuration objects below need your attention</p>
                             </c:otherwise>
                         </c:choose>
+                    </section>
 
 
                         <c:forEach items="${config.order}" var="configKey">
+                            <section>
                             <comp:view-single-config config-id="${configKey.id}" kind="${configKey.kind}"
                                                      config="${config.kind[configKey.kind][configKey.id]}"
                                                      />
+                            </section>
                         </c:forEach>
                     </c:when>
                     <c:otherwise>
