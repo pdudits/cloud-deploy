@@ -57,6 +57,7 @@ import java.net.URI;
 import java.util.logging.Logger;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
+import javax.json.bind.JsonbBuilder;
 
 @DirectProvisioning
 @ApplicationScoped
@@ -118,6 +119,16 @@ class DirectProvisioner implements Provisioner {
         var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
         var namespacedClient = namespace == null ? client : client.inNamespace(namespace);
         return namespacedClient.resource((HasMetadata) Serialization.unmarshal(resource, KubernetesResource.class)).createOrReplace();
+    }
+    
+    /**
+     * Gets a list of namespaces that have been provisioned, in JSON format
+     * @return provisioned namespaces
+     */
+    @Override
+    public String getNamespacesAsJson() {
+        var namespacesList = client.namespaces().list().getItems();
+        return JsonbBuilder.create().toJson(namespacesList);
     }
 
     class Naming {
