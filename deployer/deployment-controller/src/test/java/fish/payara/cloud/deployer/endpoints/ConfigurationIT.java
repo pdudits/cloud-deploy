@@ -123,7 +123,7 @@ public class ConfigurationIT {
 
         var client = ClientBuilder.newClient().target(uri).path("api/deployment/").path(state.getId());
 
-        var submittedConfigState = client.path("configuration/").queryParam("submit", "true").request().post(null, ConfigBean.class);
+        var submittedConfigState = client.path("configuration/").queryParam("submit", "true").request(APPLICATION_JSON_TYPE).post(null, ConfigBean.class);
 
         assertNotNull(submittedConfigState.getKind().get(KIND));
         var contextRootConfig = submittedConfigState.getKind().get(KIND).get("test.war");
@@ -150,7 +150,7 @@ public class ConfigurationIT {
         assertEquals("other-test", contextRootConfig.getValues().get(APP_NAME));
         assertEquals("/other", contextRootConfig.getValues().get(CONTEXT_ROOT));
 
-        var resetConfigState = client.queryParam("submit", "false").request()
+        var resetConfigState = client.queryParam("submit", "false").request(APPLICATION_JSON_TYPE)
                 .post(null, ConfigBean.class);
 
         contextRootConfig = resetConfigState.getKind().get(KIND).get("test.war");
