@@ -43,12 +43,19 @@
 package fish.payara.cloud.deployer.process;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
+import static java.util.stream.Collectors.toMap;
+import java.util.stream.Stream;
 import javax.json.bind.annotation.JsonbProperty;
+import javax.json.bind.annotation.JsonbTransient;
 
 /**
  * Frontend-friendly representation of set of configuration objects
@@ -112,17 +119,15 @@ public class ConfigBean {
     public void addConfig(Configuration domainObject) {
         ConfigId id = new ConfigId(domainObject.getKind(), domainObject.getId());
         order.add(id);
-        Map<String, Config> configKind = kind.get(domainObject.getKind());
-        if (configKind == null) {
-            configKind = new HashMap<>();
-            kind.put(domainObject.getKind(), configKind);
-        }
-        Config representation = new Config();
+        Map<String, Config> configKind = kind.computeIfAbsent(domainObject.getKind(), k -> new HashMap<>());
+
+        Config representation = new Config(id);
         for (String key : domainObject.getKeys()) {
             Key keyDetails = new Key();
             keyDetails.setName(key);
             keyDetails.setRequired(domainObject.isRequired(key));
             keyDetails.setDefaultValue(domainObject.getDefaultValue(key));
+            keyDetails.setUpdateKey(updateKeyFor(domainObject,key));
             representation.keydetails.add(keyDetails);
             Optional<String> value = domainObject.getValue(key);
             if (value.isPresent()) {
@@ -133,7 +138,34 @@ public class ConfigBean {
         representation.setComplete(domainObject.isComplete());
         configKind.put(domainObject.getId(), representation);
     }
+
+    private static Pattern POST_KEY = Pattern.compile("(.+?):(.+?):(.+)");
     
+    public static String updateKeyFor(Configuration domainObject, String key) {
+        return domainObject.getKind() + ":" + domainObject.getId() + ":" + key;
+    }
+    public void applyValuesFrom(Map<String, String> singleValues) {
+        for (Map.Entry<String, String> entry : singleValues.entrySet()) {
+            var matcher = POST_KEY.matcher(entry.getKey());
+            if (matcher.matches()) {
+                var kind = getKind().get(matcher.group(1));
+                if (kind != null) {
+                    var config = kind.get(matcher.group(2));
+                    if (config != null) {
+                        config.updateValue(matcher.group(3), entry.getValue());
+                    }
+                }
+            }
+        }
+    }
+    
+    public Stream<Config> configStream() {
+        return order.stream().map(id -> getKind().get(id.getKind()).get(id.getId()));
+    }
+
+    public boolean hasErrors() {
+        return configStream().anyMatch(Config::hasErrors);
+    }
     
     public static class ConfigId {
         String kind;
@@ -169,9 +201,25 @@ public class ConfigBean {
         @JsonbProperty("keys")
         List<Key> keydetails = new ArrayList<>();
         Map<String, String> values = new HashMap<>();
+        
+        @JsonbTransient
+        Set<String> updatedKeys;
 
         boolean submitted;
         private boolean complete;
+        
+        @JsonbTransient
+        private final ConfigId id;
+        
+        private String errorMessage;
+
+        private Config(ConfigId id) {
+            this.id = id;
+        }
+        
+        public Config() {
+            this.id = null;
+        }
 
         public List<Key> getKeydetails() {
             return keydetails;
@@ -204,6 +252,46 @@ public class ConfigBean {
         public boolean getComplete() {
             return complete;
         }
+
+        public ConfigId getId() {
+            return id;
+        }
+
+        private void updateValue(String key, String value) {
+            if (Objects.equals(value, values.get(key))) {
+                return;
+            }
+            if (updatedKeys == null) {
+                updatedKeys = new HashSet<>();
+            }
+            updatedKeys.add(key);
+            values.put(key, value);
+        }
+        
+        public Map<String,String> updates() {
+            if (updatedKeys == null) {
+                return Collections.emptyMap();
+            }
+            return updatedKeys.stream().collect(toMap(k -> k, k -> values.get(k)));
+        }
+        
+        public boolean hasUpdates() {
+            return updatedKeys != null;
+        }
+
+        public void setMessages(ConfigurationValidationException cve) {
+            this.errorMessage = cve.getMessage();
+            keydetails.forEach(key -> key.setErrorMessage(cve.getValidationErrors().get(key.getName())));
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+        
+        public boolean hasErrors() {
+            return this.errorMessage != null;
+        }
+        
     }
     
     public static class Key {
@@ -211,6 +299,10 @@ public class ConfigBean {
         boolean required;
         @JsonbProperty("default")
         Optional<String> defaultValue;
+        @JsonbTransient
+        private String updateKey;
+        
+        private String errorMessage;
 
         public String getName() {
             return name;
@@ -235,6 +327,24 @@ public class ConfigBean {
         public void setDefaultValue(Optional<String> defaultValue) {
             this.defaultValue = defaultValue;
         }
+
+        public void setUpdateKey(String updateKey) {
+            this.updateKey = updateKey;
+        }
+
+        public String getUpdateKey() {
+            return updateKey;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+
+        public void setErrorMessage(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+        
+        
     }
     
 }

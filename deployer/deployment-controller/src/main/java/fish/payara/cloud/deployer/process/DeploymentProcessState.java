@@ -87,19 +87,22 @@ public class DeploymentProcessState {
     private Instant endpointActivatedAt;
     private Instant deploymentCompletedAt;
     private DeploymentProcessLogOutput logOutput;
-   
+    private final boolean usingDefaultConfiguration;
+    
     DeploymentProcessState(Namespace target, String name, File tempLocation) {
-        this.id = UUID.randomUUID().toString();
-        this.namespace = target;
-        this.name = name;
-        this.tempLocation = tempLocation;
+        this(UUID.randomUUID().toString(), target, name, tempLocation, false);
     }
+    
+    DeploymentProcessState(Namespace target, String name, File tempLocation, boolean usingDefaultConfiguration) {
+        this(UUID.randomUUID().toString(), target, name, tempLocation, usingDefaultConfiguration);
+    }    
 
-    DeploymentProcessState(String id, Namespace target, String name, File tempLocation) {
+    DeploymentProcessState(String id, Namespace target, String name, File tempLocation, boolean usingDefaultConfiguration) {
         this.id = id;
         this.namespace = target;
         this.name = name;
         this.tempLocation = tempLocation;
+        this.usingDefaultConfiguration = usingDefaultConfiguration;
     }
 
     /**
@@ -363,4 +366,8 @@ public class DeploymentProcessState {
     public boolean isReady() {
         return endpointActivatedAt != null && deploymentCompletedAt != null;
     }
+
+    public boolean isUsingDefaultConfiguration() {
+        return usingDefaultConfiguration;
+    }   
 }

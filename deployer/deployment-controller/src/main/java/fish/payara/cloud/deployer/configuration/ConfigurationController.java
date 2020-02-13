@@ -58,7 +58,7 @@ class ConfigurationController {
     void startConfiguration(@ObservesAsync @ChangeKind.Filter(ChangeKind.INSPECTION_FINISHED) StateChanged event) {
         deploymentProcess.configurationStarted(event.getProcess());
         
-        if (autoSubmit && event.getProcess().isConfigurationComplete()) {
+        if ((autoSubmit || event.getProcess().isUsingDefaultConfiguration()) && event.getProcess().isConfigurationComplete()) {
             deploymentProcess.submitConfigurations(event.getProcess());
         }
         // Some tasks that this might do as well:

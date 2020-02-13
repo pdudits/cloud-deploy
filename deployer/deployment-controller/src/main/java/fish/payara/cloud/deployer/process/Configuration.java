@@ -69,6 +69,9 @@ public abstract class Configuration {
      * @param id id of the configuration
      */
     protected Configuration(String id) {
+        if (id.contains(":")) {
+            throw new IllegalArgumentException("Invalid configuration id "+id+" name cannot contain colon");
+        }
         this.id = id;
     }
 

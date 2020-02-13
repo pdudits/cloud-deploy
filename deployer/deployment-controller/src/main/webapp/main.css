@@ -75,16 +75,14 @@ footer {
     bottom: 0;
 }
 
-header h1, h2, div.result {
+header h1, h2, div.result, main {
     margin: auto;
     width: 40rem;
-    padding: 1rem;
+    padding: 28px 0;
 }
 
-main {
-    margin: auto;
-    width: 40rem;
-    margin-top: 2rem;
+header + h2 {
+    margin-top: 28px;
 }
 
 h1,h2,h3,.primary-orange,h1 a {
@@ -92,9 +90,12 @@ h1,h2,h3,.primary-orange,h1 a {
 }
 
 h2, div.result {
-    margin-top: 24px;
     text-align: center;
     color: #002c3e;
+}
+
+div.result {
+    margin-top: 24px;
 }
 
 h1 a {
@@ -107,27 +108,39 @@ h1 a {
 
 img.logo {
     width: 10em;
+    margin-right: 1em;
+    vertical-align: bottom;
+    position: relative;
+    top: 0.15em;
 }
 
 .secondary-light {
     color: #dae0e2;
 }
 
-
 .secondary-dark {
     color: #434445;
 }
 
-.secondary-white {
+.secondary-white, .secondary-white h3 {
     color: #FFFFFF;
 }
 
-form {
-    background-color: #dae0e2;
+.block {
+    padding: 40px 48px 56px 48px; 
+    margin-bottom: 56px;
+}
+
+section {
+    border-radius: 6px;
+}
+
+main > form, form.block, .form {
+    background-color: rgba(218,224,226,0.5);
     color: #434445;
-    margin-top: 56px;
-    padding: 0px 48px 56px 48px;
     display: grid;
+    grid-row-gap: 32px;
+    border-radius: 6px;
 }
 
 label {
@@ -153,9 +166,16 @@ sup {
     padding: 4px;
     margin: 12px;
     cursor: pointer;
-    transition-delay: 0.3s;
+    transition-duration: 0.3s;
     transition-property: transform;
     transition-timing-function: ease-out;
+    width: 1.2em;
+    display: inline-block;
+}
+
+form.single-action {
+    text-align: center;
+    padding: 12px;
 }
 
 .hint:hover {
@@ -168,7 +188,7 @@ progress {
     margin: auto;
 }
 
-.button {
+.button, button, input[type=submit] {
     color: #101012;
     background-color: #dae0e2;
     border-radius: 3px;
@@ -177,22 +197,40 @@ progress {
     font-weight: 500;
     cursor: pointer;
     padding: 12px 24px;
-    transition-delay: 0.1s;
+    transition-duration: 0.1s;
     transition-property: transform;
-    box-shadow: 0 -1px 0 0 rgba(134,151,156,128) inset;
-        
+    border: 0px none;
+}
+    
+.button.highlight, button.highlight, input[type=submit].highlight {
+    background: rgb(240,152,27);
+    box-shadow: 0 -1px 0 0 rgba(128,74,0,0.5) inset;
 }
 
-.button.highlight {
+.button.highlight:hover, button.highlight:hover, input[type=submit].highlight:hover {
+    background-color: rgba(240,152,27,0.9);
+}
+
+.field input:not([type=checkbox]) {
+    display: block;
+    width: 100%;
+}
+
+.button.default, button.default, input[type=submit].default{
     background-color: #F0981B;
-    box-shadow: 0 -1px 0 0 rgba(128,74,0,128) inset;
+    box-shadow: 0 -1px 0 0 rgba(134,151,156,0.5) inset;
 }
 
-.button:hover {
+.button:hover, button:hover, input[type=submit]:hover {
     transform: translate(0px, 2px);
+    background-color: rgba(195,203,206,0.8);
 }
+
 
 .pending {
+    min-height: 5em;
+    text-align: center;
+    padding: 2em 0.5em;
     background-color: #4E5A5E;
 }
 
@@ -237,6 +275,7 @@ input[type=checkbox], input[type=radio] {
     border-width: 1px;
     height: 24px;
     width: 24px;
+    vertical-align: baseline;
 }
 
 checkbox:hover, radio:hover {
