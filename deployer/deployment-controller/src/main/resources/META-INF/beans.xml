@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<beans>
+
+    <alternatives>
+        <!-- <class>fish.payara.cloud.deployer.kubernetes.DirectProvisioner</class>
+        <stereotype>fish.payara.cloud.deployer.setup.DirectProvisioning</stereotype> -->
+    </alternatives>
+</beans>
