@@ -36,42 +36,44 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection;
+package fish.payara.cloud.deployer.inspection.mpconfig;
 
-import java.io.IOException;
-import java.io.InputStream;
+import fish.payara.cloud.deployer.process.Configuration;
+
 import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 
-/**
- * A component performing inspection of an artifact
- */
-public interface Inspection {
+public class MicroprofileConfiguration extends Configuration {
 
-    default void start(InspectedArtifact artifact) {
+    public static final String KIND = "microprofileConfig";
+    private final Properties inspectedValues;
 
+    public MicroprofileConfiguration(String name, Properties inspectedValues) {
+        super(name);
+        this.inspectedValues = inspectedValues;
     }
 
-    /**
-     * Inspect a file or directory of an artifact.
-     * Inspection will mutate inpected artifact, e. g. adding configurations.
-     * @param entry
-     * @param artifact
-     */
-    void inspect(ArtifactEntry entry, InspectedArtifact artifact) throws IOException;
-
-    void finish(InspectedArtifact artifact);
-
-    interface ArtifactEntry {
-        String getName();
-        byte[] getContent() throws IOException;
-        boolean isDirectory();
-        Optional<ArtifactEntry> getParent();
-
-        boolean pathMatches(String regExp);
-        boolean classpathMatches(String regExp);
-
-        InputStream getInputStream() throws IOException;
+    @Override
+    public String getKind() {
+        return KIND;
     }
 
+    @Override
+    public Set<String> getKeys() {
+        return additionalKeysAnd(inspectedValues.stringPropertyNames());
+    }
 
+    @Override
+    public Optional<String> getDefaultValue(String key) {
+        if (inspectedValues.containsKey(key)) {
+            return Optional.of(inspectedValues.getProperty(key));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean supportsAdditionalKeys() {
+        return true;
+    }
 }

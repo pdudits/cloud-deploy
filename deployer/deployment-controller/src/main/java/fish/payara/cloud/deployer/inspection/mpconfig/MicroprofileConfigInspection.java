@@ -36,42 +36,38 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection;
+package fish.payara.cloud.deployer.inspection.mpconfig;
 
+import fish.payara.cloud.deployer.inspection.InspectedArtifact;
+import fish.payara.cloud.deployer.inspection.Inspection;
+
+import javax.el.CompositeELResolver;
+import javax.enterprise.context.Dependent;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
-/**
- * A component performing inspection of an artifact
- */
-public interface Inspection {
+@Dependent
+class MicroprofileConfigInspection implements Inspection {
+    private List<MicroprofileConfiguration> configs = new ArrayList<>();
 
-    default void start(InspectedArtifact artifact) {
-
+    @Override
+    public void inspect(ArtifactEntry entry, InspectedArtifact artifact) throws IOException {
+        if (entry.classpathMatches("META-INF/microprofile-config.properties")) {
+            addConfig(artifact.getName(), entry.getInputStream());
+        }
     }
 
-    /**
-     * Inspect a file or directory of an artifact.
-     * Inspection will mutate inpected artifact, e. g. adding configurations.
-     * @param entry
-     * @param artifact
-     */
-    void inspect(ArtifactEntry entry, InspectedArtifact artifact) throws IOException;
-
-    void finish(InspectedArtifact artifact);
-
-    interface ArtifactEntry {
-        String getName();
-        byte[] getContent() throws IOException;
-        boolean isDirectory();
-        Optional<ArtifactEntry> getParent();
-
-        boolean pathMatches(String regExp);
-        boolean classpathMatches(String regExp);
-
-        InputStream getInputStream() throws IOException;
+    private void addConfig(String name, InputStream inputStream) throws IOException {
+        Properties config = new Properties();
+        config.load(inputStream);
+        this.configs.add(new MicroprofileConfiguration(name, config));
     }
 
-
+    @Override
+    public void finish(InspectedArtifact artifact) {
+        configs.forEach(artifact::addConfiguration);
+    }
 }

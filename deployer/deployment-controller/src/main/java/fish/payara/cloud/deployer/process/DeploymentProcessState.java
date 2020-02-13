@@ -271,8 +271,24 @@ public class DeploymentProcessState {
         }
     }
 
-    private Optional<Configuration> findConfiguration(String kind, String id) {
+    public Optional<Configuration> findConfiguration(String kind, String id) {
         return configurations.stream().filter(c -> c.getKind().equals(kind) && c.getId().equals(id)).findAny();
+    }
+
+    public Optional<Configuration> findConfiguration(String kind) {
+        return findConfiguration(kind, getName());
+    }
+
+    public boolean hasConfiguration(String kind, String id) {
+        return findConfiguration(kind, id).isPresent();
+    }
+
+    public boolean hasConfiguration(String kind) {
+        return hasConfiguration(kind, getName());
+    }
+
+    public boolean hasConfigurationOverrides(String kind) {
+        return findConfiguration(kind).map(Configuration::hasOverrides).orElse(false);
     }
     
     StateChanged transition(ChangeKind target) {

@@ -39,13 +39,24 @@
 package fish.payara.cloud.deployer.kubernetes;
 
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
+import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.ConfigMapVolumeSource;
+import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
+import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
+import io.fabric8.kubernetes.api.model.PodSpec;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -54,7 +65,10 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
 
@@ -80,13 +94,58 @@ class DirectProvisioner implements Provisioner {
             provisionNamespace(naming);
             provisionDatagrid(naming);
             provisionService(naming);
-            provisionDeployment(naming);
+
+            var deploymentResource = createBaseDeployment(naming);
+            if (deployment.hasConfigurationOverrides(MicroprofileConfiguration.KIND)) {
+                String configMapName = provisionSystemProperties(naming, deployment.findConfiguration(MicroprofileConfiguration.KIND).get());
+                applySystemPropertyFromConfigMap(deploymentResource, configMapName);
+            }
+            provisionDeployment(naming, deploymentResource);
             var uri = provisionIngress(naming);
             process.endpointDetermined(deployment, uri);
             LOGGER.info("Provisioned " + deployment.getId() + " at "+uri);
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
+    }
+
+    private void applySystemPropertyFromConfigMap(Deployment deploymentResource, String configMapName) {
+        // add config map volume
+        var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
+        podTemplate.getVolumes()
+                .add(new VolumeBuilder()
+                        .withName("mp-config")
+                        .withNewConfigMap()
+                            .withName(configMapName)
+                        .endConfigMap()
+                .build());
+        // mount the volume into first, main container
+        var mainContainer = podTemplate.getContainers().get(0);
+        mainContainer.getVolumeMounts()
+                .add(new VolumeMountBuilder()
+                        .withName("mp-config")
+                        .withMountPath("/mp-config")
+                    .build());
+        // add command line argument
+        mainContainer.getArgs().addAll(List.of("--systemproperties","/mp-config/microprofile-config.properties"));
+    }
+
+    private String provisionSystemProperties(Naming naming, Configuration configuration) {
+        var configMap = new ConfigMapBuilder().withNewMetadata()
+                .withName(naming.getName()+"-mpconfig")
+                .withLabels(naming.labelsForComponent("mpconfig"))
+                .endMetadata()
+                .withData(Map.of("microprofile-config.properties", buildPropertyFile(configuration)))
+                .build();
+        var created = naming.namespaceClient().resource(configMap).createOrReplace();
+        return created.getMetadata().getName();
+    }
+
+    private String buildPropertyFile(Configuration configuration) {
+        return
+            configuration.getKeys().stream()
+                    .map(key -> key+"="+configuration.getValue(key).orElse(""))
+                    .collect(Collectors.joining("\n"));
     }
 
     private URI provisionIngress(Naming naming) throws IOException {
@@ -103,8 +162,13 @@ class DirectProvisioner implements Provisioner {
         naming.createNamespaced("datagrid.yaml");
     }
 
-    private void provisionDeployment(Naming naming) throws IOException {
-        createFromTemplate(naming.getNamespace(), naming, "deployment.yaml");
+    private void provisionDeployment(Naming naming, Deployment deployment) throws IOException {
+        naming.namespaceClient().resource(deployment).createOrReplace();
+    }
+
+    private Deployment createBaseDeployment(Naming naming) {
+        var template = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/deployment.yaml"), naming::variableValue);
+        return Serialization.unmarshal(template, Deployment.class);
     }
 
     private void provisionNamespace(Naming n) throws IOException {
@@ -116,7 +180,7 @@ class DirectProvisioner implements Provisioner {
 
     private HasMetadata createFromTemplate(String namespace, Naming naming, String template) throws IOException {
         var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
-        var namespacedClient = namespace == null ? client : client.inNamespace(namespace);
+        NamespacedKubernetesClient namespacedClient = namespace == null ? client : client.inNamespace(namespace);
         return namespacedClient.resource((HasMetadata) Serialization.unmarshal(resource, KubernetesResource.class)).createOrReplace();
     }
 
@@ -138,10 +202,14 @@ class DirectProvisioner implements Provisioner {
             return deployment.getNamespace().getProject()+"-"+deployment.getNamespace().getStage();
         }
 
+        NamespacedKubernetesClient namespaceClient() {
+            return client.inNamespace(getNamespace());
+        }
+
         public String variableValue(String var) {
             switch(var) {
                 case "ID":
-                    return deployment.getId();
+                    return getId();
                 case "PROJECT":
                     return deployment.getNamespace().getProject();
                 case "STAGE":
@@ -149,7 +217,7 @@ class DirectProvisioner implements Provisioner {
                 case "URL":
                     return deployment.getPersistentLocation().toString();
                 case "NAME":
-                    return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.APP_NAME).get();
+                    return getName();
                 case "DOMAIN":
                     return domain;
                 case "PATH":
@@ -161,8 +229,23 @@ class DirectProvisioner implements Provisioner {
             }
         }
 
+        private String getName() {
+            return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.APP_NAME).get();
+        }
+
         private String getContextRoot() {
             return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.CONTEXT_ROOT).get();
+        }
+
+        public Map<String, String> labelsForComponent(String componentName) {
+            return Map.of("app.kubernetes.io/name", getName(),
+                    "app.kubernetes.io/component", componentName,
+                    "app.kubernetes.io/part-of", getId(),
+                    "app.kubernetes.io/managed-by", "payara-cloud");
+        }
+
+        private String getId() {
+            return deployment.getId();
         }
     }
 
