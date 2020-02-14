@@ -57,6 +57,9 @@ import java.net.URI;
 import java.util.logging.Logger;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
+import fish.payara.cloud.deployer.process.Namespace;
+import java.util.ArrayList;
+import java.util.List;
 import javax.json.bind.JsonbBuilder;
 
 @DirectProvisioning
@@ -126,9 +129,15 @@ class DirectProvisioner implements Provisioner {
      * @return provisioned namespaces
      */
     @Override
-    public String getNamespacesAsJson() {
-        var namespacesList = client.namespaces().list().getItems();
-        return JsonbBuilder.create().toJson(namespacesList);
+    public List<Namespace> getNamespaces() {
+        List<Namespace> namespacesList = new ArrayList<>();
+        for (var namespace: client.namespaces().list().getItems()) {
+            if ("payara-cloud".equals(namespace.getMetadata().getLabels().get("app.kubernetes.io/managed-by:"))) {
+                String[] kNamespaceStr = namespace.getMetadata().getNamespace().split("-");
+                namespacesList.add(new Namespace(kNamespaceStr[0], kNamespaceStr[1]));
+            }
+        }
+        return namespacesList;
     }
 
     class Naming {

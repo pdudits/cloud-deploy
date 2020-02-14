@@ -39,6 +39,8 @@
 package fish.payara.cloud.deployer.provisioning;
 
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
+import java.util.List;
 
 /**
  * Provisions application resources for a deployment.
@@ -62,8 +64,8 @@ public interface Provisioner {
     void provision(DeploymentProcessState deployment) throws ProvisioningException;
     
     /**
-     * Gets the provisioned namespaces, in JSON format
+     * Gets the provisioned namespaces
      * @return 
      */
-    String getNamespacesAsJson();
+    List<Namespace> getNamespaces();
 }

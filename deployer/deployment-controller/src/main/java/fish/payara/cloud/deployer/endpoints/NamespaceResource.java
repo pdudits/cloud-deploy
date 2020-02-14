@@ -42,7 +42,9 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
+import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
+import java.util.List;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -64,8 +66,7 @@ public class NamespaceResource {
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getAllNamespaces() {
-        String namespaces = provisioner.getNamespacesAsJson();
-        return Response.ok(namespaces).build();
+    public List<Namespace> getAllNamespaces() {
+        return provisioner.getNamespaces();
     }
 }
