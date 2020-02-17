@@ -200,6 +200,11 @@ public class DeploymentProcess {
     public DeploymentProcessState provisioningStarted(DeploymentProcessState process) {
         return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_STARTED));
     }
+    
+    public DeploymentProcessState deleteArtifact(DeploymentProcessState process) {
+        updateProcess(process, DeploymentProcessState::deleteArtifact);
+        return artifactDeleted(process);
+    }
 
     public DeploymentProcessState artifactDeleted(DeploymentProcessState process) {
         return updateProcess(process, DeploymentProcessState::removePersistentLocation);

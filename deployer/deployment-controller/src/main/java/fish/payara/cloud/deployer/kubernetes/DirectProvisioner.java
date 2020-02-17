@@ -63,6 +63,7 @@ import java.util.logging.Level;
 @ApplicationScoped
 class DirectProvisioner implements Provisioner {
     public static final Logger LOGGER = Logger.getLogger(DirectProvisioner.class.getName());
+    private static final String APP_KUBERNETES_IO_PART_OF = "app.kubernetes.io/part-of";
 
     @Inject
     NamespacedKubernetesClient client;
@@ -124,8 +125,10 @@ class DirectProvisioner implements Provisioner {
 
     @Override
     public boolean delete(DeploymentProcessState deployment) {
-        var deployments = client.apps().deployments().withLabel("app.kubernetes.io/part-of", deployment.getId());
-        return deployments.delete();
+        var deployments = client.apps().deployments().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId());
+        var services = client.services().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId());
+        var pods = client.pods().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId());
+        return deployments.delete() && services.delete() && pods.delete();
     }
 
     class Naming {

@@ -138,7 +138,12 @@ public enum ChangeKind {
     /**
      * Deletion of deployment started
      */
-    DELETION_STARTED;
+    DELETION_STARTED,
+    
+    /**
+     * Deletion of deployment finished
+     */
+    DELETION_FINISHED;
 
     public Filter asFilter() {
         return new FilterLiteral(this);

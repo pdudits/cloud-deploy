@@ -299,11 +299,15 @@ public class DeploymentProcessState {
     public boolean isConfigurationComplete() {
         return configurations.stream().allMatch(Configuration::isComplete);
     }
+    
+    StateChanged deleteArtifact() {
+        return transition(ChangeKind.DELETION_STARTED);
+    }
 
     StateChanged removePersistentLocation() {
         version++;
         persistentLocation = null;
-        return transition(ChangeKind.DELETION_STARTED);
+        return transition(ChangeKind.DELETION_FINISHED);
     }
 
     StateChanged setPersistentLocation(URI location) {

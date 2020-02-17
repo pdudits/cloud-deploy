@@ -203,7 +203,7 @@ public class DeploymentResource {
         if (state == null) {
             throw new NotFoundException();
         }
-        process.artifactDeleted(state);
+        process.deleteArtifact(state);
         return Response.noContent().build();
     }
     
