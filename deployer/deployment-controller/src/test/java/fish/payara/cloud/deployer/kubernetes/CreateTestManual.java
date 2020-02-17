@@ -38,7 +38,6 @@
 
 package fish.payara.cloud.deployer.kubernetes;
 
-import com.google.common.base.Charsets;
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
@@ -63,6 +62,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.concurrent.Executors;
+import org.junit.Assert;
 
 import static org.mockito.Mockito.mock;
 
@@ -84,6 +84,10 @@ public class CreateTestManual {
 
         DirectProvisioner provisoner = setupProvisioner();
         provisoner.provision(process);
+        
+        var namespaces = provisoner.getNamespaces();
+        Assert.assertEquals("namespace not listed", 1, namespaces.size());
+        Assert.assertEquals("Incorrect namespace created", "test-dev", namespaces.get(0).toString());
     }
 
     @Test
