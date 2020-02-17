@@ -124,9 +124,8 @@ class DirectProvisioner implements Provisioner {
 
     @Override
     public boolean delete(DeploymentProcessState deployment) {
-        var naming = new Naming(deployment);
-        var serverNamespace = client.namespaces().withName(naming.getNamespace()).get();
-        return client.namespaces().delete(serverNamespace);
+        var deployments = client.apps().deployments().withLabel("app.kubernetes.io/part-of", deployment.getId());
+        return deployments.delete();
     }
 
     class Naming {

@@ -303,7 +303,7 @@ public class DeploymentProcessState {
     StateChanged removePersistentLocation() {
         version++;
         persistentLocation = null;
-        return transition(ChangeKind.DELETE_STARTED);
+        return transition(ChangeKind.DELETION_STARTED);
     }
 
     StateChanged setPersistentLocation(URI location) {

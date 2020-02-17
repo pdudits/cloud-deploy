@@ -156,7 +156,7 @@ class ProvisioningController {
         }
     }
     
-    void deleteProvision(@ObservesAsync @ChangeKind.Filter(ChangeKind.DELETE_STARTED) StateChanged event) {
+    void deleteProvision(@ObservesAsync @ChangeKind.Filter(ChangeKind.DELETION_STARTED) StateChanged event) {
         provisioner.delete(event.getProcess());
     }
 

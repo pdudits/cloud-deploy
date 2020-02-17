@@ -109,7 +109,7 @@ public class DeploymentObservationIT {
         assertNotNull("Process should contain completion time", state.getCompletion());
         
         process.artifactDeleted(state);
-        observer.await(ChangeKind.DELETE_STARTED);
+        observer.await(ChangeKind.DELETION_STARTED);
         state = observer.getLastProcess();
         assertNull("Location of artifact has been deleted", state.getPersistentLocation());
         assertNotNull("Process should contain completion time", state.getCompletion());
