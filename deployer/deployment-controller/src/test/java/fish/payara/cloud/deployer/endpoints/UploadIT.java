@@ -50,6 +50,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import javax.mvc.Models;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -77,7 +78,9 @@ public class UploadIT {
                 .addPackage(DeploymentProcess.class.getPackage())
                 .addPackage(Provisioner.class.getPackage())
                 .addPackage(Application.class.getPackage())
-                .addClass(ManagedConcurrencyProducer.class);
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(Models.class)
+                .addClass(ModelsImpl.class);
 
         System.out.println(archive.toString(true));
         return archive;

@@ -64,6 +64,7 @@ import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfi
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.KIND;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
+import javax.mvc.Models;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -78,7 +79,9 @@ public class ConfigurationIT {
                 .addPackage(Application.class.getPackage())
                 .addPackage(Provisioner.class.getPackage())
                 .addClass(ContextRootConfiguration.class)
-                .addClass(ManagedConcurrencyProducer.class);
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(Models.class)
+                .addClass(ModelsImpl.class);
     }
 
     @Inject

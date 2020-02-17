@@ -42,43 +42,50 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.provisioning.Provisioner;
-import java.util.List;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.mvc.Controller;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import javax.enterprise.context.RequestScoped;
 import javax.mvc.Models;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 /**
  *
- * @author jonathan coustick
+ * @author jonathan
  */
-@Path("/namespaces")
-@ApplicationScoped
-public class NamespaceResource {
-    
-    @Inject
-    Provisioner provisioner;
-    
-    @Inject
-    private Models model;
-    
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<Namespace> getAllNamespaces() {
-        return provisioner.getNamespaces();
+@RequestScoped
+class ModelsImpl implements Models {
+        
+        private Map<String, Object> map = new HashMap<>();
+
+        @Override
+        public Models put(String string, Object o) {
+            map.put(string, o);
+            return this;
+        }
+
+        @Override
+        public Object get(String string) {
+            return map.get(string);
+        }
+
+        @Override
+        public <T> T get(String string, Class<T> type) {
+            Object value = map.get(string);
+            if (type.isAssignableFrom(value.getClass())) {
+                return (T) value;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public Map<String, Object> asMap() {
+            return map;
+        }
+
+        @Override
+        public Iterator<String> iterator() {
+            return map.keySet().iterator();
+        }
+        
     }
-    
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    @Controller
-    public String getNamespaces() {
-        model.put("namespaces", getAllNamespaces());
-        return "namespaces.xhtml";
-    }
-}
