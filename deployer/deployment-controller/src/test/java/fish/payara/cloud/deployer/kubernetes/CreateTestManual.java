@@ -46,6 +46,7 @@ import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodCondition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
@@ -62,10 +63,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Properties;
 import java.util.concurrent.Executors;
-import org.junit.Assert;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.logging.Logger;
 
+import org.junit.Assert;
+import static java.util.Comparator.comparing;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -102,8 +109,9 @@ public class CreateTestManual {
 
         DirectProvisioner provisoner = setupProvisioner();
 
-        var watcher = new StructuredWatcher("src/test/resources", "single-app");
+        var watcher = new StructuredWatcher("src/test/resources", "single-app", process.getId());
         watcher.client = setupClient();
+
         watcher.executorService = Executors.newScheduledThreadPool(2);
         watcher.startWatching();
 
@@ -150,17 +158,29 @@ public class CreateTestManual {
     // we create more structured output that we can replay in a test
     static class StructuredWatcher extends KubernetesWatcher {
         private final PrintWriter output;
+        private final String id;
+        private static final Logger LOGGER = Logger.getLogger(StructuredWatcher.class.getName());
 
-        StructuredWatcher(String basePath, String name) throws IOException {
+        StructuredWatcher(String basePath, String name, String id) throws IOException {
             var dir = Files.createDirectories(Paths.get(basePath));
             Path out = Files.createFile(
                     dir.resolve(name + Instant.now().toString().replaceAll(":","")+".log"));
             output = new PrintWriter(new FileWriter(out.toFile(), StandardCharsets.UTF_8));
+            this.id = id;
+        }
+
+        @Override
+        protected boolean isCurrentDeployment(String id) {
+            return id.equals(this.id);
         }
 
         @Override
         protected void handlePodEvent(Watcher.Action action, Pod resource, String id) {
-
+            var conditions = new ArrayList<>(resource.getStatus().getConditions());
+            Collections.sort(conditions, Comparator.nullsFirst(comparing(PodCondition::getLastTransitionTime)).reversed());
+            if (!conditions.isEmpty()) {
+                LOGGER.info("Pod " + resource.getMetadata().getName() + ": " + conditions.get(0));
+            }
         }
 
         @Override
@@ -174,8 +194,12 @@ public class CreateTestManual {
         }
 
         @Override
-        protected void logEvent(Watcher.Action action, HasMetadata resource) {
-            super.logEvent(action, resource);
+        protected void handleLog(String id, ObjectMeta podMeta, byte[] availableBytes) {
+
+        }
+
+        @Override
+        protected synchronized void logEvent(Watcher.Action action, HasMetadata resource, Object status) {
             output.println(Instant.now());
             output.println("Event");
             output.println(resource.getKind());
@@ -184,12 +208,12 @@ public class CreateTestManual {
         }
 
         @Override
-        protected void logLog(String id, ObjectMeta podMeta, byte[] chunk) {
-            super.logLog(id, podMeta, chunk);
+        protected synchronized void logLog(String id, ObjectMeta podMeta, byte[] chunk) {
             output.println(Instant.now());
             output.println("Log");
             output.println(podMeta.getUid());
             var stringChunk = new String(chunk, StandardCharsets.UTF_8);
+            System.out.println(stringChunk);
             output.println(stringChunk.length());
             output.println(stringChunk);
         }
