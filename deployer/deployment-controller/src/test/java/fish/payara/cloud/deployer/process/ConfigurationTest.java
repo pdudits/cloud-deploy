@@ -42,6 +42,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -104,10 +105,12 @@ public class ConfigurationTest {
     public void configWithRequiredFieldsOverridenIsComplete() {
         conf.updateConfiguration(Map.of("required", "value"));
         assertTrue("Configuration with required fields filled should be complete", conf.isComplete());
+        assertTrue("Presence of overriden value is reported", conf.hasOverrides());
     }
 
     @Test
     public void configWithNoRequiredFieldsIsComplete() {
+        assertFalse("No overriden values are reported", conf.hasOverrides());
         assertTrue("Configuration with no required fields should be complete", simple.isComplete());
     }
 
@@ -225,6 +228,80 @@ public class ConfigurationTest {
         conf.updateConfiguration(Map.of("optional","odd","number", "3", "biggerNumber","1"));
     }
 
+    @Test
+    public void unknownKeysAreRejectedWhenAdditionalKeysNotSupported() {
+        thrown.expectMessage("unknown: Unsupported configuration key");
+        conf.updateConfiguration(Map.of("optional","odd", "unknown", "boom!"));
+    }
+
+    @Test
+    public void additionalKeysAreAccepted() {
+        var extensible = new ExtensibleConfiguration();
+        extensible.updateConfiguration(Map.of("one", "1", "three", "3"));
+        assertTrue(extensible.getKeys().contains("three"));
+        assertTrue(extensible.getValue("three").isPresent());
+    }
+
+    @Test
+    public void updateKeysCanBeRejectedByCheckUpdate() {
+        var extensible = new ExtensibleConfiguration();
+        extensible.updateConfiguration(Map.of("unwanted", "ignored", "two", "also ignored"));
+        assertFalse(extensible.getKeys().contains("unwanted"));
+        assertFalse(extensible.getValue("unwanted").isPresent());
+        assertFalse(extensible.getValue("two").isPresent());
+    }
+
+    @Test
+    public void updatingToDefaultValueClearsOverrideFlag() {
+        assertFalse("Clean configuration should not have any overrides", conf.hasOverrides());
+        conf.updateConfiguration(Map.of("defaulted","otherValue"));
+        assertTrue("Adding an override is reflected in flag", conf.hasOverrides());
+        conf.updateConfiguration(Map.of("defaulted", "DefaultValue"));
+        assertFalse("Reverting to default value should clean override flag", conf.hasOverrides());
+    }
+
+    @Test
+    public void nullValueForAdditionalKeyRemovesKey() {
+        var extensible = new ExtensibleConfiguration();
+        extensible.updateConfiguration(Map.of("three", "3"));
+        assertTrue("Changing only additonal key is an override", extensible.hasOverrides());
+        var removingMap = new HashMap<String,String>();
+        removingMap.put("three", null); // Map.of doesn't support null values
+        extensible.updateConfiguration(removingMap);
+        assertFalse("Setting null value should remove additonal key", extensible.getKeys().contains("three"));
+        assertFalse(extensible.hasOverrides());
+    }
+
+    static class ExtensibleConfiguration extends Configuration {
+        public ExtensibleConfiguration() {
+            super("extensible");
+        }
+
+        @Override
+        public String getKind() {
+            return "extensible";
+        }
+
+        static final Set<String> BASE_KEYS = Set.of("one","two");
+        @Override
+        public Set<String> getKeys() {
+            return additionalKeysAnd(BASE_KEYS);
+        }
+
+        @Override
+        public boolean supportsAdditionalKeys() {
+            return true;
+        }
+
+        @Override
+        protected void checkUpdate(UpdateContext context) {
+            assertFalse("All updates to this contain additonal keys", context.additonalKeys().isEmpty());
+            context.remove("unwanted");
+            // up for consideration - can a base key be silently rejected?
+            context.remove("two");
+        }
+    }
+
     static class MockConfiguration extends Configuration {
         static final Set<String> KEYS = Set.of("required", "defaulted", "optional", "number", "biggerNumber");
 
@@ -259,6 +336,7 @@ public class ConfigurationTest {
 
         @Override
         protected void checkUpdate(UpdateContext context) {
+            super.checkUpdate(context);
             var number = context.key("number").convert(Integer::parseInt);
             var biggerNumber = context.key("biggerNumber")
                     .convertAndCheck(Integer::parseInt, bigger -> checkBigger(bigger, number));

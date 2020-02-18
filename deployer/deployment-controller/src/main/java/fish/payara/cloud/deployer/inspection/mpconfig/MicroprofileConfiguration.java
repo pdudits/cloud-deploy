@@ -36,51 +36,44 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.provisioning;
+package fish.payara.cloud.deployer.inspection.mpconfig;
 
-import fish.payara.cloud.deployer.process.DeploymentProcess;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.setup.MockProvisioning;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import fish.payara.cloud.deployer.process.Configuration;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 
-@MockProvisioning
-@ApplicationScoped
-class MockProvisioner implements Provisioner {
-    @Inject
-    ScheduledExecutorService delay;
+public class MicroprofileConfiguration extends Configuration {
 
-    @Inject
-    @ConfigProperty(name = "provisioning.mock.fail-after", defaultValue = "PT5S")
-    Duration failDelay;
+    public static final String KIND = "microprofileConfig";
+    private final Properties inspectedValues;
 
-    @Inject
-    DeploymentProcess process;
-
-    @Override
-    public void provision(DeploymentProcessState deployment) throws ProvisioningException {
-        delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    private void failDeployment(DeploymentProcessState deployment) {
-        process.fail(deployment, "Provisioning is not enabled in this configuration", null);
+    public MicroprofileConfiguration(String name, Properties inspectedValues) {
+        super(name);
+        this.inspectedValues = inspectedValues;
     }
 
     @Override
-    public List<Namespace> getNamespaces() {
-        return List.of(new Namespace("foo", "bar"));   
+    public String getKind() {
+        return KIND;
     }
-    
+
     @Override
-    public DeploymentProcessState delete(DeploymentProcessState deployment) {
-        return process.artifactDeleted(deployment);
+    public Set<String> getKeys() {
+        return additionalKeysAnd(inspectedValues.stringPropertyNames());
+    }
+
+    @Override
+    public Optional<String> getDefaultValue(String key) {
+        if (inspectedValues.containsKey(key)) {
+            return Optional.of(inspectedValues.getProperty(key));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public boolean supportsAdditionalKeys() {
+        return true;
     }
 }

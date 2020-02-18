@@ -38,8 +38,8 @@
 
 package fish.payara.cloud.deployer.kubernetes;
 
-import com.google.common.base.Charsets;
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
@@ -62,7 +62,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.Properties;
 import java.util.concurrent.Executors;
+import org.junit.Assert;
 
 import static org.mockito.Mockito.mock;
 
@@ -84,6 +86,10 @@ public class CreateTestManual {
 
         DirectProvisioner provisoner = setupProvisioner();
         provisoner.provision(process);
+        
+        var namespaces = provisoner.getNamespaces();
+        Assert.assertEquals("namespace not listed", 1, namespaces.size());
+        Assert.assertEquals("Incorrect namespace created", "test-dev", namespaces.get(0).toString());
     }
 
     @Test
@@ -105,6 +111,22 @@ public class CreateTestManual {
 
         Thread.sleep(60000);
         watcher.close();
+    }
+
+    @Test
+    public void createConfiguredDirectly() throws ProvisioningException {
+        var process = ProcessAccessor.createProcessWithName("consumer-app.war");
+        ProcessAccessor.setPersistentLocation(process, URI.create("https://cloud3.blob.core.windows.net/deployment/micro1/consumer-app.war"));
+
+        var contextRoot = new ContextRootConfiguration("consumer-app.war", "consumer-app", "/consumer-app");
+        ProcessAccessor.addConfiguration(process, contextRoot);
+        var mpProperties = new Properties();
+        mpProperties.put("fish.payara.talk.replicationtrouble.contentauthz.user.replication.ReplicationAPI/mp-rest/url","http://producer-app/replication");
+        var mpConfig = new MicroprofileConfiguration("consumer-app.war", mpProperties);
+        ProcessAccessor.addConfiguration(process, mpConfig);
+
+        DirectProvisioner provisoner = setupProvisioner();
+        provisoner.provision(process);
     }
 
     private DirectProvisioner setupProvisioner() {

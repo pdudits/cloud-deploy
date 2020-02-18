@@ -1,6 +1,8 @@
 /*
- * Copyright (c) 2020 Payara Foundation and/or its affiliates. All rights reserved.
- *
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * 
+ *  Copyright (c) [2020] Payara Foundation and/or its affiliates. All rights reserved.
+ * 
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
  *  and Distribution License("CDDL") (collectively, the "License").  You
@@ -9,20 +11,23 @@
  *  https://github.com/payara/Payara/blob/master/LICENSE.txt
  *  See the License for the specific
  *  language governing permissions and limitations under the License.
- *
+ * 
+ *  When distributing the software, include this License Header Notice in each
+ *  file and include the License.
+ * 
  *  When distributing the software, include this License Header Notice in each
  *  file and include the License file at glassfish/legal/LICENSE.txt.
- *
+ * 
  *  GPL Classpath Exception:
  *  The Payara Foundation designates this particular file as subject to the "Classpath"
  *  exception as provided by the Payara Foundation in the GPL Version 2 section of the License
  *  file that accompanied this code.
- *
+ * 
  *  Modifications:
  *  If applicable, add the following below the License Header, with the fields
  *  enclosed by brackets [] replaced by your own identifying information:
  *  "Portions Copyright [year] [name of copyright owner]"
- *
+ * 
  *  Contributor(s):
  *  If you wish your version of this file to be governed by only the CDDL or
  *  only the GPL Version 2, indicate your decision by adding "[Contributor]
@@ -35,52 +40,52 @@
  *  only if the new code is made subject to such option by the copyright
  *  holder.
  */
+package fish.payara.cloud.deployer.endpoints;
 
-package fish.payara.cloud.deployer.provisioning;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import javax.enterprise.context.RequestScoped;
+import javax.mvc.Models;
 
-import fish.payara.cloud.deployer.process.DeploymentProcess;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.setup.MockProvisioning;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+/**
+ *
+ * @author jonathan
+ */
+@RequestScoped
+class ModelsImpl implements Models {
+        
+        private Map<String, Object> map = new HashMap<>();
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+        @Override
+        public Models put(String string, Object o) {
+            map.put(string, o);
+            return this;
+        }
 
-@MockProvisioning
-@ApplicationScoped
-class MockProvisioner implements Provisioner {
-    @Inject
-    ScheduledExecutorService delay;
+        @Override
+        public Object get(String string) {
+            return map.get(string);
+        }
 
-    @Inject
-    @ConfigProperty(name = "provisioning.mock.fail-after", defaultValue = "PT5S")
-    Duration failDelay;
+        @Override
+        public <T> T get(String string, Class<T> type) {
+            Object value = map.get(string);
+            if (type.isAssignableFrom(value.getClass())) {
+                return (T) value;
+            } else {
+                return null;
+            }
+        }
 
-    @Inject
-    DeploymentProcess process;
+        @Override
+        public Map<String, Object> asMap() {
+            return map;
+        }
 
-    @Override
-    public void provision(DeploymentProcessState deployment) throws ProvisioningException {
-        delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
+        @Override
+        public Iterator<String> iterator() {
+            return map.keySet().iterator();
+        }
+        
     }
-
-    private void failDeployment(DeploymentProcessState deployment) {
-        process.fail(deployment, "Provisioning is not enabled in this configuration", null);
-    }
-
-    @Override
-    public List<Namespace> getNamespaces() {
-        return List.of(new Namespace("foo", "bar"));   
-    }
-    
-    @Override
-    public DeploymentProcessState delete(DeploymentProcessState deployment) {
-        return process.artifactDeleted(deployment);
-    }
-}

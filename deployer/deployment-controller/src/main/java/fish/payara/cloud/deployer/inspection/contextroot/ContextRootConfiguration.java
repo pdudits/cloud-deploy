@@ -69,6 +69,24 @@ public class ContextRootConfiguration extends Configuration {
     }
 
     @Override
+    public boolean isRequired(String key) {
+        return true;
+    }
+
+    @Override
+    protected void checkUpdate(UpdateContext context) {
+        super.checkUpdate(context);
+        context.key(CONTEXT_ROOT).check(v -> {
+            if (!v.startsWith("/")) throw new IllegalArgumentException("Value must start with a slash");
+        });
+        context.key(APP_NAME).check(v -> {
+            if (v.isBlank()) throw new IllegalArgumentException("Name must be provided");
+        });
+    }
+    
+    
+
+    @Override
     public Optional<String> getDefaultValue(String key) {
         switch (key) {
             case CONTEXT_ROOT:

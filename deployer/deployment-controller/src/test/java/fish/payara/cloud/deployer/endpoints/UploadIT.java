@@ -43,11 +43,14 @@
 package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.provisioning.Provisioner;
+import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import javax.mvc.Models;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -73,7 +76,11 @@ public class UploadIT {
     public static WebArchive deployment() {
         WebArchive archive =  ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Application.class.getPackage());
+                .addPackage(Provisioner.class.getPackage())
+                .addPackage(Application.class.getPackage())
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(Models.class)
+                .addClass(ModelsImpl.class);
 
         System.out.println(archive.toString(true));
         return archive;

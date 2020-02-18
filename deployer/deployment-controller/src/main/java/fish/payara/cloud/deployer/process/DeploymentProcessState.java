@@ -87,19 +87,22 @@ public class DeploymentProcessState {
     private Instant endpointActivatedAt;
     private Instant deploymentCompletedAt;
     private DeploymentProcessLogOutput logOutput;
-   
+    private final boolean usingDefaultConfiguration;
+    
     DeploymentProcessState(Namespace target, String name, File tempLocation) {
-        this.id = UUID.randomUUID().toString();
-        this.namespace = target;
-        this.name = name;
-        this.tempLocation = tempLocation;
+        this(UUID.randomUUID().toString(), target, name, tempLocation, false);
     }
+    
+    DeploymentProcessState(Namespace target, String name, File tempLocation, boolean usingDefaultConfiguration) {
+        this(UUID.randomUUID().toString(), target, name, tempLocation, usingDefaultConfiguration);
+    }    
 
-    DeploymentProcessState(String id, Namespace target, String name, File tempLocation) {
+    DeploymentProcessState(String id, Namespace target, String name, File tempLocation, boolean usingDefaultConfiguration) {
         this.id = id;
         this.namespace = target;
         this.name = name;
         this.tempLocation = tempLocation;
+        this.usingDefaultConfiguration = usingDefaultConfiguration;
     }
 
     /**
@@ -268,8 +271,24 @@ public class DeploymentProcessState {
         }
     }
 
-    private Optional<Configuration> findConfiguration(String kind, String id) {
+    public Optional<Configuration> findConfiguration(String kind, String id) {
         return configurations.stream().filter(c -> c.getKind().equals(kind) && c.getId().equals(id)).findAny();
+    }
+
+    public Optional<Configuration> findConfiguration(String kind) {
+        return findConfiguration(kind, getName());
+    }
+
+    public boolean hasConfiguration(String kind, String id) {
+        return findConfiguration(kind, id).isPresent();
+    }
+
+    public boolean hasConfiguration(String kind) {
+        return hasConfiguration(kind, getName());
+    }
+
+    public boolean hasConfigurationOverrides(String kind) {
+        return findConfiguration(kind).map(Configuration::hasOverrides).orElse(false);
     }
     
     StateChanged transition(ChangeKind target) {
@@ -372,4 +391,8 @@ public class DeploymentProcessState {
     public boolean isReady() {
         return endpointActivatedAt != null && deploymentCompletedAt != null;
     }
+
+    public boolean isUsingDefaultConfiguration() {
+        return usingDefaultConfiguration;
+    }   
 }

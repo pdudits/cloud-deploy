@@ -60,7 +60,9 @@ public class Application extends javax.ws.rs.core.Application {
         classes.add(ConfigurationResource.class);
         classes.add(DeploymentResource.class);
         classes.add(MultiPartFeature.class);
+        classes.add(NamespaceResource.class);
         classes.add(Version.class);
+        classes.add(UnpolyRedirectFilter.class);
         return classes;
     }
     

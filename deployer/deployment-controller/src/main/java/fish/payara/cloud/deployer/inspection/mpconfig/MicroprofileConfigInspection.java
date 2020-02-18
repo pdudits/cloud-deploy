@@ -36,51 +36,38 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.provisioning;
+package fish.payara.cloud.deployer.inspection.mpconfig;
 
-import fish.payara.cloud.deployer.process.DeploymentProcess;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.setup.MockProvisioning;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import fish.payara.cloud.deployer.inspection.InspectedArtifact;
+import fish.payara.cloud.deployer.inspection.Inspection;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.time.Duration;
-import java.util.Collections;
+import javax.el.CompositeELResolver;
+import javax.enterprise.context.Dependent;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Properties;
 
-@MockProvisioning
-@ApplicationScoped
-class MockProvisioner implements Provisioner {
-    @Inject
-    ScheduledExecutorService delay;
-
-    @Inject
-    @ConfigProperty(name = "provisioning.mock.fail-after", defaultValue = "PT5S")
-    Duration failDelay;
-
-    @Inject
-    DeploymentProcess process;
+@Dependent
+class MicroprofileConfigInspection implements Inspection {
+    private List<MicroprofileConfiguration> configs = new ArrayList<>();
 
     @Override
-    public void provision(DeploymentProcessState deployment) throws ProvisioningException {
-        delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
+    public void inspect(ArtifactEntry entry, InspectedArtifact artifact) throws IOException {
+        if (entry.classpathMatches("META-INF/microprofile-config.properties")) {
+            addConfig(artifact.getName(), entry.getInputStream());
+        }
     }
 
-    private void failDeployment(DeploymentProcessState deployment) {
-        process.fail(deployment, "Provisioning is not enabled in this configuration", null);
+    private void addConfig(String name, InputStream inputStream) throws IOException {
+        Properties config = new Properties();
+        config.load(inputStream);
+        this.configs.add(new MicroprofileConfiguration(name, config));
     }
 
     @Override
-    public List<Namespace> getNamespaces() {
-        return List.of(new Namespace("foo", "bar"));   
-    }
-    
-    @Override
-    public DeploymentProcessState delete(DeploymentProcessState deployment) {
-        return process.artifactDeleted(deployment);
+    public void finish(InspectedArtifact artifact) {
+        configs.forEach(artifact::addConfiguration);
     }
 }

@@ -39,6 +39,8 @@
 package fish.payara.cloud.deployer.provisioning;
 
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
+import java.util.List;
 
 /**
  * Provisions application resources for a deployment.
@@ -62,7 +64,12 @@ public interface Provisioner {
     void provision(DeploymentProcessState deployment) throws ProvisioningException;
     
     /**
-     * Unprovision the deployment.
+     * Gets the provisioned namespaces
+     * @return 
+     */
+    List<Namespace> getNamespaces();
+    
+    /* Unprovision the deployment.
      * @param deployment deployment to delete
      * @return state of the deployment process with last change of
      * {@link fish.payara.cloud.deployer.process.ChangeKind#DELETION_FINISHED}

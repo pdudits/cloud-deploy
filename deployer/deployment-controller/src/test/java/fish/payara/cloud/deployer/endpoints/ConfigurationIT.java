@@ -62,6 +62,9 @@ import java.util.Map;
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.APP_NAME;
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.CONTEXT_ROOT;
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.KIND;
+import fish.payara.cloud.deployer.provisioning.Provisioner;
+import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
+import javax.mvc.Models;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -74,7 +77,11 @@ public class ConfigurationIT {
         return ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
                 .addPackage(Application.class.getPackage())
-                .addClass(ContextRootConfiguration.class);
+                .addPackage(Provisioner.class.getPackage())
+                .addClass(ContextRootConfiguration.class)
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(Models.class)
+                .addClass(ModelsImpl.class);
     }
 
     @Inject
@@ -123,7 +130,7 @@ public class ConfigurationIT {
 
         var client = ClientBuilder.newClient().target(uri).path("api/deployment/").path(state.getId());
 
-        var submittedConfigState = client.path("configuration/").queryParam("submit", "true").request().post(null, ConfigBean.class);
+        var submittedConfigState = client.path("configuration/").queryParam("submit", "true").request(APPLICATION_JSON_TYPE).post(null, ConfigBean.class);
 
         assertNotNull(submittedConfigState.getKind().get(KIND));
         var contextRootConfig = submittedConfigState.getKind().get(KIND).get("test.war");
@@ -150,7 +157,7 @@ public class ConfigurationIT {
         assertEquals("other-test", contextRootConfig.getValues().get(APP_NAME));
         assertEquals("/other", contextRootConfig.getValues().get(CONTEXT_ROOT));
 
-        var resetConfigState = client.queryParam("submit", "false").request()
+        var resetConfigState = client.queryParam("submit", "false").request(APPLICATION_JSON_TYPE)
                 .post(null, ConfigBean.class);
 
         contextRootConfig = resetConfigState.getKind().get(KIND).get("test.war");

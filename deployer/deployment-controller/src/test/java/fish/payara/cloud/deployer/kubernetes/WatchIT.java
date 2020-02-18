@@ -60,7 +60,7 @@ import java.util.concurrent.TimeUnit;
  * Capture is created from {@link CreateTestManual#inspectWatches()}, which stores Kubernetes events in a format
  * understood by {@link StoredLog} and these are then fed into mock kubernetes server
  */
-public class WatchTest {
+public class WatchIT {
     @Rule
     public KubernetesServer mockServer = new KubernetesServer();
 

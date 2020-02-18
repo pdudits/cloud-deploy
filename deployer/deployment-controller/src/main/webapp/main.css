@@ -41,13 +41,11 @@ html,body {
     padding: 0;
     margin: 0;
     height: 100%;
-    background-color: #002c3e;
-    color: #dae0e2;
 }
 
 body {
-    margin: auto;
-    width: 40rem;
+    font-size: 1rem;
+    line-height: 1.5;
 }
 
 .light {
@@ -59,30 +57,45 @@ body {
 }
 
 header, header h1 a, header h1 {
-    background-color: #f0981b;
-    color:  #1b2c3d;
+    color: #F0981B;
+    
 }
 
-header {
+header, footer {
+    background-color: #002c3e;
     border-bottom: 2px solid #ae6e2b
 }
 
-header, h2, div.result {
-    margin: 0;
-    padding: 1rem;
+footer {
+    color: #FFFFFF;
+    text-align: center;
+    margin-top: 112px;
+    width: 100%;
+    position: fixed;
+    bottom: 0;
 }
 
-main {
-    margin-top: 2rem;
+header h1, h2, div.result, main {
+    margin: auto;
+    width: 40rem;
+    padding: 28px 0;
+}
+
+header + h2 {
+    margin-top: 28px;
 }
 
 h1,h2,h3,.primary-orange,h1 a {
-    color: #f0981b
+    color: #f0981b;
 }
 
 h2, div.result {
-    background-color:  #e8eff2;
-    background: linear-gradient(white 40%, #bfd3db)
+    text-align: center;
+    color: #002c3e;
+}
+
+div.result {
+    margin-top: 24px;
 }
 
 h1 a {
@@ -93,22 +106,80 @@ h1 a {
     color: #0096d6;
 }
 
+img.logo {
+    width: 10em;
+    margin-right: 1em;
+    vertical-align: bottom;
+    position: relative;
+    top: 0.15em;
+}
+
 .secondary-light {
     color: #dae0e2;
 }
-
 
 .secondary-dark {
     color: #434445;
 }
 
-form {
-    display: grid;
-    grid-template-columns: 5em [main] auto;
-    grid-gap: 0.5em
+.secondary-white, .secondary-white h3 {
+    color: #FFFFFF;
 }
-input[type=submit] {
-    grid-column: main;
+
+.block {
+    padding: 40px 48px 56px 48px; 
+    margin-bottom: 56px;
+}
+
+section {
+    border-radius: 6px;
+}
+
+main > form, form.block, .form {
+    background-color: rgba(218,224,226,0.5);
+    color: #434445;
+    display: grid;
+    grid-row-gap: 32px;
+    border-radius: 6px;
+}
+
+label {
+    color: #434445;
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+sup {
+    color: #9B1200;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.hint {
+    background-color: #4E5A5E;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 3px;
+    padding: 4px;
+    margin: 12px;
+    cursor: pointer;
+    transition-duration: 0.3s;
+    transition-property: transform;
+    transition-timing-function: ease-out;
+    width: 1.2em;
+    display: inline-block;
+}
+
+form.single-action {
+    text-align: center;
+    padding: 12px;
+}
+
+.hint:hover {
+    transform: rotate(45deg);
 }
 
 progress {
@@ -117,9 +188,101 @@ progress {
     margin: auto;
 }
 
+.button, button, input[type=submit] {
+    color: #101012;
+    background-color: #dae0e2;
+    border-radius: 3px;
+    font-size: 16px;
+    line-height: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 12px 24px;
+    transition-duration: 0.1s;
+    transition-property: transform;
+    border: 0px none;
+}
+    
+.button.highlight, button.highlight, input[type=submit].highlight {
+    background: rgb(240,152,27);
+    box-shadow: 0 -1px 0 0 rgba(128,74,0,0.5) inset;
+}
+
+.button.highlight:hover, button.highlight:hover, input[type=submit].highlight:hover {
+    background-color: rgba(240,152,27,0.9);
+}
+
+.field input:not([type=checkbox]) {
+    display: block;
+    width: 100%;
+}
+
+.button.default, button.default, input[type=submit].default{
+    background-color: #F0981B;
+    box-shadow: 0 -1px 0 0 rgba(134,151,156,0.5) inset;
+}
+
+.button:hover, button:hover, input[type=submit]:hover {
+    transform: translate(0px, 2px);
+    background-color: rgba(195,203,206,0.8);
+}
+
+
+.pending {
+    min-height: 5em;
+    text-align: center;
+    padding: 2em 0.5em;
+    background-color: #4E5A5E;
+}
+
+.success {
+    background-color: #006729;
+}
+
+.failed {
+    background-color: #9B1200;
+}
+
 #log {
     width: 100%;
     background: transparent;
     color: #0f9;
     border: 1px solid #f0981b;
+}
+
+p {
+    margin-top: 1.5rem;
+}
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.625rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+h4, h5, h6 {
+    font-size: 1rem;
+}
+
+input[type=checkbox], input[type=radio] {
+    border-color: #86979c;
+    border-radius: 3px;
+    border-style: solid;
+    border-width: 1px;
+    height: 24px;
+    width: 24px;
+    vertical-align: baseline;
+}
+
+checkbox:hover, radio:hover {
+    border-color: #b5bfc2;
+}
+
+checkbox:focus, radio:focus {
+    border-color: #FFFFFF;
+    box-shadow: 0 0 0 2px #008fcb;
 }

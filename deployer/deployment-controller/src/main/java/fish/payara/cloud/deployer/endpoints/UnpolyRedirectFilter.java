@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2020 Payara Foundation and/or its affiliates. All rights reserved.
+ *  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ *
+ *  Copyright (c) [2020] Payara Foundation and/or its affiliates. All rights reserved.
  *
  *  The contents of this file are subject to the terms of either the GNU
  *  General Public License Version 2 only ("GPL") or the Common Development
@@ -9,6 +11,9 @@
  *  https://github.com/payara/Payara/blob/master/LICENSE.txt
  *  See the License for the specific
  *  language governing permissions and limitations under the License.
+ *
+ *  When distributing the software, include this License Header Notice in each
+ *  file and include the License.
  *
  *  When distributing the software, include this License Header Notice in each
  *  file and include the License file at glassfish/legal/LICENSE.txt.
@@ -35,52 +40,31 @@
  *  only if the new code is made subject to such option by the copyright
  *  holder.
  */
+package fish.payara.cloud.deployer.endpoints;
 
-package fish.payara.cloud.deployer.provisioning;
+import java.io.IOException;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.container.ContainerResponseFilter;
+import javax.ws.rs.core.Response;
 
-import fish.payara.cloud.deployer.process.DeploymentProcess;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.setup.MockProvisioning;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-@MockProvisioning
-@ApplicationScoped
-class MockProvisioner implements Provisioner {
-    @Inject
-    ScheduledExecutorService delay;
-
-    @Inject
-    @ConfigProperty(name = "provisioning.mock.fail-after", defaultValue = "PT5S")
-    Duration failDelay;
-
-    @Inject
-    DeploymentProcess process;
+/**
+ *
+ * @author patrik
+ */
+public class UnpolyRedirectFilter implements ContainerResponseFilter {
 
     @Override
-    public void provision(DeploymentProcessState deployment) throws ProvisioningException {
-        delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) throws IOException {
+        if (responseContext.getStatusInfo().equals(Response.Status.SEE_OTHER) && requestContext.getHeaders().containsKey("X-Up-Target")) {
+            // If it is a redirect response to request made by Unpoly, flag this in Matrix parameter
+            var location = responseContext.getHeaderString("Location");
+            responseContext.getHeaders().putSingle("Location", location+REDIRECT_FLAG);
+        } else if (requestContext.getUriInfo().getPath().contains(REDIRECT_FLAG)) {
+            // if it is subsequent request from above, add X-Up-Loadtion so unpoly keeps correct header
+            responseContext.getHeaders().putSingle("X-Up-Location", requestContext.getUriInfo().getRequestUri().toString().replace(REDIRECT_FLAG, ""));
+        }
     }
-
-    private void failDeployment(DeploymentProcessState deployment) {
-        process.fail(deployment, "Provisioning is not enabled in this configuration", null);
-    }
-
-    @Override
-    public List<Namespace> getNamespaces() {
-        return List.of(new Namespace("foo", "bar"));   
-    }
+    private static final String REDIRECT_FLAG = ";redirected=true";
     
-    @Override
-    public DeploymentProcessState delete(DeploymentProcessState deployment) {
-        return process.artifactDeleted(deployment);
-    }
 }
