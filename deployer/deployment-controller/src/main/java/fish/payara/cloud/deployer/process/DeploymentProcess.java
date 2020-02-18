@@ -208,6 +208,8 @@ public class DeploymentProcess {
     public DeploymentProcessState artifactDeleted(DeploymentProcessState process) {
         return updateProcess(process, DeploymentProcessState::removePersistentLocation);
     }
+    
+    
 
     public DeploymentProcessState artifactStored(DeploymentProcessState process, URI persistentUri) {
         return updateProcess(process, p -> p.setPersistentLocation(persistentUri));

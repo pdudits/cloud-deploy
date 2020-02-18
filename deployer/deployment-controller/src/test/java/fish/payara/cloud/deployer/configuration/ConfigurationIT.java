@@ -61,6 +61,7 @@ import org.junit.runner.RunWith;
 import javax.inject.Inject;
 
 import static fish.payara.cloud.deployer.inspection.InspectionHelper.write;
+import fish.payara.cloud.deployer.provisioning.Provisioner;
 
 @RunWith(Arquillian.class)
 public class ConfigurationIT {
@@ -73,6 +74,7 @@ public class ConfigurationIT {
                 .addPackage(DeploymentProcess.class.getPackage())
                 .addPackage(Inspection.class.getPackage())
                 .addPackage(ContextRootConfiguration.class.getPackage())
+                .addPackage(Provisioner.class.getPackage())
                 .addClass(DurationConverter.class)
                 .addClass(ManagedConcurrencyProducer.class)
                 .addClass(InspectionObserver.class)

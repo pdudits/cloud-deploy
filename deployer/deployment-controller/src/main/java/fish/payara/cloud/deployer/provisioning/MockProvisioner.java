@@ -40,12 +40,15 @@ package fish.payara.cloud.deployer.provisioning;
 
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.setup.MockProvisioning;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -69,5 +72,10 @@ class MockProvisioner implements Provisioner {
 
     private void failDeployment(DeploymentProcessState deployment) {
         process.fail(deployment, "Provisioning is not enabled in this configuration", null);
+    }
+
+    @Override
+    public List<Namespace> getNamespaces() {
+        return List.of(new Namespace("foo", "bar"));
     }
 }

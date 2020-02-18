@@ -41,6 +41,8 @@ package fish.payara.cloud.deployer.endpoints;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.ProcessObserver;
+import fish.payara.cloud.deployer.provisioning.Provisioner;
+import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -60,10 +62,14 @@ import javax.ws.rs.sse.InboundSseEvent;
 import javax.ws.rs.sse.SseEventSource;
 
 import java.net.URI;
-import java.net.URL;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import javax.enterprise.context.RequestScoped;
+import javax.mvc.Models;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -77,7 +83,11 @@ public class ServerSideEventsIT {
     public static WebArchive deployment() {
         return ShrinkWrap.create(WebArchive.class)
                 .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Application.class.getPackage());
+                .addPackage(Provisioner.class.getPackage())
+                .addPackage(Application.class.getPackage())
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(Models.class)
+                .addClass(ModelsImpl.class);
     }
 
     @Inject

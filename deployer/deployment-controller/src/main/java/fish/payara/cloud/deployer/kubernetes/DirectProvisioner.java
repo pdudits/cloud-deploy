@@ -71,6 +71,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
+import fish.payara.cloud.deployer.process.Namespace;
+import java.util.ArrayList;
+import java.util.List;
+import javax.json.bind.JsonbBuilder;
 
 @DirectProvisioning
 @ApplicationScoped
@@ -182,6 +186,23 @@ class DirectProvisioner implements Provisioner {
         var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
         NamespacedKubernetesClient namespacedClient = namespace == null ? client : client.inNamespace(namespace);
         return namespacedClient.resource((HasMetadata) Serialization.unmarshal(resource, KubernetesResource.class)).createOrReplace();
+    }
+    
+    /**
+     * Gets a list of namespaces that have been provisioned, in JSON format
+     * @return provisioned namespaces
+     */
+    @Override
+    public List<Namespace> getNamespaces() {
+        List<Namespace> namespacesList = new ArrayList<>();
+        for (var namespace: client.namespaces().list().getItems()) {
+            if ("payara-cloud".equals(namespace.getMetadata().getLabels().get("app.kubernetes.io/managed-by"))) {
+                var project = namespace.getMetadata().getLabels().get("app.kubernetes.io/name");
+                var stage = namespace.getMetadata().getLabels().get("app.kubernetes.io/part-of");;
+                namespacesList.add(new Namespace(project, stage));
+            }
+        }
+        return namespacesList;
     }
 
     class Naming {
