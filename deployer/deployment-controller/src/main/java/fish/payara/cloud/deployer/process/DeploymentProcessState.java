@@ -303,6 +303,11 @@ public class DeploymentProcessState {
     StateChanged deleteArtifact() {
         return transition(ChangeKind.DELETION_STARTED);
     }
+    
+    StateChanged deletetionFinish() {
+        persistentLocation = null;
+        return transition(ChangeKind.DELETION_FINISHED);
+    }
 
     StateChanged removePersistentLocation() {
         version++;

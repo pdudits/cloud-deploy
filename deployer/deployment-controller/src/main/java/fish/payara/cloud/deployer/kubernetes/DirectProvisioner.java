@@ -124,11 +124,11 @@ class DirectProvisioner implements Provisioner {
     }
 
     @Override
-    public boolean delete(DeploymentProcessState deployment) {
-        var deployments = client.apps().deployments().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId());
-        var services = client.services().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId());
-        var pods = client.pods().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId());
-        return deployments.delete() && services.delete() && pods.delete();
+    public DeploymentProcessState delete(DeploymentProcessState deployment) {
+        client.apps().deployments().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId()).delete();
+        client.services().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId()).delete();
+        client.pods().withLabel(APP_KUBERNETES_IO_PART_OF, deployment.getId()).delete();
+        return process.artifactDeleted(deployment);
     }
 
     class Naming {

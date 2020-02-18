@@ -64,7 +64,8 @@ public interface Provisioner {
     /**
      * Unprovision the deployment.
      * @param deployment deployment to delete
-     * @return true if the deployment was successfully unprovisioned.
+     * @return state of the deployment process with last change of
+     * {@link fish.payara.cloud.deployer.process.ChangeKind#DELETION_FINISHED}
      */
-    boolean delete(DeploymentProcessState deployment);
+    DeploymentProcessState delete(DeploymentProcessState deployment);
 }

@@ -202,8 +202,7 @@ public class DeploymentProcess {
     }
     
     public DeploymentProcessState deleteArtifact(DeploymentProcessState process) {
-        updateProcess(process, DeploymentProcessState::deleteArtifact);
-        return artifactDeleted(process);
+        return updateProcess(process, DeploymentProcessState::deleteArtifact);
     }
 
     public DeploymentProcessState artifactDeleted(DeploymentProcessState process) {

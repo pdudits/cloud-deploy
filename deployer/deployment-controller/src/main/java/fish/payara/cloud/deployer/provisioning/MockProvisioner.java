@@ -72,7 +72,7 @@ class MockProvisioner implements Provisioner {
     }
 
     @Override
-    public boolean delete(DeploymentProcessState deployment) {
-        return false;
+    public DeploymentProcessState delete(DeploymentProcessState deployment) {
+        return process.artifactDeleted(deployment);
     }
 }
