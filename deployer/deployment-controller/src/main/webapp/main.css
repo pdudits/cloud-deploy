@@ -48,6 +48,25 @@ body {
     line-height: 1.5;
 }
 
+p {
+    margin-top: 1.5rem;
+}
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.625rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
+
+h4, h5, h6 {
+    font-size: 1rem;
+}
+
 .light {
     font-weight: 300;
 }
@@ -58,34 +77,68 @@ body {
 
 header, header h1 a, header h1 {
     color: #F0981B;
-    
 }
 
-header, footer {
+.secondary-light {
+    color: #dae0e2;
+}
+
+.secondary-dark {
+    color: #434445;
+}
+
+.secondary-white, .secondary-white h3 {
+    color: #FFFFFF;
+}
+
+/* all top-level elements have margin */
+body > *, .block, section {
+    margin: 28px auto;
+}
+
+/* with some exceptions */
+body > header, body > header > *, 
+body > nav, nav > *, 
+body > footer, 
+body > main, .nested {
+    margin: auto;
+}
+
+/* All top level elements have page width */
+body > *, header h1, nav > * {
+    width: 40rem;
+}
+
+/* Except full-width visual elements */
+body > header, body > footer, body > nav {
+    width: 100%;
+}
+
+body > header, body > footer {
     background-color: #002c3e;
     border-bottom: 2px solid #ae6e2b
 }
 
-footer {
+body > header h1 {
+    padding: 28px 0;
+}
+
+body > main {
+    margin-bottom: 3rem; /* because of footer */
+}
+body > footer {
     color: #FFFFFF;
     text-align: center;
-    margin-top: 112px;
-    width: 100%;
     position: fixed;
     bottom: 0;
 }
 
-header h1, h2, div.result, main {
-    margin: auto;
-    width: 40rem;
-    padding: 28px 0;
+body > nav {
+    background-color: #DAE0E2;
+    line-height: 3rem;
 }
 
-header + h2 {
-    margin-top: 28px;
-}
-
-h1,h2,h3,.primary-orange,h1 a {
+.primary-orange, h1,h2,h3,h1 a {
     color: #f0981b;
 }
 
@@ -95,7 +148,7 @@ h2, div.result {
 }
 
 div.result {
-    margin-top: 24px;
+    margin-top: 28px;
 }
 
 h1 a {
@@ -114,28 +167,17 @@ img.logo {
     top: 0.15em;
 }
 
-.secondary-light {
-    color: #dae0e2;
-}
-
-.secondary-dark {
-    color: #434445;
-}
-
-.secondary-white, .secondary-white h3 {
-    color: #FFFFFF;
-}
-
 .block {
     padding: 40px 48px 56px 48px; 
-    margin-bottom: 56px;
+    margin: 28px 0;
 }
 
 section {
     border-radius: 6px;
 }
 
-main > form, form.block, .form {
+/* forms */
+form.block, .form {
     background-color: rgba(218,224,226,0.5);
     color: #434445;
     display: grid;
@@ -143,11 +185,17 @@ main > form, form.block, .form {
     border-radius: 6px;
 }
 
+/* we already have grid gap so we don't need margins */
+.form > * {
+    margin: 0;
+}
+
 label {
     color: #434445;
     font-size: 16px;
     font-weight: 500;
     margin-bottom: 8px;
+    word-break: break-all;
 }
 
 sup {
@@ -182,12 +230,26 @@ form.single-action {
     transform: rotate(45deg);
 }
 
-progress {
-    display: block;
-    width: 50%;
-    margin: auto;
+input[type=checkbox], input[type=radio] {
+    border-color: #86979c;
+    border-radius: 3px;
+    border-style: solid;
+    border-width: 1px;
+    height: 24px;
+    width: 24px;
+    vertical-align: sub;
 }
 
+checkbox:hover, radio:hover {
+    border-color: #b5bfc2;
+}
+
+checkbox:focus, radio:focus {
+    border-color: #FFFFFF;
+    box-shadow: 0 0 0 2px #008fcb;
+}
+
+/* button */
 .button, button, input[type=submit] {
     color: #101012;
     background-color: #dae0e2;
@@ -226,11 +288,22 @@ progress {
     background-color: rgba(195,203,206,0.8);
 }
 
+a.button {
+    text-decoration: none;
+}
 
-.pending {
+/* status block */
+#status > section {
     min-height: 5em;
     text-align: center;
     padding: 2em 0.5em;
+}
+
+#status > section h3 {
+    margin-top: auto;
+}
+
+.pending {
     background-color: #4E5A5E;
 }
 
@@ -242,47 +315,19 @@ progress {
     background-color: #9B1200;
 }
 
+progress {
+    display: block;
+    width: 50%;
+    margin: auto;
+}
+
 #log {
     width: 100%;
     background: transparent;
-    color: #0f9;
+    color: #434445;
     border: 1px solid #f0981b;
 }
 
-p {
-    margin-top: 1.5rem;
-}
-h1 {
-    font-size: 2rem;
-}
-
-h2 {
-    font-size: 1.625rem;
-}
-
-h3 {
-    font-size: 1.25rem;
-}
-
-h4, h5, h6 {
-    font-size: 1rem;
-}
-
-input[type=checkbox], input[type=radio] {
-    border-color: #86979c;
-    border-radius: 3px;
-    border-style: solid;
-    border-width: 1px;
-    height: 24px;
-    width: 24px;
-    vertical-align: baseline;
-}
-
-checkbox:hover, radio:hover {
-    border-color: #b5bfc2;
-}
-
-checkbox:focus, radio:focus {
-    border-color: #FFFFFF;
-    box-shadow: 0 0 0 2px #008fcb;
+.hidden {
+    display:none;
 }

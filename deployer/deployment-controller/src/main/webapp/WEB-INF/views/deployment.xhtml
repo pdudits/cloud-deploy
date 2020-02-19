@@ -42,23 +42,27 @@
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:comp="http://xmlns.jcp.org/jsf/composite/cloud-deploy">
     <ui:define name="main">
+        <nav>
+            <h4>Stage and project: #{deployment.namespace.stage} / #{deployment.namespace.project}</h4>
+        </nav>
         <h2>Deployment #{deployment.name}</h2>
         <main>
-            <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
-        <div id="status">
+            <div id="status">
                 <c:choose>
                     <c:when test="#{deployment.failed}">
+                        <section class="failed secondary-white">
                         <h3>Failed</h3>
                         <p>#{deployment.completionMessage}</p>
+                        </section>
                     </c:when>
                     <c:when test="#{deployment.ready}">
-                <div class="success secondary-white">
-                        <h3>Success!</h3>
-                        <p>#{deployment.completionMessage}</p>
-                <div class="result secondary-white">
-                            <a href="#{deployment.endpoint}" target="_blank">#{deployment.endpoint}</a>
-                        </div>
-                </div>
+                        <section class="success secondary-white">
+                            <h3>Success!</h3>
+                            <p>#{deployment.completionMessage}</p>
+                            <div class="result secondary-white">
+                                <a href="#{deployment.endpoint}" target="_blank" class="button highlight">View your app</a>
+                            </div>
+                        </section>
                     </c:when>
                     <c:when test="#{deployment.configurable}">
                         <section class="pending secondary-white"><h3>Configuration pending</h3>
@@ -82,19 +86,22 @@
                         </form>
                     </c:when>
                     <c:otherwise>
-                        <progress/>
-                <p class="pending secondary-white">Deploying...</p>
-                        <p>#{lastStateTimestamp} #{deployment.lastChange}</p>
+                        <section class="pending secondary-white">
+                            <h3>Deploying...</h3>
+                            <progress/>
+                            <p>#{lastStateTimestamp} #{deployment.lastChange}</p>
+                        </section>
                     </c:otherwise>
                 </c:choose>
 
             </div>
 
-            <textarea id="log" readonly="readonly" rows="25" style="visibility: hidden">
+            <details class="hidden" id="logcontainer">
+                <summary>Container log</summary>
+                <textarea id="log" readonly="readonly" rows="25"></textarea>
+            </details>
 
-            </textarea>
-
-            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get">
+            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get" class="hidden">
                 <button id="refresh" type="submit">Refresh</button>
             </form>
         </main>
@@ -125,8 +132,9 @@
                 })
                 eventStream.addEventListener("log", (event) => {
                     console.log("log event", event);
+                    const container = document.getElementById('logcontainer');
+                    container.className=container.className.replace("hidden","");
                     const el = document.getElementById('log');
-                    el.style.visibility = "visible";
                     el.value = el.value + event.data;
                     el.scrollTop = el.scrollHeight;
                 });
