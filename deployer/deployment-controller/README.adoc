@@ -1,3 +1,30 @@
 = Deployment Controller
 
 The Main component, that handles configuration and provisioning of kubernetes resources based on provided input.
+
+= Maven profiles
+
+`-Pdebug` adds debug arguments to Payara micro.
+Automatically enabled when debugging integration tests with `-Dmaven.failsafe.debug`
+Debug port of the server is 9009.
+
+`-Prun` packages and run the application.
+
+`-Pexploded` is intended for use with `run` and will deploy the target directory, rather when war
+Useful when your IDE updates resources in target directory automatically (like Netbeans does)
+
+`-Pconfigured` will add system properties from `$HOME/cloud.properties`.
+By default both storage and provisioning use mock mode, which pretends to do stuff.
+You can configure Kubernetes and Azure in that property file and run against the real thing.
+
+`-Ptest-docker` runs integration tests which require docker.
+
+= Development run
+
+`mvn -Prun,debug,exploded` is best for developing the UI with fast feedback loop.
+
+`mvn -Prun,debug,configured` is best for trying out things against real cloud infra.
+
+`mvn pre-integration-test -Pdebug` then `mvn test -Dtest=...IT -Dmaven.surefire.debug` serves for debugging a single integration test.
+Server debug port is 9009, Surefire debug port is 5005.
+But usually interesting stuff happens at server.
