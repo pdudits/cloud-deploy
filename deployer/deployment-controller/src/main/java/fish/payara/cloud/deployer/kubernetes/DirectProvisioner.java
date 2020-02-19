@@ -190,9 +190,10 @@ class DirectProvisioner implements Provisioner {
     public List<Namespace> getNamespaces() {
         List<Namespace> namespacesList = new ArrayList<>();
         for (var namespace: client.namespaces().list().getItems()) {
-            if ("payara-cloud".equals(namespace.getMetadata().getLabels().get("app.kubernetes.io/managed-by"))) {
-                var project = namespace.getMetadata().getLabels().get("app.kubernetes.io/name");
-                var stage = namespace.getMetadata().getLabels().get("app.kubernetes.io/part-of");;
+            var labels = namespace.getMetadata().getLabels();
+            if (labels != null && "payara-cloud".equals(labels.get("app.kubernetes.io/managed-by"))) {
+                var project = labels.get("app.kubernetes.io/name");
+                var stage = labels.get("app.kubernetes.io/part-of");;
                 namespacesList.add(new Namespace(project, stage));
             }
         }
