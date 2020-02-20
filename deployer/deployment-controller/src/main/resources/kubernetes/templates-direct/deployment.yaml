@@ -55,19 +55,45 @@ spec:
           - mountPath: /opt/payara/deployments
             name: deployments
         # DNS cluster mode allows for instances of same app cluster themselves without need for Kubernetes API access
-        args: ["--deploymentDir", "/opt/payara/deployments", "--clustermode", "dns:$(NAME)-datagrid:6900"]
+        # "--clustermode", "dns:$(NAME)-datagrid:6900"
+        # but still has startup time cost, so for demo we switch it off
+        args: ["--deploymentDir", "/opt/payara/deployments", "--nocluster"]
         resources:
           # Allocate quarter of CPU at rest, allow for use up to 1 CPU.
           requests:
             cpu: 250m
           limits:
             memory: "512Mi"
-            cpu: "1"
+            # disable for snappier demo
+            # cpu: "1"
         ports:
           - containerPort: 8080
             name: http
           - containerPort: 6900
             name: datagrid
+        # poll hard at startup, then in regular periods (Since 1.16)
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 1
+          failureThreshold: 120
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          failureThreshold: 3
+          initialDelaySeconds: 60
+        # Kubernetes 1.14 doesn't know startup probe yet, let's use readyness
+        # so that we don't announce failed deployment as success
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          failureThreshold: 1   
+          periodSeconds: 2
+          initialDelaySeconds: 3
       volumes:
         - name: deployments
           emptyDir: 
