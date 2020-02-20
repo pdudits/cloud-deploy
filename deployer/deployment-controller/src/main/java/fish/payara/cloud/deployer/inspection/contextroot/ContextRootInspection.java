@@ -41,13 +41,13 @@ package fish.payara.cloud.deployer.inspection.contextroot;
 import fish.payara.cloud.deployer.inspection.InspectedArtifact;
 import fish.payara.cloud.deployer.inspection.Inspection;
 import fish.payara.cloud.deployer.inspection.InspectionException;
+import fish.payara.cloud.deployer.utils.Xml;
+import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import javax.enterprise.context.Dependent;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathException;
-import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathNodes;
 import java.io.IOException;
 import java.util.Properties;
@@ -77,17 +77,12 @@ class ContextRootInspection implements Inspection {
     private void inspectGlassfishDescriptor(ArtifactEntry entry) throws IOException {
 
         try {
-            var dbf = DocumentBuilderFactory.newInstance();
-            dbf.setValidating(false);
-            dbf.setExpandEntityReferences(false);
-            dbf.setFeature( "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            var document = dbf.newDocumentBuilder().parse(entry.getInputStream());
-            var factory = XPathFactory.newInstance();
-            var result = factory.newXPath().evaluateExpression("/glassfish-web-app/context-root/text()", document, XPathNodes.class);
+            Document document = Xml.parse(entry.getInputStream());
+            XPathNodes result = Xml.xpath(document, "/glassfish-web-app/context-root/text()");
             if (result.size() == 1) {
                 descriptorRoot = result.get(0).getTextContent();
             }
-        } catch (ParserConfigurationException | SAXException | XPathException e) {
+        } catch (SAXException | XPathException e) {
             throw new InspectionException("Failed to parse glassfish-web.xml", e);
         }
     }
