@@ -108,7 +108,7 @@ public class DeploymentObservationIT {
         assertFalse("Process should not be marked as failed", state.isFailed());
         assertNotNull("Process should contain completion time", state.getCompletion());
         
-        process.deleteArtifact(state);
+        process.delete(state);
         observer.await(ChangeKind.DELETION_STARTED);
         state = observer.getLastProcess();
         assertNull("Location of artifact has been deleted", state.getPersistentLocation());

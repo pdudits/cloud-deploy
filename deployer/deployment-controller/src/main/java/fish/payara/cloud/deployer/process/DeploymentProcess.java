@@ -205,7 +205,7 @@ public class DeploymentProcess {
         return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_STARTED));
     }
     
-    public DeploymentProcessState deleteArtifact(DeploymentProcessState process) {
+    public DeploymentProcessState delete(DeploymentProcessState process) {
         return updateProcess(process, DeploymentProcessState::deleteArtifact);
     }
 
