@@ -42,29 +42,37 @@
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:comp="http://xmlns.jcp.org/jsf/composite/cloud-deploy">
     <ui:define name="main">
-        <h2>Deployment #{deployment.name}</h2>
+        <nav class="nav--main">
+            <ul>
+                <li><span class="nav__label">Stage</span> #{deployment.namespace.stage}</li>
+                <li><span class="nav__label">Project</span> #{deployment.namespace.project}</li>
+            </ul>
+        </nav>
+        <h1>Deployment #{deployment.name}</h1>
+        <div class="page">
         <main>
-            <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
         <div id="status">
                 <c:choose>
                     <c:when test="#{deployment.failed}">
+                        <div class="status status--error">
                         <h3>Failed</h3>
                         <p>#{deployment.completionMessage}</p>
+                        </div>
                     </c:when>
                     <c:when test="#{deployment.ready}">
-                <div class="success secondary-white">
+                <div class="status status--success">
                         <h3>Success!</h3>
                         <p>#{deployment.completionMessage}</p>
-                <div class="result secondary-white">
-                            <a href="#{deployment.endpoint}" target="_blank">#{deployment.endpoint}</a>
-                        </div>
+                        <p>
+                            <a href="#{deployment.endpoint}" target="_blank" class="button highlight">View Your App</a>
+                        </p>
                 </div>
                     </c:when>
                     <c:when test="#{deployment.configurable}">
-                        <section class="pending secondary-white"><h3>Configuration pending</h3>
+                        <section class="pending secondary-white block"><h3>Configuration pending</h3>
                         <c:choose>
                             <c:when test="${deployment.configurationComplete}">
-                                <button onclick="document.getElementById('config').submit()">Confirm configured values</button>
+                                <p><button class="button" onclick="document.getElementById('config').submit()">Confirm configured values</button></p>
                             </c:when> 
                             <c:otherwise>
                                 <p>Some of configuration objects below need your attention</p>
@@ -78,26 +86,30 @@
                                                      config="${config.kind[configKey.kind][configKey.id]}"
                                                      />
                         </c:forEach>
-                            <button class="highlight">Confirm configured values</button>
+                            <button class="button highlight">Confirm configured values</button>
                         </form>
                     </c:when>
                     <c:otherwise>
+                        <section class="pending secondary-white block">
+                            <h3>Deploying...</h3>
                         <progress/>
-                <p class="pending secondary-white">Deploying...</p>
                         <p>#{lastStateTimestamp} #{deployment.lastChange}</p>
+                        </section>
                     </c:otherwise>
                 </c:choose>
 
             </div>
 
-            <textarea id="log" readonly="readonly" rows="25" style="visibility: hidden">
+            <details class="hidden" id="logcontainer">
+                <summary>Container log</summary>
+                <textarea id="log" readonly="readonly" rows="25"></textarea>
+            </details>
 
-            </textarea>
-
-            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get">
+            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get" class="hidden">
                 <button id="refresh" type="submit">Refresh</button>
             </form>
         </main>
+        </div>
 
         <script type="text/javascript">
             //<![CDATA[
@@ -115,18 +127,19 @@
                         }
                         document.getElementById("refresh").click();
                     }
-                }
+                };
                 eventStream.addEventListener("state", (event) => {
                     console.log("state event", event);
                     const payload = JSON.parse(event.data);
                     if (payload.complete) {
                         eventStream.close();
                     }
-                })
+                });
                 eventStream.addEventListener("log", (event) => {
                     console.log("log event", event);
+                    const container = document.getElementById('logcontainer');
+                    container.className=container.className.replace("hidden","");
                     const el = document.getElementById('log');
-                    el.style.visibility = "visible";
                     el.value = el.value + event.data;
                     el.scrollTop = el.scrollHeight;
                 });

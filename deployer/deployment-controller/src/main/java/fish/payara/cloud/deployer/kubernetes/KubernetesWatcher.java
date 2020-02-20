@@ -52,10 +52,8 @@ import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.Watch;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
-import io.fabric8.kubernetes.client.utils.Serialization;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Initialized;
@@ -75,7 +73,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -96,14 +93,18 @@ class KubernetesWatcher implements Closeable {
     @Inject
     DeploymentProcess process;
     @Inject
-    @ConfigProperty(name = "kubernetes.watcher.pumpinterval", defaultValue = "PT1S")
-    Duration pumpInterval = Duration.ofSeconds(1);
+    @ConfigProperty(name = "kubernetes.watcher.pumpinterval", defaultValue = "PT0.2S")
+    Duration pumpInterval = Duration.ofMillis(200);
 
     private WatchHandle<Ingress> ingressWatch;
     private WatchHandle<Deployment> deploymentWatch;
     private WatchHandle<Pod> podWatch;
     private Set<String> startingPods = new ConcurrentHashMap<String, Boolean>().keySet(true);
     private ConcurrentMap<String, WatchedPod> podWatches = new ConcurrentHashMap<>();
+
+    private static String utf8String(byte[] chunk) {
+        return new String(chunk, StandardCharsets.UTF_8);
+    }
 
     /**
      * Subscribes to changes of managed resources.
@@ -119,60 +120,9 @@ class KubernetesWatcher implements Closeable {
         startWatching();
     }
 
-    class WatchHandle<T> {
-        Watch watch;
-        volatile Watcher<T> watcher;
-        private final String kind;
-        private final BiFunction<Watcher<T>, String, Watch> registration;
-        private final BiConsumer<Watcher.Action, T> handler;
-        private String resourceVersion;
-
-
-        WatchHandle(String kind, BiFunction<Watcher<T>,String,Watch> registration, BiConsumer<Watcher.Action, T> handler) {
-            this.kind = kind;
-            this.registration = registration;
-            this.handler = handler;
-        }
-
-        void register() {
-            watcher = new Watcher<T>() {
-                @Override
-                public void eventReceived(Action action, T resource) {
-                    handler.accept(action, resource);
-                }
-
-                @Override
-                public void onClose(KubernetesClientException cause) {
-                    LOGGER.log(Level.WARNING, kind + " watch closed", cause);
-                    if (retryableException(cause) && WatchHandle.this.watcher == this) {
-                        // For ingresses I observe getting 2-day old event first, client remembers the resource version
-                        // and subsequent reconnects fail on too old resource version.
-                        // Let's play along with the API server here
-                        if ("Gone".equals(cause.getStatus().getReason())) {
-                            var matcher = Pattern.compile("too old resource version: .+\\((.+)\\)").matcher(cause.getStatus().getMessage());
-                            if (matcher.matches()) {
-                                resourceVersion = matcher.group(1);
-                            }
-                        }
-                        executorService.schedule(WatchHandle.this::register, 1, TimeUnit.SECONDS);
-                    }
-                }
-            };
-            watch = registration.apply(watcher, resourceVersion);
-        }
-
-        void close() {
-            if (watch != null) {
-                watch.close();
-            }
-        }
-
-    }
-
-
     private void startWatchingPods() {
         podWatch = new WatchHandle<>("Pod",
-                (w,r) -> client.inAnyNamespace().pods()
+                (w, r) -> client.inAnyNamespace().pods()
                         .withLabel("app.kubernetes.io/managed-by", "payara-cloud")
                         .withResourceVersion(r)
                         .watch(w),
@@ -182,7 +132,7 @@ class KubernetesWatcher implements Closeable {
 
     private void startWatchingDeployment() {
         deploymentWatch = new WatchHandle<>("Deployment",
-                (w,r) -> client.inAnyNamespace().apps().deployments()
+                (w, r) -> client.inAnyNamespace().apps().deployments()
                         .withLabel("app.kubernetes.io/managed-by", "payara-cloud")
                         .withResourceVersion(r)
                         .watch(w),
@@ -192,7 +142,7 @@ class KubernetesWatcher implements Closeable {
 
     private void startWatchingIngress() {
         ingressWatch = new WatchHandle<>("Ingress",
-                (w,r) -> client.inAnyNamespace().extensions().ingresses()
+                (w, r) -> client.inAnyNamespace().extensions().ingresses()
                         .withLabel("app.kubernetes.io/managed-by", "payara-cloud")
                         .withResourceVersion(r)
                         .watch(w),
@@ -262,7 +212,7 @@ class KubernetesWatcher implements Closeable {
                     logLog(id, logWatchEntry.getValue().podMeta, availableBytes);
                     handleLog(id, logWatchEntry.getValue().podMeta, availableBytes);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "Failed to process log pump of " + id, e);
                 unregisterLogWatch(id);
             }
@@ -274,30 +224,38 @@ class KubernetesWatcher implements Closeable {
         if (id == null) {
             return;
         }
-        logEvent(action, resource);
+        if (!isCurrentDeployment(id)) {
+            return;
+        }
+        logEvent(action, resource, resource.getStatus().getConditions());
         handlePodEvent(action, resource, id);
-        if (becameReady(action, resource)) {
+        if (started(action, resource)) {
             registerLogWatch(id, resource);
         }
     }
 
+    protected boolean isCurrentDeployment(String id) {
+        return process.getProcessState(id) != null;
+    }
+
     /**
      * Track when created pod enters ready state (its main container is started)
+     *
      * @param action
      * @param resource
      * @return
      */
-    private boolean becameReady(Watcher.Action action, Pod resource) {
+    private boolean started(Watcher.Action action, Pod resource) {
         var uid = resource.getMetadata().getUid();
         if (action == Watcher.Action.ADDED) {
             startingPods.add(uid);
             return false;
         } else if (startingPods.contains(uid)) {
-            boolean isReady = resource.getStatus().getContainerStatuses().stream().anyMatch(status -> status.getReady());
-            if (isReady) {
+            boolean running = resource.getStatus().getContainerStatuses().stream().anyMatch(status -> status.getState().getRunning() != null);
+            if (running) {
                 startingPods.remove(uid);
             }
-            return isReady;
+            return running;
         } else {
             return false;
         }
@@ -316,7 +274,7 @@ class KubernetesWatcher implements Closeable {
     }
 
     private void unregisterLogWatch(String id) {
-        LOGGER.info("Disconnecting from log of "+id);
+        LOGGER.info("Disconnecting from log of " + id);
         var watch = podWatches.remove(id);
         watch.close();
     }
@@ -327,7 +285,7 @@ class KubernetesWatcher implements Closeable {
         if (id == null) {
             return;
         }
-        logEvent(action, resource);
+        logEvent(action, resource, resource.getStatus());
         handleDeploymentEvent(action, resource, id);
     }
 
@@ -336,7 +294,7 @@ class KubernetesWatcher implements Closeable {
         if (id == null) {
             return;
         }
-        logEvent(action, resource);
+        logEvent(action, resource, resource.getStatus());
         handleIngressEvent(action, resource, id);
     }
 
@@ -350,16 +308,63 @@ class KubernetesWatcher implements Closeable {
     }
 
 
-    protected void logEvent(Watcher.Action action, HasMetadata resource) {
-        LOGGER.info(resource.getKind() + " " + action + " " + resource.getMetadata().getNamespace()+resource.getMetadata().getName());
+    protected void logEvent(Watcher.Action action, HasMetadata resource, Object status) {
+        LOGGER.info(resource.getKind() + " " + action + " " + resource.getMetadata().getNamespace() + "/" 
+                + resource.getMetadata().getName() + (status != null ? " : " + status : ""));
     }
 
     protected void logLog(String id, ObjectMeta podMeta, byte[] chunk) {
 
     }
 
-    private static String utf8String(byte[] chunk) {
-        return new String(chunk, StandardCharsets.UTF_8);
+    class WatchHandle<T> {
+        private final String kind;
+        private final BiFunction<Watcher<T>, String, Watch> registration;
+        private final BiConsumer<Watcher.Action, T> handler;
+        Watch watch;
+        volatile Watcher<T> watcher;
+        private String resourceVersion;
+
+
+        WatchHandle(String kind, BiFunction<Watcher<T>, String, Watch> registration, BiConsumer<Watcher.Action, T> handler) {
+            this.kind = kind;
+            this.registration = registration;
+            this.handler = handler;
+        }
+
+        void register() {
+            watcher = new Watcher<T>() {
+                @Override
+                public void eventReceived(Action action, T resource) {
+                    handler.accept(action, resource);
+                }
+
+                @Override
+                public void onClose(KubernetesClientException cause) {
+                    LOGGER.log(Level.WARNING, kind + " watch closed", cause);
+                    if (retryableException(cause) && WatchHandle.this.watcher == this) {
+                        // For ingresses I observe getting 2-day old event first, client remembers the resource version
+                        // and subsequent reconnects fail on too old resource version.
+                        // Let's play along with the API server here
+                        if ("Gone".equals(cause.getStatus().getReason())) {
+                            var matcher = Pattern.compile("too old resource version: .+\\((.+)\\)").matcher(cause.getStatus().getMessage());
+                            if (matcher.matches()) {
+                                resourceVersion = matcher.group(1);
+                            }
+                        }
+                        executorService.schedule(WatchHandle.this::register, 1, TimeUnit.SECONDS);
+                    }
+                }
+            };
+            watch = registration.apply(watcher, resourceVersion);
+        }
+
+        void close() {
+            if (watch != null) {
+                watch.close();
+            }
+        }
+
     }
 
     class WatchedPod {

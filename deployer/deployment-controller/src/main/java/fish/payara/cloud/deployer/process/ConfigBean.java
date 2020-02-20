@@ -139,10 +139,10 @@ public class ConfigBean {
         configKind.put(domainObject.getId(), representation);
     }
 
-    private static Pattern POST_KEY = Pattern.compile("(.+?):(.+?):(.+)");
+    private static Pattern POST_KEY = Pattern.compile("(.+?):(.+?)::(.+)");
     
     public static String updateKeyFor(Configuration domainObject, String key) {
-        return domainObject.getKind() + ":" + domainObject.getId() + ":" + key;
+        return domainObject.getKind() + ":" + domainObject.getId() + "::" + key;
     }
     public void applyValuesFrom(Map<String, String> singleValues) {
         for (Map.Entry<String, String> entry : singleValues.entrySet()) {
