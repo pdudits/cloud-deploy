@@ -56,15 +56,15 @@
             <main>
                 <form enctype="multipart/form-data" action="api/deployment" method="post" class="block">
                     <div class="field">
-                        <label for="project">Project <sup>(required)</sup><a class="hint">?</a></label>
+                        <label for="project">Project <sup>(required)</sup></label>
                         <input id="project" name="project" required type="text" pattern="[a-zA-Z0-9-]{4,30}" placeholder="DNS-like name, at least 4 characters (required)">
                     </div>
                     <div class="field">
-                        <label for="stage">Stage <sup>(required)</sup><a class="hint">?</a></label>
+                        <label for="stage">Stage <sup>(required)</sup></label>
                         <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
                     </div>
                     <div class="field">
-                    <label for="artifact">Artifact <sup>(required)</sup><a class="hint">?</a></label>
+                    <label for="artifact">Artifact <sup>(required)</sup></label>
                     <input type="file" accept=".war" id="artifact" name="artifact" required/>
                     </div>
                     <div class="field">

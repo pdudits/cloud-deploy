@@ -51,7 +51,7 @@
                 <c:forEach items="${currentConfig.keydetails}" var="key">
                     <div class="field">
                     <label for="${key.name}">${key.name}</label>
-                    <input id="${key.name}" name="${key.name}" value="${currentConfig.values[key.name]}"/>
+                    <input id="${key.name}" name="${key.name}" value="${currentConfig.values[key.name]}" type="text"/>
                     </div>
                 </c:forEach>
                 <input type="submit" value="Save"/>
