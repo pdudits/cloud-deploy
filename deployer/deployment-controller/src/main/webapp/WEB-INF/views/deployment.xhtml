@@ -42,29 +42,32 @@
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:comp="http://xmlns.jcp.org/jsf/composite/cloud-deploy">
     <ui:define name="main">
-        <h2>Deployment #{deployment.name}</h2>
+        <h1>Deployment #{deployment.name}</h1>
+        <div class="page">
         <main>
             <h4>Stage: #{deployment.namespace.project}-#{deployment.namespace.stage}</h4>
         <div id="status">
                 <c:choose>
                     <c:when test="#{deployment.failed}">
+                        <div class="status status--error">
                         <h3>Failed</h3>
                         <p>#{deployment.completionMessage}</p>
+                        </div>
                     </c:when>
                     <c:when test="#{deployment.ready}">
-                <div class="success secondary-white">
+                <div class="status status--success">
                         <h3>Success!</h3>
                         <p>#{deployment.completionMessage}</p>
-                <div class="result secondary-white">
-                            <a href="#{deployment.endpoint}" target="_blank">#{deployment.endpoint}</a>
-                        </div>
+                        <p>
+                            <a href="#{deployment.endpoint}" target="_blank" class="button highlight">View Your App</a>
+                        </p>
                 </div>
                     </c:when>
                     <c:when test="#{deployment.configurable}">
                         <section class="pending secondary-white"><h3>Configuration pending</h3>
                         <c:choose>
                             <c:when test="${deployment.configurationComplete}">
-                                <button onclick="document.getElementById('config').submit()">Confirm configured values</button>
+                                <p><button class="button" onclick="document.getElementById('config').submit()">Confirm configured values</button></p>
                             </c:when> 
                             <c:otherwise>
                                 <p>Some of configuration objects below need your attention</p>
@@ -78,7 +81,7 @@
                                                      config="${config.kind[configKey.kind][configKey.id]}"
                                                      />
                         </c:forEach>
-                            <button class="highlight">Confirm configured values</button>
+                            <button class="button highlight">Confirm configured values</button>
                         </form>
                     </c:when>
                     <c:otherwise>
@@ -94,10 +97,11 @@
 
             </textarea>
 
-            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get">
+            <form id="refreshform" up-target="#status" up-cache="false" up-history="false" method="get" class="transparent-form">
                 <button id="refresh" type="submit">Refresh</button>
             </form>
         </main>
+        </div>
 
         <script type="text/javascript">
             //<![CDATA[
