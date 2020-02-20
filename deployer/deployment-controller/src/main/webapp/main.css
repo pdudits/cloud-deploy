@@ -36,11 +36,16 @@
  *  holder.
  */
 
+* {
+	box-sizing: border-box;
+}
+
 html,body {
     font-family: 'IBM Plex Sans', sans-serif;
     padding: 0;
     margin: 0;
     height: 100%;
+    color: #434445;
 }
 
 body {
@@ -63,9 +68,11 @@ header, header h1 a, header h1 {
 
 header, footer {
     background-color: #002c3e;
-    border-bottom: 2px solid #ae6e2b
+    text-align: center;
 }
-
+header {
+    padding: 40px 0 60px 0;
+}
 footer {
     color: #FFFFFF;
     text-align: center;
@@ -73,19 +80,28 @@ footer {
     width: 100%;
     position: fixed;
     bottom: 0;
+    padding: 0.5em 0;
 }
-
-header h1, h2, div.result, main {
+.page {
+    max-width: 42em;
+    margin: 0 auto 14em auto;
+    padding: 0 2em;
+}
+h2, div.result, .nav--main > * {
     margin: auto;
     width: 40rem;
     padding: 28px 0;
+}
+header h1 {
+    font-size: 2.25em;
+    margin: 0 0.25em;
 }
 
 header + h2 {
     margin-top: 28px;
 }
 
-h1,h2,h3,.primary-orange,h1 a {
+.primary-orange,h1 a {
     color: #f0981b;
 }
 
@@ -106,12 +122,23 @@ h1 a {
     color: #0096d6;
 }
 
+img {
+    display: inline-block;
+    max-width: 100%;
+    height: auto;
+    border: none;
+}
 img.logo {
-    width: 10em;
-    margin-right: 1em;
+    max-width: 10em;
+    margin-right: 0.25em;
     vertical-align: bottom;
     position: relative;
     top: 0.15em;
+}
+header h1 span {
+    white-space: nowrap;
+    margin-top: 12px;
+    display: inline-block;
 }
 
 .secondary-light {
@@ -137,10 +164,14 @@ section {
 
 main > form, form.block, .form {
     background-color: rgba(218,224,226,0.5);
-    color: #434445;
-    display: grid;
-    grid-row-gap: 32px;
+    /* color: #434445; */
+    /* display: grid; */
+    /* grid-row-gap: 32px; */
     border-radius: 6px;
+}
+
+form .field + .field {
+    margin: 32px 0 0 0;
 }
 
 label {
@@ -148,6 +179,11 @@ label {
     font-size: 16px;
     font-weight: 500;
     margin-bottom: 8px;
+    display: block;
+}
+
+.label--technical {
+    word-break: break-all;
 }
 
 sup {
@@ -188,42 +224,90 @@ progress {
     margin: auto;
 }
 
+.form-submit-area {
+    margin-top: 32px;
+    text-align: center;
+}
+.form-submit-area:before {
+    content: '';
+    display: block;
+    background: rgb(218,224,226);
+    height: 2px;
+    border-radius: 1px;
+    width: 100%;
+    margin-bottom: 32px;
+}
+
 .button, button, input[type=submit] {
     color: #101012;
-    background-color: #dae0e2;
+    background-color: rgb(195,203,206);
     border-radius: 3px;
-    font-size: 16px;
-    line-height: 1em;
+    font-size: inherit;
+    line-height: 1.5;
     font-weight: 500;
     cursor: pointer;
     padding: 12px 24px;
     transition-duration: 0.1s;
     transition-property: transform;
-    border: 0px none;
+    border: none;
+    display: inline-block;
+    box-shadow: 0 -1px 0 0 rgba(134,151,156,0.5) inset;
+    text-decoration: none;
+}
+
+.button:hover, button:hover, input[type=submit]:hover,
+.button:active, button:active, input[type=submit]:active {
+    transform: translate(0px, 1px);
+    background-color: rgba(195,203,206,0.8);
+    box-shadow: none;
+}
+.button:active, button:active, input[type=submit]:active {
+    transform: translate(0px, 2px);
+}
+.button:focus, button:focus, input[type=submit]:focus {
+    background-color: rgba(195,203,206,0.8);
+    box-shadow: 0 0 0 4px rgb(0,143,203);
 }
     
 .button.highlight, button.highlight, input[type=submit].highlight {
     background: rgb(240,152,27);
     box-shadow: 0 -1px 0 0 rgba(128,74,0,0.5) inset;
 }
-
-.button.highlight:hover, button.highlight:hover, input[type=submit].highlight:hover {
+.button.highlight:hover, button.highlight:hover, input[type=submit].highlight:hover,
+.button.highlight:active, button.highlight:active, input[type=submit].highlight:active {
     background-color: rgba(240,152,27,0.9);
+    box-shadow: none;
+}
+.button.highlight:focus, button.highlight:focus, input[type=submit].highlight:focus {
+    background-color: rgba(240,152,27,0.9);
+    box-shadow: 0 0 0 4px rgb(0,143,203);
 }
 
-.field input:not([type=checkbox]) {
+/* .field input:not([type=checkbox]) {
     display: block;
     width: 100%;
+} */
+
+input[type="text"] {
+    background: #fff;
+    border: solid 1px rgb(134,151,156);
+    border-radius: 3px;
+    padding: 12px;
+    font-size: inherit;
+    width: 100%;
+    -webkit-appearance: none;
+}
+input[type="text"]:hover {
+    border-color: rgb(181,191,194);
+}
+input[type="text"]:focus {
+    border-color: #fff;
+    box-shadow: 0 0 0 4px rgb(0,143,203);
 }
 
 .button.default, button.default, input[type=submit].default{
     background-color: #F0981B;
     box-shadow: 0 -1px 0 0 rgba(134,151,156,0.5) inset;
-}
-
-.button:hover, button:hover, input[type=submit]:hover {
-    transform: translate(0px, 2px);
-    background-color: rgba(195,203,206,0.8);
 }
 
 
@@ -244,16 +328,24 @@ progress {
 
 #log {
     width: 100%;
-    background: transparent;
-    color: #0f9;
-    border: 1px solid #f0981b;
+    background: rgb(0,44,62);
+    color: #fff;
+    border: 1px solid #86979C;
+    border-radius: 3px;
+    padding: 20px;
 }
-
+.transparent-form {
+    background: transparent;
+    text-align: center;
+    margin-top: 30px;
+}
 p {
     margin-top: 1.5rem;
 }
 h1 {
     font-size: 2rem;
+    text-align: center;
+    margin: 2em 0 2em 0;
 }
 
 h2 {
@@ -266,23 +358,96 @@ h3 {
 
 h4, h5, h6 {
     font-size: 1rem;
+    margin: 2em 0 1.5em 0;
 }
 
-input[type=checkbox], input[type=radio] {
-    border-color: #86979c;
+input[type="checkbox"] {
+	background: none;
+	opacity: 0.00001;
+	position: absolute;
+	-webkit-appearance: none;
+}
+input[type="checkbox"] + label {
+	cursor: pointer;
+	display: block;
+	min-height: 1.5em;
+	padding: 8px 0 8px calc(1.5em + 12px);
+	position: relative;
+}
+input[type="checkbox"] + label:before {
+	background: #fff;
+	border: solid 1px rgb(134,151,156);
+	border-radius: 3px;
+	content: '';
+	height: 1.5em;
+	position: absolute;
+	left: 0;
+	width: 1.5em;
+}
+input[type="checkbox"]:checked + label:after {
+    background: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='16px' height='16px' viewBox='0 0 16 16' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3C!-- Generator: Sketch 63.1 (92452) - https://sketch.com --%3E%3Ctitle%3ETick%3C/title%3E%3Cdesc%3ECreated with Sketch.%3C/desc%3E%3Cg id='Tick' stroke='none' stroke-width='1' fill='none' fill-rule='evenodd'%3E%3Cg id='Group' transform='translate(8.131728, 6.000000) rotate(-315.000000) translate(-8.131728, -6.000000) translate(3.631728, -1.000000)' fill='%2386979C'%3E%3Crect id='Rectangle' transform='translate(4.500000, 12.500000) rotate(-90.000000) translate(-4.500000, -12.500000) ' x='3' y='8.5' width='3' height='8'%3E%3C/rect%3E%3Crect id='Rectangle-Copy' transform='translate(7.000000, 7.000000) rotate(-360.000000) translate(-7.000000, -7.000000) ' x='5.5' y='0' width='3' height='14'%3E%3C/rect%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+	border: solid 1px #fff;
+	content: '';
+	left: 0;
+	margin: 0.25em;
+	position: absolute;
+	height: 1em;
+	width: 1em;
+}
+input[type="checkbox"]:focus + label:before {
+	border: solid 1px #fff;
+	box-shadow: 0 0 0 4px #008FCB;
+}
+input[type="checkbox"] + label:hover:before {
+    border-color: rgb(181,191,194);
+}
+
+.status {
+    padding: 44px 48px 56px 48px;
+    background: rgb(78,90,94);
     border-radius: 3px;
-    border-style: solid;
-    border-width: 1px;
-    height: 24px;
-    width: 24px;
-    vertical-align: baseline;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 56px;
+}
+.status--error {
+    background: rgb(155,18,0);
+}
+.status--success {
+    background: rgb(0,103,41);
+}
+.status h3 {
+    margin-top: 0;
+}
+.status p:last-child {
+    margin-bottom: 0;
 }
 
-checkbox:hover, radio:hover {
-    border-color: #b5bfc2;
+.hidden {
+    display: none;
 }
 
-checkbox:focus, radio:focus {
-    border-color: #FFFFFF;
-    box-shadow: 0 0 0 2px #008fcb;
+.nav--main {
+   background-color: rgba(218,224,226,0.5); 
 }
+
+.nav--main > ul {
+    padding: 0;
+}
+
+.nav--main > ul > li {
+    display: inline-block;
+    padding: 0.25em 1em 0.25em 0;
+    margin-right: 1em;
+    border-right: 3px solid rgb(218,224,226);
+    font-weight: bold;
+    color: #002c3e;
+}
+
+.nav__label {
+    display: block;
+    font-weight: normal;
+    font-size: 0.8em;
+    color: #434445;
+}
+

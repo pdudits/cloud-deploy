@@ -46,31 +46,37 @@
     </head>
     <body>
         <header>
-            <h1><img src="images/logo.svg" alt="Payara" class="logo"/>Cloud Deploy</h1>
+            <h1><img src="images/logo.svg" alt="Payara" class="logo"/><span>Cloud Deploy</span></h1>
         </header>
-        <h2>
-            What shall we deploy?
-        </h2>
-        <main>
-            <form enctype="multipart/form-data" action="api/deployment" method="post" class="block">
-                <div class="field">
-                    <label for="project">Project <sup>(required)</sup></label><a class="hint">?</a>
-                    <input id="project" name="project" required type="text" pattern="[a-zA-Z0-9-]{4,30}" placeholder="DNS-like name, at least 4 characters (required)">
-                </div>
-                <div class="field">
-                    <label for="stage">Stage <sup>(required)</sup></label><a class="hint">?</a>
-                    <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
-                </div>
-                <div class="field">
-                <label for="artifact">Artifact <sup>(required)</sup></label><a class="hint">?</a>
-                <input type="file" accept=".war" id="artifact" name="artifact" required/>
-                </div>
-                <div class="field">
-                <input type="checkbox" id="defaultConfig" name="defaultConfig" value="true"> <label for="defaultConfig">Use default configuration</label>
-                </div>
-                <input type="submit" value="Deploy" class="highlight">
-            </form>
-        </main>
+
+        <div class="page">
+            <h1>
+                What shall we deploy?
+            </h1>
+            <main>
+                <form enctype="multipart/form-data" action="api/deployment" method="post" class="block">
+                    <div class="field">
+                        <label for="project">Project <sup>(required)</sup></label>
+                        <input id="project" name="project" required type="text" pattern="[a-zA-Z0-9-]{4,30}" placeholder="DNS-like name, at least 4 characters (required)">
+                    </div>
+                    <div class="field">
+                        <label for="stage">Stage <sup>(required)</sup></label>
+                        <input id="stage" name="stage" required type="text" pattern="[a-zA-Z0-9]{1,30}" placeholder="DNS-like name, at least one character">
+                    </div>
+                    <div class="field">
+                    <label for="artifact">Artifact <sup>(required)</sup></label>
+                    <input type="file" accept=".war" id="artifact" name="artifact" required/>
+                    </div>
+                    <div class="field">
+                    <input type="checkbox" id="defaultConfig" name="defaultConfig" value="true"> <label for="defaultConfig">Use default configuration</label>
+                    </div>
+                    <div class="form-submit-area">
+                        <input type="submit" value="Deploy" class="button highlight">
+                    </div>
+                </form>
+            </main>
+        </div>
+
         <footer>
             &#169; 2020 Payara Services Ltd.
         </footer>

@@ -53,9 +53,9 @@
         <c:set var="values" value="${cc.attrs.config.values}"/>
         <c:forEach items="${cc.attrs.config.keydetails}" var="key">
             <div class="field">
-                <label for="${key.updateKey}">${key.name}<c:if test="${key.required}"> <sup>(required)</sup></c:if></label>
+                <label for="${key.updateKey}" class="label--technical">${key.name}<c:if test="${key.required}"> <sup>(required)</sup></c:if></label>
             <input id="${key.updateKey}" name="${key.updateKey}" value="${values[key.name]}" required="${key.required ? 'required' : ''}"
-                   invalid="${key.errorMessage != null ? 'invalid':''}"/>
+                   invalid="${key.errorMessage != null ? 'invalid':''}" type="text"/>
             <c:if test="${key.errorMessage != null}">
                 <div class="error">${key.errorMessage}</div>
             </c:if>

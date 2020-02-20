@@ -150,7 +150,7 @@ public class DeploymentProcess {
      */
     public void fail(DeploymentProcessState process, String message, Throwable exception) {
         updateProcess(process, p -> p.fail(message, exception));
-        LOGGER.log(Level.SEVERE, "Deployment " + process.getId() + " failed: " + message, exception);
+        LOGGER.log(Level.INFO, exception, () -> String.format("Deployment of %s (%s) into %s failed", process.getId(), process.getName(), process.getNamespace()));
     }
 
     private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, StateChanged> update) {
