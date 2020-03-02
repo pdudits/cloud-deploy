@@ -45,6 +45,7 @@ package fish.payara.cloud.deployer.endpoints;
 import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import java.util.List;
+import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.mvc.Controller;
@@ -87,8 +88,8 @@ public class NamespaceResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{id}")
-    public List<Namespace> getDeploymentsInNamespace(@PathParam("id") String id) {
-        return provisioner.getNamespaces();
+    public Map<String, List<String>> getDeploymentsJson(@PathParam("id") String id) {
+        return provisioner.getDeploymentsWithIngress(id);
     }
     
     @GET
