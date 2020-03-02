@@ -79,7 +79,7 @@ public class ProvisionTimeoutIT {
 
     @Test
     public void provisionWithoutActivityTimesOut() {
-        DeploymentProcessState process = deployment.start(new File("target/test.war"), "test.war", new Namespace("test", "dev"));
+        DeploymentProcessState process = deployment.start(new File("target/test.war"), "test-fail.war", new Namespace("test", "dev"));
         // submittings configs triggers provisioning
         observer.reset();
         deployment.submitConfigurations(process);

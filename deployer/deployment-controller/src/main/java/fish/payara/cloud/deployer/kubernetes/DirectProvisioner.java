@@ -47,13 +47,7 @@ import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import io.fabric8.kubernetes.api.model.ConfigMapVolumeSource;
-import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
-import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KubernetesResource;
-import io.fabric8.kubernetes.api.model.PodSpec;
-import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -170,7 +164,7 @@ class DirectProvisioner implements Provisioner {
     }
 
     private void provisionDeployment(Naming naming, Deployment deployment) throws IOException {
-        naming.namespaceClient().resource(deployment).createOrReplace();
+        naming.namespaceClient().resource(deployment).deletingExisting().createOrReplace();
     }
 
     private Deployment createBaseDeployment(Naming naming) {
@@ -188,7 +182,7 @@ class DirectProvisioner implements Provisioner {
     private HasMetadata createFromTemplate(String namespace, Naming naming, String template) throws IOException {
         var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
         NamespacedKubernetesClient namespacedClient = namespace == null ? client : client.inNamespace(namespace);
-        return namespacedClient.resource((HasMetadata) Serialization.unmarshal(resource, KubernetesResource.class)).createOrReplace();
+        return namespacedClient.resource(Serialization.unmarshal(resource, HasMetadata.class)).createOrReplace();
     }
     
     /**
@@ -199,9 +193,10 @@ class DirectProvisioner implements Provisioner {
     public List<Namespace> getNamespaces() {
         List<Namespace> namespacesList = new ArrayList<>();
         for (var namespace: client.namespaces().list().getItems()) {
-            if ("payara-cloud".equals(namespace.getMetadata().getLabels().get("app.kubernetes.io/managed-by"))) {
-                var project = namespace.getMetadata().getLabels().get("app.kubernetes.io/name");
-                var stage = namespace.getMetadata().getLabels().get("app.kubernetes.io/part-of");
+            var labels = namespace.getMetadata().getLabels();
+            if (labels != null && "payara-cloud".equals(labels.get("app.kubernetes.io/managed-by"))) {
+                var project = labels.get("app.kubernetes.io/name");
+                var stage = labels.get("app.kubernetes.io/part-of");;
                 namespacesList.add(new Namespace(project, stage));
             }
         }

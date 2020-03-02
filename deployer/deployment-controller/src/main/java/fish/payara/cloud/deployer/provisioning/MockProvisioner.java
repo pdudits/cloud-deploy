@@ -46,6 +46,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import java.net.URI;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,22 @@ class MockProvisioner implements Provisioner {
 
     @Override
     public void provision(DeploymentProcessState deployment) throws ProvisioningException {
-        delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
+        if (deployment.getName().contains("fail")) {
+            delay.schedule(() -> this.failDeployment(deployment), failDelay.toMillis(), TimeUnit.MILLISECONDS);
+        } else {
+            step(0.5, () -> process.endpointDetermined(deployment, URI.create("http://mock-deployment")));
+            step(1, () -> process.podCreated(deployment, "mock", "mock-pod-349sa4d"));
+            for (int i=0; i<20; i++) {
+                var step = i;
+                step(1.5+i*0.2, () -> process.outputLogged(deployment, "log message "+step+"\n"));
+            }
+            step(3, () -> process.deploymentFinished(deployment));
+            step(5, () -> process.endpointActivated(deployment));
+        }
+    }
+
+    private void step(double number, Runnable action) {
+        delay.schedule(action, (long)number*1000, TimeUnit.MILLISECONDS);
     }
 
     private void failDeployment(DeploymentProcessState deployment) {

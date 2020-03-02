@@ -74,8 +74,8 @@ public abstract class Configuration {
      * @param id id of the configuration
      */
     protected Configuration(String id) {
-        if (id.contains(":")) {
-            throw new IllegalArgumentException("Invalid configuration id "+id+" name cannot contain colon");
+        if (id.contains("::")) {
+            throw new IllegalArgumentException("Invalid configuration id "+id+" name cannot contain double colon");
         }
         this.id = id;
     }
@@ -453,6 +453,13 @@ public abstract class Configuration {
          */
         public boolean isValid() {
             return validationErrors.isEmpty() && mainValidationError == null;
+        }
+
+        public <T> Optional<T> convertIfValid(Function<? super String, T> converter) {
+            if (validationContext == null || validationErrors.containsKey(validationContext)) {
+                return Optional.empty();
+            }
+            return getValue(validationContext).map(converter);
         }
     }
 

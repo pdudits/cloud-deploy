@@ -78,7 +78,7 @@ public class WatchIT {
 
         try (KubernetesWatcher watcher = new KubernetesWatcher() {
             @Override
-            protected void logEvent(Watcher.Action action, HasMetadata resource) {
+            protected void logEvent(Watcher.Action action, HasMetadata resource, Object status) {
             }
 
             @Override

@@ -36,65 +36,30 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.contextroot;
+package fish.payara.cloud.deployer.inspection.datasource;
 
-import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.ProcessAccessor;
+import org.junit.Test;
 
-import java.util.Optional;
-import java.util.Set;
+import java.util.Map;
 
-public class ContextRootConfiguration extends Configuration {
-    public static final String CONTEXT_ROOT = "contextRoot";
-    public static final String APP_NAME = "appName";
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-    public static final String KIND = CONTEXT_ROOT;
-    private final Set<String> KEYS = Set.of(CONTEXT_ROOT, APP_NAME);
-    private final String defaultContext;
-    private final String appName;
-
-    public ContextRootConfiguration(String moduleName, String appName, String defaultContext) {
-        super(moduleName);
-        this.appName = appName;
-        this.defaultContext = defaultContext;
+public class DatasourceConfigTest {
+    @Test
+    public void defaultDatasourceIsComplete() {
+        var conf = DatasourceConfiguration.createDefault();
+        assertTrue(conf.isComplete());
+        assertFalse(conf.hasOverrides());
     }
 
-    @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return KEYS;
-    }
-
-    @Override
-    public boolean isRequired(String key) {
-        return true;
-    }
-
-    @Override
-    protected void checkUpdate(UpdateContext context) {
-        super.checkUpdate(context);
-        context.key(CONTEXT_ROOT).check(v -> {
-            if (!v.startsWith("/")) throw new IllegalArgumentException("Value must start with a slash");
-        });
-        context.key(APP_NAME).check(v -> {
-            if (v.isBlank()) throw new IllegalArgumentException("Name must be provided");
-        });
-    }
-    
-    
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        switch (key) {
-            case CONTEXT_ROOT:
-                return Optional.ofNullable(defaultContext);
-            case APP_NAME:
-                return Optional.of(appName);
-            default:
-                return super.getDefaultValue(key);
-        }
+    @Test
+    public void nonDefaultDatasourceRequiresUrl() {
+        var conf = new DatasourceConfiguration("jdbc/main");
+        assertFalse(conf.isComplete());
+        ProcessAccessor.updateConfiguration(conf, Map.of("jdbcurl", "jdbc:h2:mem"));
+        assertTrue(conf.isComplete());
+        assertTrue(conf.hasOverrides());
     }
 }

@@ -41,12 +41,15 @@ package fish.payara.cloud.deployer.process;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.print.attribute.standard.Severity;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Driving component of Deployment Process.
@@ -56,6 +59,8 @@ import java.util.function.Function;
  */
 @ApplicationScoped
 public class DeploymentProcess {
+    private static final Logger LOGGER = Logger.getLogger(DeploymentProcess.class.getName());
+
     private final ConcurrentHashMap<String, DeploymentProcessState> runningProcesses = new ConcurrentHashMap<>();
 
     @Inject
@@ -145,6 +150,7 @@ public class DeploymentProcess {
      */
     public void fail(DeploymentProcessState process, String message, Throwable exception) {
         updateProcess(process, p -> p.fail(message, exception));
+        LOGGER.log(Level.INFO, exception, () -> String.format("Deployment of %s (%s) into %s failed", process.getId(), process.getName(), process.getNamespace()));
     }
 
     private DeploymentProcessState updateProcess(DeploymentProcessState process, Function<DeploymentProcessState, StateChanged> update) {
