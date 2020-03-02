@@ -40,7 +40,9 @@ package fish.payara.cloud.deployer.provisioning;
 
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
+import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provisions application resources for a deployment.
@@ -68,4 +70,11 @@ public interface Provisioner {
      * @return 
      */
     List<Namespace> getNamespaces();
+    
+    /**
+     * Gets a map of all deployments in a namespace
+     * @param namespaceId
+     * @return 
+     */
+    Map<String, List<String>> getDeploymentsWithIngress(String namespaceId);
 }

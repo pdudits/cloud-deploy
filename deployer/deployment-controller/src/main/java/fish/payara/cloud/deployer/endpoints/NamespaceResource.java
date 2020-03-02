@@ -51,6 +51,7 @@ import javax.mvc.Controller;
 import javax.mvc.Models;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -78,7 +79,25 @@ public class NamespaceResource {
     @Produces(MediaType.TEXT_HTML)
     @Controller
     public String getNamespaces() {
+        model.put("title", "Namespaces");
         model.put("namespaces", getAllNamespaces());
         return "namespaces.xhtml";
+    }
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{id}")
+    public List<Namespace> getDeploymentsInNamespace(@PathParam("id") String id) {
+        return provisioner.getNamespaces();
+    }
+    
+    @GET
+    @Produces(MediaType.TEXT_HTML)
+    @Controller
+    @Path("{id}")
+    public String getDeployments(@PathParam("id") String id) {
+        model.put("title", "Deployments in " + id);
+        model.put("deployments", provisioner.getDeploymentsWithIngress(id));
+        return "deployment_list.xhtml";
     }
 }

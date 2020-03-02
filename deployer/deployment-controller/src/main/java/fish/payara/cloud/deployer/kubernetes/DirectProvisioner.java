@@ -72,8 +72,11 @@ import java.util.stream.Collectors;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
 import fish.payara.cloud.deployer.process.Namespace;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Level;
 import javax.json.bind.JsonbBuilder;
 
 @DirectProvisioning
@@ -198,11 +201,26 @@ class DirectProvisioner implements Provisioner {
         for (var namespace: client.namespaces().list().getItems()) {
             if ("payara-cloud".equals(namespace.getMetadata().getLabels().get("app.kubernetes.io/managed-by"))) {
                 var project = namespace.getMetadata().getLabels().get("app.kubernetes.io/name");
-                var stage = namespace.getMetadata().getLabels().get("app.kubernetes.io/part-of");;
+                var stage = namespace.getMetadata().getLabels().get("app.kubernetes.io/part-of");
                 namespacesList.add(new Namespace(project, stage));
             }
         }
         return namespacesList;
+    }
+    
+    @Override
+    public Map<String, List<String>> getDeploymentsWithIngress(String id) {
+        Map<String, List<String>> deployments = new HashMap<>();
+        for (Ingress ingress : client.extensions().ingresses().withLabel("app.kubernetes.io/part-of", id).list().getItems()) {
+            List<String> pathList = new ArrayList<>();
+            for (var rule: ingress.getSpec().getRules()) {
+                for (var path : rule.getHttp().getPaths()) {
+                    pathList.add(path.toString());
+                }
+            }
+            deployments.put(ingress.getMetadata().getName(), pathList);
+        }
+        return deployments;
     }
 
     class Naming {
