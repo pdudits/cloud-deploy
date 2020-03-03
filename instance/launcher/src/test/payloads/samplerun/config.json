@@ -1,0 +1,7 @@
+{
+  "mpConfig": {
+    "map": {
+      "fish.payara.talk.replicationtrouble.contentauthz.user.replication.ReplicationAPI/mp-rest/url": "/producer-app/replication"
+    }
+  }
+}

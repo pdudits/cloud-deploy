@@ -1,0 +1,8 @@
+{
+  "deployment": {
+    "contextRoot": {
+      "file": "indirectReference"
+    },
+    "artifact": "test.war"
+  }
+}

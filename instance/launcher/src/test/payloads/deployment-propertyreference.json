@@ -1,0 +1,11 @@
+{
+  "deployment": {
+    "contextRoot": {
+      "propertyFile": {
+        "file": "valueInFile",
+        "key": "indirectValue"
+      }
+    },
+    "artifact": "test.war"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "deployment": {
+    "contextRoot": "/",
+    "artifact": "/src/zeromagic/talks/replication/consumer-app/target/consumer-app.war"
+  }
+}

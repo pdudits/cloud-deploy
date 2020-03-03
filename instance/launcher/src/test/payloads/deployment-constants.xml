@@ -1,0 +1,5 @@
+<!-- Originally I wanted XML structure like this, Jackson fais to deserialize that -->
+<deployment>
+    <contextRoot>/</contextRoot>
+    <artifact>test.war</artifact>
+</deployment>
