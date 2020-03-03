@@ -204,9 +204,9 @@ class DirectProvisioner implements Provisioner {
     }
     
     @Override
-    public Map<String, List<String>> getDeploymentsWithIngress(String id) {
+    public Map<String, List<String>> getDeploymentsWithIngress(String namespace) {
         Map<String, List<String>> deployments = new HashMap<>();
-        for (Ingress ingress : client.extensions().ingresses().withLabel("app.kubernetes.io/part-of", id).list().getItems()) {
+        for (Ingress ingress : client.extensions().ingresses().inNamespace(namespace).withLabel("managed-by", "payara-cloud").list().getItems()) {
             List<String> pathList = new ArrayList<>();
             for (var rule: ingress.getSpec().getRules()) {
                 for (var path : rule.getHttp().getPaths()) {
