@@ -51,6 +51,7 @@ import javax.inject.Inject;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(Arquillian.class)
@@ -105,6 +106,12 @@ public class DeploymentObservationIT {
         state = observer.getLastProcess();
         assertTrue("Process should be complete", state.isComplete());
         assertFalse("Process should not be marked as failed", state.isFailed());
+        assertNotNull("Process should contain completion time", state.getCompletion());
+        
+        process.delete(state);
+        observer.await(ChangeKind.DELETION_STARTED);
+        state = observer.getLastProcess();
+        assertNull("Location of artifact has been deleted", state.getPersistentLocation());
         assertNotNull("Process should contain completion time", state.getCompletion());
     }
 }

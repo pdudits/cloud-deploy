@@ -318,11 +318,17 @@ public class DeploymentProcessState {
     public boolean isConfigurationComplete() {
         return configurations.stream().allMatch(Configuration::isComplete);
     }
-
-    StateChanged removePersistentLocation() {
-        version++;
+    
+    StateChanged deletionStarted() {
+        return transition(ChangeKind.DELETION_STARTED);
+    }
+    
+    StateChanged deletionFinished() {
         persistentLocation = null;
-        return null; // no event broadcasted
+        this.endpoint = null;
+        deploymentCompletedAt = null;
+        endpointActivatedAt = null;
+        return transition(ChangeKind.DELETION_FINISHED);
     }
 
     StateChanged setPersistentLocation(URI location) {

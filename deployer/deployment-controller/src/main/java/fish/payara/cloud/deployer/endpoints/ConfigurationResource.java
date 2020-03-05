@@ -44,6 +44,7 @@ package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.process.ConfigBean;
 import fish.payara.cloud.deployer.process.ConfigurationValidationException;
+import fish.payara.cloud.deployer.process.DeploymentManagement;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import java.util.Map;
@@ -80,7 +81,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 public class ConfigurationResource {
 
     @Inject
-    DeploymentProcess process;
+    DeploymentManagement process;
     
     @Inject
     MvcModels models;

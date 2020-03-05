@@ -70,7 +70,14 @@ public interface Provisioner {
      */
     List<Namespace> getNamespaces();
     
-    /**
+    /* Unprovision the deployment.
+     * @param deployment deployment to delete
+     * @return state of the deployment process with last change of
+     * {@link fish.payara.cloud.deployer.process.ChangeKind#DELETION_FINISHED}
+     */
+    DeploymentProcessState delete(DeploymentProcessState deployment);
+
+     /**
      * Gets a map of all deployments in a namespace
      * @param namespace name of Namespace to get deployments in
      * @return map where key is the deployment id and the values being a list

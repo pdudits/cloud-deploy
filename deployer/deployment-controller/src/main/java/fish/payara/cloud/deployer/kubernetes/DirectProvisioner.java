@@ -59,7 +59,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -71,12 +70,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
-import javax.json.bind.JsonbBuilder;
 
 @DirectProvisioning
 @ApplicationScoped
 class DirectProvisioner implements Provisioner {
     public static final Logger LOGGER = Logger.getLogger(DirectProvisioner.class.getName());
+    private static final String APP_KUBERNETES_IO_PART_OF = "app.kubernetes.io/part-of";
 
     @Inject
     NamespacedKubernetesClient client;
@@ -89,6 +88,7 @@ class DirectProvisioner implements Provisioner {
     DeploymentProcess process;
 
 
+    @Override
     public void provision(DeploymentProcessState deployment) throws ProvisioningException {
         var naming = new Naming(deployment);
         try {
@@ -104,7 +104,7 @@ class DirectProvisioner implements Provisioner {
             provisionDeployment(naming, deploymentResource);
             var uri = provisionIngress(naming);
             process.endpointDetermined(deployment, uri);
-            LOGGER.info("Provisioned " + deployment.getId() + " at "+uri);
+            LOGGER.log(Level.INFO, "Provisioned {0} at {1}", new Object[]{deployment.getId(), uri});
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
@@ -201,6 +201,17 @@ class DirectProvisioner implements Provisioner {
             }
         }
         return namespacesList;
+    }
+
+    @Override
+    public DeploymentProcessState delete(DeploymentProcessState deployment) {
+        String id = deployment.getId();
+        client.apps().deployments().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
+        client.pods().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
+        client.secrets().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
+        client.services().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
+        client.extensions().ingresses().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
+        return process.deletionFinished(deployment);
     }
     
     @Override

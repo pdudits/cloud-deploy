@@ -92,7 +92,12 @@ class MockProvisioner implements Provisioner {
 
     @Override
     public List<Namespace> getNamespaces() {
-        return List.of(new Namespace("foo", "bar"));
+        return List.of(new Namespace("foo", "bar"));   
+    }
+    
+    @Override
+    public DeploymentProcessState delete(DeploymentProcessState deployment) {
+        return process.deletionFinished(deployment);
     }
 
     @Override

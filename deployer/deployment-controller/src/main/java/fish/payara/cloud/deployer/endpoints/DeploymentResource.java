@@ -42,6 +42,7 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
+import fish.payara.cloud.deployer.process.DeploymentManagement;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
@@ -67,6 +68,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
@@ -92,7 +94,7 @@ public class DeploymentResource {
     private static final Logger LOGGER = Logger.getLogger(DeploymentResource.class.getName());
     
     @Inject
-    DeploymentProcess process;
+    DeploymentManagement process;
     
     @Inject
     DeploymentObserver deploymentStream;
@@ -200,7 +202,18 @@ public class DeploymentResource {
     public Response redirectToDeploymentDir(@PathParam("id") String id, @Context UriInfo uriInfo) {
         // redirect to {id}/
         return Response.seeOther(uriInfo.resolve(URI.create(id+"/"))).build();
-    }    
+    }
+    
+    @DELETE
+    @Path("{id}")
+    public Response deleteDeployment(@PathParam("id") String id) {
+        DeploymentProcessState state = process.getProcessState(id);
+        if (state == null) {
+            throw new NotFoundException();
+        }
+        process.delete(state);
+        return Response.noContent().build();
+    }
     
     @GET
     @Path("{project}/{stage}/{id}")

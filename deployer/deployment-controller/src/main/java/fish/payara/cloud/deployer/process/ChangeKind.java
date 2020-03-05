@@ -133,7 +133,17 @@ public enum ChangeKind {
     /**
      * Cleanup of temporary resources finished.
      */
-    CLEANUP_FINISHED;
+    CLEANUP_FINISHED,
+    
+    /**
+     * Deletion of deployment started
+     */
+    DELETION_STARTED,
+    
+    /**
+     * Deletion of deployment finished
+     */
+    DELETION_FINISHED;
 
     public Filter asFilter() {
         return new FilterLiteral(this);
