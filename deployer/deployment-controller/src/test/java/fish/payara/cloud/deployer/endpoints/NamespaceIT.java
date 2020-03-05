@@ -42,63 +42,71 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
-import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
+import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.mvc.Controller;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
 import javax.mvc.Models;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.MediaType;
+import org.junit.Assert;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
- *
+ * Test for the namespaces endpoint
  * @author jonathan coustick
  */
-@Path("/namespaces")
-@ApplicationScoped
-public class NamespaceResource {
+@RunWith(Arquillian.class)
+public class NamespaceIT {
     
+    @Deployment
+    public static WebArchive deployment() {
+        return ShrinkWrap.create(WebArchive.class)
+                .addPackage(DeploymentProcess.class.getPackage())
+                .addPackage(Application.class.getPackage())
+                .addPackage(Provisioner.class.getPackage())
+                .addClass(ContextRootConfiguration.class)
+                .addClass(ManagedConcurrencyProducer.class)
+                .addClass(Models.class)
+                .addClass(ModelsImpl.class);
+    }
+
     @Inject
-    Provisioner provisioner;
+    DeploymentProcess process;
+
+    @ArquillianResource
+    URI uri;
     
-    @Inject
-    private Models model;
-    
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public List<Namespace> getAllNamespaces() {
-        return provisioner.getNamespaces();
+    @Test
+    public void testNamespacesList() {
+        var client = ClientBuilder.newClient().target(uri).path("api/namespaces/");
+        var response = client.request(MediaType.APPLICATION_JSON).get(JsonArray.class);
+        Assert.assertEquals(1, response.size());
+        JsonObject content =  response.getJsonObject(0);
+        Assert.assertEquals("foo", content.getString("project"));
+        Assert.assertEquals("bar", content.getString("stage"));
     }
     
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    @Controller
-    public String getNamespaces() {
-        model.put("title", "Namespaces");
-        model.put("namespaces", getAllNamespaces());
-        return "namespaces.xhtml";
+    @Test
+    public void testDeploymentsList() {
+        var client = ClientBuilder.newClient().target(uri).path("api/namespaces/bar/foo");
+        var response = client.request(MediaType.APPLICATION_JSON).get(Map.class);
+        Assert.assertEquals(1, response.size());
+        List array = (List) response.get("foo");
+        Assert.assertEquals(1, array.size());
+        Assert.assertEquals("http://www.example.com", array.get(0).toString());
     }
     
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("{stage}/{project}/")
-    public Map<String, List<String>> getDeploymentsJson(@PathParam("stage") String stage, @PathParam("project") String project) {
-        return provisioner.getDeploymentsWithIngress(new Namespace(project, stage));
-    }
-    
-    @GET
-    @Produces(MediaType.TEXT_HTML)
-    @Controller
-    @Path("{stage}/{project}}/")
-    public String getDeployments(@PathParam("stage") String stage, @PathParam("project") String project) {
-        model.put("title", String.format("Deployments in %s/%s", stage, project));
-        model.put("deployments", provisioner.getDeploymentsWithIngress(new Namespace(project, stage)));
-        return "deployment_list.xhtml";
-    }
 }

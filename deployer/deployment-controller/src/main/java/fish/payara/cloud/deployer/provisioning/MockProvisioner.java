@@ -48,8 +48,8 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.net.URI;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -93,5 +93,10 @@ class MockProvisioner implements Provisioner {
     @Override
     public List<Namespace> getNamespaces() {
         return List.of(new Namespace("foo", "bar"));
+    }
+
+    @Override
+    public Map<String, List<String>> getDeploymentsWithIngress(Namespace namespaceId) {
+        return Map.of("foo", List.of("http://www.example.com"));
     }
 }
