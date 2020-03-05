@@ -42,17 +42,17 @@
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 xmlns:comp="http://xmlns.jcp.org/jsf/composite/cloud-deploy">
     <ui:define name="main">
-        <nav class="nav--main">
-            <ul>
-                <li><span class="nav__label">Stage</span> #{deployment.namespace.stage}</li>
-                <li><span class="nav__label">Project</span> #{deployment.namespace.project}</li>
-            </ul>
-        </nav>
         <h1>Deployment #{deployment.name}</h1>
         <div class="page">
         <main>
         <div id="status">
                 <c:choose>
+                    <c:when test="#{deployment.deleted}">
+                        <div class="status status--error">
+                        <h3>Deleted</h3>
+                        <p>Deployment was deleted</p>
+                        </div>
+                    </c:when>                      
                     <c:when test="#{deployment.failed}">
                         <div class="status status--error">
                         <h3>Failed</h3>

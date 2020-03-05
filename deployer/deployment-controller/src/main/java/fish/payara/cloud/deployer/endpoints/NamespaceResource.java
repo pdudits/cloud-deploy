@@ -43,9 +43,10 @@
 package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.provisioning.DeploymentInfo;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.mvc.Controller;
@@ -70,6 +71,9 @@ public class NamespaceResource {
     @Inject
     private Models model;
     
+    @Inject
+    MvcModels domainModels;
+    
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<Namespace> getAllNamespaces() {
@@ -81,24 +85,26 @@ public class NamespaceResource {
     @Controller
     public String getNamespaces() {
         model.put("title", "Namespaces");
-        model.put("namespaces", getAllNamespaces());
+        model.put("namespaces", getAllNamespaces().stream().collect(Collectors.groupingBy(Namespace::getStage)));
         return "namespaces.xhtml";
     }
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("{stage}/{project}/")
-    public Map<String, List<String>> getDeploymentsJson(@PathParam("stage") String stage, @PathParam("project") String project) {
+    public List<DeploymentInfo> getDeploymentsJson(@PathParam("stage") String stage, @PathParam("project") String project) {
         return provisioner.getDeploymentsWithIngress(new Namespace(project, stage));
     }
     
     @GET
     @Produces(MediaType.TEXT_HTML)
     @Controller
-    @Path("{stage}/{project}}/")
+    @Path("{stage}/{project}/")
     public String getDeployments(@PathParam("stage") String stage, @PathParam("project") String project) {
+        final Namespace namespace = new Namespace(project, stage);
+        domainModels.setNamespace(namespace);
         model.put("title", String.format("Deployments in %s/%s", stage, project));
-        model.put("deployments", provisioner.getDeploymentsWithIngress(new Namespace(project, stage)));
+        model.put("deployments", provisioner.getDeploymentsWithIngress(namespace));
         return "deployment_list.xhtml";
     }
 }

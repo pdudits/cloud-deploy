@@ -43,6 +43,7 @@ import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
 import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.provisioning.DeploymentInfo;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
@@ -215,17 +216,20 @@ class DirectProvisioner implements Provisioner {
     }
     
     @Override
-    public Map<String, List<String>> getDeploymentsWithIngress(Namespace namespace) {
-        Map<String, List<String>> deployments = new HashMap<>();
+    public List<DeploymentInfo> getDeploymentsWithIngress(Namespace namespace) {
+        List<DeploymentInfo> deployments = new ArrayList<>();
         for (Ingress ingress : client.extensions().ingresses().inNamespace(convertNamespace(namespace))
-                .withLabel("managed-by", "payara-cloud").list().getItems()) {
+                .withLabel("app.kubernetes.io/managed-by", "payara-cloud").list().getItems()) {
+            var info = new DeploymentInfo(namespace, ingress.getMetadata().getLabels().get(APP_KUBERNETES_IO_PART_OF),
+                    ingress.getMetadata().getName());
             List<String> pathList = new ArrayList<>();
             for (var rule: ingress.getSpec().getRules()) {
+                var prefix = "http://"+rule.getHost();
                 for (var path : rule.getHttp().getPaths()) {
-                    pathList.add(path.toString());
+                    info.addUrl(prefix+path.getPath());
                 }
             }
-            deployments.put(ingress.getMetadata().getName(), pathList);
+            deployments.add(info);
         }
         return deployments;
     }

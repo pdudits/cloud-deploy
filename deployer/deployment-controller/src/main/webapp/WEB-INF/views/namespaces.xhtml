@@ -41,14 +41,19 @@
       xmlns:ui="http://xmlns.jcp.org/jsf/facelets" xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
       xmlns:f="http://xmlns.jcp.org/jsf/core">
     <ui:define name="main">
-        <h2>Namespaces</h2>
+        <h2>Stages and Namespaces</h2>
 
-        <main>
-            <ul>
-            <c:forEach items="${namespaces}" var="namespace">
-                <li>${namespace}</li>
+        <main class="page">
+            <c:forEach items="${namespaces}" var="entry">
+                <section>
+                    <h3>Stage ${entry.key}</h3>
+                    <ul>
+                        <c:forEach items="${entry.value}" var="namespace">
+                            <li><a href="${namespace.stage}/${namespace.project}/">${namespace.project}</a></li>
+                        </c:forEach>
+                    </ul>
+                </section>
             </c:forEach>
-            </ul>
         </main>
     </ui:define>
 </ui:composition>

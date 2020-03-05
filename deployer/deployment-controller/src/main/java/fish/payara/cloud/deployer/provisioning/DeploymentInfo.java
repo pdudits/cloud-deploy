@@ -38,50 +38,41 @@
 
 package fish.payara.cloud.deployer.provisioning;
 
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
+
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-/**
- * Provisions application resources for a deployment.
- *
- * Provisioner is invoked by Provisioning controller after artifact is uploaded and provisioning is started.
- * The implementation is responsible for communicating with cloud backend, creating necessary resources and
- * informing the system about progress of provisioning.
- *
- * It should also inform when provisioning is finished and application is available.
- */
-public interface Provisioner {
-    /**
-     * Provision the deployment. Check for any definition trouble, initiate the provisioning with the backend
-     * and asynchronously update the deployment with information. At the end, invoke
-     * {@link fish.payara.cloud.deployer.process.DeploymentProcess#provisioningFinished(DeploymentProcessState)}
-     * to signal end of provisioning.
-     *
-     * @param deployment deployment to provision
-     * @throws ProvisioningException in case of deployment misconfiguration or backend error
-     */
-    void provision(DeploymentProcessState deployment) throws ProvisioningException;
-    
-    /**
-     * Gets the provisioned namespaces
-     * @return 
-     */
-    List<Namespace> getNamespaces();
-    
-    /* Unprovision the deployment.
-     * @param deployment deployment to delete
-     * @return state of the deployment process with last change of
-     * {@link fish.payara.cloud.deployer.process.ChangeKind#DELETION_FINISHED}
-     */
-    DeploymentProcessState delete(DeploymentProcessState deployment);
+public class DeploymentInfo {
+    private Namespace namespace;
+    private String name;
+    private String id;
+    private List<String> urls = new ArrayList<>();
 
-     /**
-     * Gets a map of all deployments in a namespace
-     * @param namespace name of Namespace to get deployments in
-     * @return map where key is the deployment id and the values being a list
-     * of ingress URLs.
-     */
-    List<DeploymentInfo> getDeploymentsWithIngress(Namespace namespace);
+    public DeploymentInfo(Namespace namespace,  String id, String name) {
+        this.namespace = namespace;
+        this.name = name;
+        this.id = id;
+    }
+
+    public Namespace getNamespace() {
+        return namespace;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public List<String> getUrls() {
+        return urls;
+    }
+
+    public DeploymentInfo addUrl(String url) {
+        this.urls.add(url);
+        return this;
+    }
 }

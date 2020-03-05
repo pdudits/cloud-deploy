@@ -44,13 +44,16 @@ package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.process.ConfigBean;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Optional;
+import javax.enterprise.context.Dependent;
 import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Model;
 import javax.enterprise.inject.Produces;
+import javax.inject.Named;
 
 /**
  *
@@ -62,6 +65,7 @@ class MvcModels {
     private ConfigBean config;
     private String configKind;
     private String configId;
+    private Namespace namespace;
 
     @Produces @Model
     public DeploymentProcessState getDeployment() {
@@ -71,8 +75,23 @@ class MvcModels {
     public void setDeployment(DeploymentProcessState deployment) {
         this.deployment = deployment;
     }
+    
+    @Produces @Named @Dependent
+    public Namespace getNamespace() {
+        if (namespace != null) {
+            return namespace;
+        }
+        if (deployment != null) {
+            return deployment.getNamespace();
+        }
+        return null;
+    }
+    
+    public void setNamespace(Namespace namespace) {
+        this.namespace = namespace;
+    }
 
-    @Produces @Model
+    @Produces @Named @Dependent
     public ConfigBean getConfig() {
         if (config != null) {
             return config;
