@@ -42,6 +42,7 @@
  */
 package fish.payara.cloud.deployer.endpoints;
 
+import fish.payara.cloud.deployer.process.DeploymentManagement;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
@@ -93,7 +94,7 @@ public class DeploymentResource {
     private static final Logger LOGGER = Logger.getLogger(DeploymentResource.class.getName());
     
     @Inject
-    DeploymentProcess process;
+    DeploymentManagement process;
     
     @Inject
     DeploymentObserver deploymentStream;

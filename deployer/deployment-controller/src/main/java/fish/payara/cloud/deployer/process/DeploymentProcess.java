@@ -57,7 +57,7 @@ import java.util.logging.Logger;
  * Upon change of state, it broadcasts asynchronous event {@link StateChanged}.
  */
 @ApplicationScoped
-public class DeploymentProcess {
+public class DeploymentProcess implements DeploymentManagement {
     private static final Logger LOGGER = Logger.getLogger(DeploymentProcess.class.getName());
 
     private final ConcurrentHashMap<String, DeploymentProcessState> runningProcesses = new ConcurrentHashMap<>();
@@ -65,18 +65,13 @@ public class DeploymentProcess {
     @Inject
     Event<StateChanged> deploymentEvent;
 
-    /**
-     * Start new deployment process.
-     * @param artifactLocation non-null local location of deployment artifact
-     * @param name the name of the upload
-     * @param target namespace to deploy to
-     * @return new state representing the deployment process
-     */
+    @Override
     public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
         var processState = new DeploymentProcessState(target, name, artifactLocation);
         return start(processState);
     }
     
+    @Override
     public DeploymentProcessState startWithDefaultConfiguration(File artifactLocation, String name, Namespace target) {
         var processState = new DeploymentProcessState(target, name, artifactLocation, true);
         return start(processState);
@@ -98,31 +93,12 @@ public class DeploymentProcess {
         updateProcess(process, p -> p.addConfiguration(configuration));
     }
 
-    /**
-     * Update configuration values, and submit the configuration automatically
-     * @param process process to update
-     * @param kind kind of configuration
-     * @param id id of configuration
-     * @param values values to set
-     * @throws IllegalArgumentException when such configuration is not present
-     * @throws ConfigurationValidationException when values are not valid
-     * @return
-     */
+    @Override
     public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, Map<String, String> values) {
         return setConfiguration(process, kind, id, true, values);
     }
 
-    /**
-     * Update configuration values, and optionally submit the configuration if it is complete.
-     * @param process process to update
-     * @param kind kind of configuration
-     * @param id id of configuration
-     * @param submit whether to submit if configuration is complete after update
-     * @param values values to set
-     * @throws IllegalArgumentException when such configuration is not present
-     * @throws ConfigurationValidationException when values are not valid
-     * @return
-     */
+    @Override
     public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String, String> values) {
         process = updateProcess(process, p -> p.setConfiguration(kind, id, submit, values));
         if (submit) {
@@ -131,12 +107,7 @@ public class DeploymentProcess {
         return process;
     }
 
-    /**
-     * Submit all configurations of a process.
-     * @param process process to update
-     * @throws IllegalStateException when some of the configurations are incomplete
-     * @return
-     */
+    @Override
     public DeploymentProcessState submitConfigurations(DeploymentProcessState process) {
         return updateProcess(process, p -> p.submitConfigurations(true));
     }
@@ -193,6 +164,7 @@ public class DeploymentProcess {
         return updateProcess(process, p -> p.transition(ChangeKind.INSPECTION_FINISHED));
     }
     
+    @Override
     public DeploymentProcessState getProcessState(String id) {
         return runningProcesses.get(id);
     }
@@ -210,8 +182,9 @@ public class DeploymentProcess {
         return updateProcess(process, p -> p.transition(ChangeKind.PROVISION_STARTED));
     }
     
+    @Override
     public DeploymentProcessState delete(DeploymentProcessState process) {
-        return updateProcess(process, DeploymentProcessState::deleteArtifact);
+        return updateProcess(process, DeploymentProcessState::deletionStarted);
     }
 
     public DeploymentProcessState deletionFinished(DeploymentProcessState process) {
@@ -230,6 +203,7 @@ public class DeploymentProcess {
         return updateProcess(process, p -> p.provisionFinished());
     }
 
+    @Override
     public DeploymentProcessState resetConfigurations(DeploymentProcessState process) {
         return updateProcess(process, p -> p.resetConfigurations());
     }
