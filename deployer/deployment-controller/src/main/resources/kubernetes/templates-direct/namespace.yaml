@@ -3,7 +3,7 @@ kind: Namespace
 metadata:
   name: $(PROJECT)-$(STAGE)
   labels:
-    app.kubernetes.io/name: $(STAGE)
+    app.kubernetes.io/name: $(PROJECT)
     app.kubernetes.io/component: project-stage
-    app.kubernetes.io/part-of: $(PROJECT)
+    app.kubernetes.io/part-of: $(STAGE)
     app.kubernetes.io/managed-by: payara-cloud
