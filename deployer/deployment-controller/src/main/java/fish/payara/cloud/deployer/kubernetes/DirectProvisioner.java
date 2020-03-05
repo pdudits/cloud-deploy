@@ -204,9 +204,10 @@ class DirectProvisioner implements Provisioner {
     }
     
     @Override
-    public Map<String, List<String>> getDeploymentsWithIngress(String namespace) {
+    public Map<String, List<String>> getDeploymentsWithIngress(Namespace namespace) {
         Map<String, List<String>> deployments = new HashMap<>();
-        for (Ingress ingress : client.extensions().ingresses().inNamespace(namespace).withLabel("managed-by", "payara-cloud").list().getItems()) {
+        for (Ingress ingress : client.extensions().ingresses().inNamespace(convertNamespace(namespace))
+                .withLabel("managed-by", "payara-cloud").list().getItems()) {
             List<String> pathList = new ArrayList<>();
             for (var rule: ingress.getSpec().getRules()) {
                 for (var path : rule.getHttp().getPaths()) {
@@ -216,6 +217,10 @@ class DirectProvisioner implements Provisioner {
             deployments.put(ingress.getMetadata().getName(), pathList);
         }
         return deployments;
+    }
+
+    static String convertNamespace(Namespace namespace) {
+        return namespace.getProject()+"-"+namespace.getStage();
     }
 
     class Naming {
@@ -233,7 +238,7 @@ class DirectProvisioner implements Provisioner {
         }
 
         String getNamespace() {
-            return deployment.getNamespace().getProject()+"-"+deployment.getNamespace().getStage();
+            return convertNamespace(deployment.getNamespace());
         }
 
         NamespacedKubernetesClient namespaceClient() {

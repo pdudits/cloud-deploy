@@ -87,18 +87,18 @@ public class NamespaceResource {
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("{id}")
-    public Map<String, List<String>> getDeploymentsJson(@PathParam("id") String id) {
-        return provisioner.getDeploymentsWithIngress(id);
+    @Path("{stage}/{project}/")
+    public Map<String, List<String>> getDeploymentsJson(@PathParam("stage") String stage, @PathParam("project") String project) {
+        return provisioner.getDeploymentsWithIngress(new Namespace(project, stage));
     }
     
     @GET
     @Produces(MediaType.TEXT_HTML)
     @Controller
-    @Path("{id}")
-    public String getDeployments(@PathParam("id") String id) {
-        model.put("title", "Deployments in " + id);
-        model.put("deployments", provisioner.getDeploymentsWithIngress(id));
+    @Path("{stage}/{project}}/")
+    public String getDeployments(@PathParam("stage") String stage, @PathParam("project") String project) {
+        model.put("title", String.format("Deployments in %s/%s", stage, project));
+        model.put("deployments", provisioner.getDeploymentsWithIngress(new Namespace(project, stage)));
         return "deployment_list.xhtml";
     }
 }

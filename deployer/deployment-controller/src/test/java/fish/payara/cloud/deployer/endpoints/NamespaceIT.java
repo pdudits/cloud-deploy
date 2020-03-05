@@ -101,7 +101,7 @@ public class NamespaceIT {
     
     @Test
     public void testDeploymentsList() {
-        var client = ClientBuilder.newClient().target(uri).path("api/namespaces/foo-bar");
+        var client = ClientBuilder.newClient().target(uri).path("api/namespaces/bar/foo");
         var response = client.request(MediaType.APPLICATION_JSON).get(Map.class);
         Assert.assertEquals(1, response.size());
         List array = (List) response.get("foo");

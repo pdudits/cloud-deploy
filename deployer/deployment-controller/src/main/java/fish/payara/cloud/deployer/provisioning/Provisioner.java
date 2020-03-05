@@ -76,5 +76,5 @@ public interface Provisioner {
      * @return map where key is the deployment id and the values being a list
      * of ingress URLs.
      */
-    Map<String, List<String>> getDeploymentsWithIngress(String namespace);
+    Map<String, List<String>> getDeploymentsWithIngress(Namespace namespace);
 }

@@ -96,7 +96,7 @@ class MockProvisioner implements Provisioner {
     }
 
     @Override
-    public Map<String, List<String>> getDeploymentsWithIngress(String namespaceId) {
+    public Map<String, List<String>> getDeploymentsWithIngress(Namespace namespaceId) {
         return Map.of("foo", List.of("http://www.example.com"));
     }
 }
