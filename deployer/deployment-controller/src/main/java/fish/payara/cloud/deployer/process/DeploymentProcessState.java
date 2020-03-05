@@ -388,6 +388,10 @@ public class DeploymentProcessState {
     public boolean isReady() {
         return endpointActivatedAt != null && deploymentCompletedAt != null;
     }
+    
+    public boolean isDeleted() {
+        return lastChange == ChangeKind.DELETION_FINISHED;
+    }
 
     public boolean isUsingDefaultConfiguration() {
         return usingDefaultConfiguration;

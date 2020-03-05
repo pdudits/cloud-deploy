@@ -172,7 +172,7 @@ class KubernetesWatcher implements Closeable {
     }
 
     protected void handleDeploymentEvent(Watcher.Action action, Deployment resource, String id) {
-        if (isDeploymentReady(resource)) {
+        if (isDeploymentReady(resource) && action != Watcher.Action.DELETED) {
             process.deploymentFinished(process.getProcessState(id));
         }
     }
@@ -182,7 +182,7 @@ class KubernetesWatcher implements Closeable {
     }
 
     protected void handleIngressEvent(Watcher.Action action, Ingress resource, String id) {
-        if (hasActiveIngress(resource)) {
+        if (hasActiveIngress(resource) && action != Watcher.Action.DELETED) {
             process.endpointActivated(process.getProcessState(id));
         }
     }

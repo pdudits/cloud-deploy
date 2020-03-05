@@ -96,4 +96,6 @@ public interface DeploymentManagement {
     DeploymentProcessState resetConfigurations(DeploymentProcessState process);
     
     DeploymentProcessState getProcessState(String id);
+
+    DeploymentProcessState deleteForeign(String id);
 }

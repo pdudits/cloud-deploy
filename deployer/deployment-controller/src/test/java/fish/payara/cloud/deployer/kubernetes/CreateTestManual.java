@@ -50,6 +50,7 @@ import io.fabric8.kubernetes.api.model.PodCondition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.junit.Test;
@@ -81,7 +82,7 @@ import static org.mockito.Mockito.mock;
  *
  */
 public class CreateTestManual {
-    private DefaultKubernetesClient client;
+    private NamespacedKubernetesClient client;
 
     @Test
     public void createDirectly() throws ProvisioningException {
@@ -145,7 +146,7 @@ public class CreateTestManual {
         return provisoner;
     }
 
-    private DefaultKubernetesClient setupClient() {
+    private NamespacedKubernetesClient setupClient() {
         if (client != null) {
             return client;
         }

@@ -228,4 +228,14 @@ public class DeploymentProcess implements DeploymentManagement {
     public DeploymentProcessState uploadStarting(DeploymentProcessState process) {
         return updateProcess(process, DeploymentProcessState::uploadStarting);
     }
+
+    @Override
+    public DeploymentProcessState deleteForeign(String id) {
+        // this is temporary method unless we put proper DeploymentRepository in place
+        // and a representation of already provisioned deployment
+        DeploymentProcessState temp = new DeploymentProcessState(id, new Namespace("foreign","unknown"), id, null, true);
+        runningProcesses.put(id, temp);
+        return delete(temp);
+    }
+    
 }

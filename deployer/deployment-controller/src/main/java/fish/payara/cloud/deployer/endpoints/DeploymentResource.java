@@ -209,11 +209,27 @@ public class DeploymentResource {
     public Response deleteDeployment(@PathParam("id") String id) {
         DeploymentProcessState state = process.getProcessState(id);
         if (state == null) {
-            throw new NotFoundException();
+            process.deleteForeign(id);
+        } else {
+            process.delete(state);
         }
-        process.delete(state);
         return Response.noContent().build();
     }
+
+    @POST
+    @Controller
+    @Path("{id}/delete")
+    public Response deleteDeploymentViaForm(@PathParam("id") String id, @Context UriInfo uriInfo) {
+        DeploymentProcessState state = process.getProcessState(id);
+        if (state == null) {
+            process.deleteForeign(id);
+        } else {
+            process.delete(state);
+        }
+        return Response.seeOther(uriInfo.getBaseUriBuilder().path("deployment/{id}/").build(id)).build();
+    }
+
+
     
     @GET
     @Path("{project}/{stage}/{id}")

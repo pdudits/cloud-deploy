@@ -40,6 +40,7 @@ package fish.payara.cloud.deployer.kubernetes;
 
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
+import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
@@ -52,11 +53,12 @@ public class KubernetesClient {
     private static final Logger LOGGER = Logger.getLogger(KubernetesClient.class.getName());
 
     @Produces
-    DefaultKubernetesClient client;
+    NamespacedKubernetesClient client;
 
     @PostConstruct
     void connectApiServer() {
-        client = new DefaultKubernetesClient();
+        client = new DefaultKubernetesClient().inAnyNamespace();
+       
         var version = client.getVersion();
         LOGGER.info("Successfully connected to API Server version "+version.getMajor()+"."+version.getMinor());
     }
