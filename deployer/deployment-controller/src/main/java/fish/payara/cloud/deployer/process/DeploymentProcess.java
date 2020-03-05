@@ -224,4 +224,8 @@ public class DeploymentProcess implements DeploymentManagement {
     public DeploymentProcessState outputLogged(DeploymentProcessState process, String logChunk) {
         return updateProcess(process, p -> p.logged(logChunk));
     }
+
+    public DeploymentProcessState uploadStarting(DeploymentProcessState process) {
+        return updateProcess(process, DeploymentProcessState::uploadStarting);
+    }
 }

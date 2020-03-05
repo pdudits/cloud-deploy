@@ -391,5 +391,9 @@ public class DeploymentProcessState {
 
     public boolean isUsingDefaultConfiguration() {
         return usingDefaultConfiguration;
-    }   
+    }
+
+    StateChanged uploadStarting() {
+        return transition(ChangeKind.UPLOADING);
+    }
 }

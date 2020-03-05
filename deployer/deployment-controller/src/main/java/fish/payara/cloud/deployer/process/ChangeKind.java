@@ -83,6 +83,11 @@ public enum ChangeKind {
     CONFIGURATION_FINISHED,
 
     /**
+     * Artifact is being uploaded to persistent storage
+     */
+    UPLOADING,
+
+    /**
      * Artifact was stored into persistent storage.
      */
     ARTIFACT_STORED,

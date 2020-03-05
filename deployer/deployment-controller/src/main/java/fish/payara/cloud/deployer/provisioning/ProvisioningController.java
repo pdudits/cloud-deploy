@@ -87,6 +87,7 @@ class ProvisioningController {
 
         // then store artifact to persistent storage
         try {
+            process.uploadStarting(event.getProcess());
             var persistentUri = artifactStorage.storeArtifact(event.getProcess());
             process.artifactStored(event.getProcess(), persistentUri);
         } catch (IOException e) {
