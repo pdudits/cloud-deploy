@@ -1,0 +1,16 @@
+{
+  "mpConfig": {
+    "map": {
+      "constant": "constantValue",
+      "fileRef": {
+        "file": "value"
+      },
+      "propertyRef": {
+        "propertyFile": {
+          "file": "valueInFile",
+          "key": "indirectValue"
+        }
+      }
+    }
+  }
+}

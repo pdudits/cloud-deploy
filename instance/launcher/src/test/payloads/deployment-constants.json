@@ -1,0 +1,6 @@
+{
+  "deployment": {
+    "contextRoot": "/",
+    "artifact": "test.war"
+  }
+}

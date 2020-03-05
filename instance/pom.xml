@@ -49,5 +49,6 @@
 
     <modules>
         <module>cds</module>
+        <module>launcher</module>
     </modules>
 </project>
