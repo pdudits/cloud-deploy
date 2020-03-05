@@ -41,7 +41,6 @@ package fish.payara.cloud.deployer.process;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
-import javax.print.attribute.standard.Severity;
 import java.io.File;
 import java.net.URI;
 import java.util.Map;
@@ -109,7 +108,7 @@ public class DeploymentProcess {
      * @throws ConfigurationValidationException when values are not valid
      * @return
      */
-    public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, Map<String,String> values) {
+    public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, Map<String, String> values) {
         return setConfiguration(process, kind, id, true, values);
     }
 
@@ -124,7 +123,7 @@ public class DeploymentProcess {
      * @throws ConfigurationValidationException when values are not valid
      * @return
      */
-    public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String,String> values) {
+    public DeploymentProcessState setConfiguration(DeploymentProcessState process, String kind, String id, boolean submit, Map<String, String> values) {
         process = updateProcess(process, p -> p.setConfiguration(kind, id, submit, values));
         if (submit) {
             process = updateProcess(process, p -> p.submitConfigurations(false));
@@ -215,11 +214,9 @@ public class DeploymentProcess {
         return updateProcess(process, DeploymentProcessState::deleteArtifact);
     }
 
-    public DeploymentProcessState artifactDeleted(DeploymentProcessState process) {
-        return updateProcess(process, DeploymentProcessState::removePersistentLocation);
+    public DeploymentProcessState deletionFinished(DeploymentProcessState process) {
+        return updateProcess(process, DeploymentProcessState::deletionFinished);
     }
-    
-    
 
     public DeploymentProcessState artifactStored(DeploymentProcessState process, URI persistentUri) {
         return updateProcess(process, p -> p.setPersistentLocation(persistentUri));

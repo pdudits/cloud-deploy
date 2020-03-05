@@ -48,7 +48,6 @@ import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.KubernetesResource;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -212,7 +211,7 @@ class DirectProvisioner implements Provisioner {
         client.secrets().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
         client.services().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
         client.extensions().ingresses().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
-        return process.artifactDeleted(deployment);
+        return process.deletionFinished(deployment);
     }
     
     @Override

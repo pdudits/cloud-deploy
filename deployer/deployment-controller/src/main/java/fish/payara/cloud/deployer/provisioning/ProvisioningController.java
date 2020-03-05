@@ -111,7 +111,7 @@ class ProvisioningController {
         if (uri != null) {
             try {
                 artifactStorage.deleteArtifact(event.getProcess());
-                process.artifactDeleted(event.getProcess());
+                process.deletionFinished(event.getProcess());
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Could not delete artifact "+uri, e);
             }
@@ -157,6 +157,11 @@ class ProvisioningController {
     }
     
     void deleteProvision(@ObservesAsync @ChangeKind.Filter(ChangeKind.DELETION_STARTED) StateChanged event) {
+        try {
+            artifactStorage.deleteArtifact(event.getProcess());
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Failed to delete artifact from storage "+event.getProcess().getPersistentLocation());
+        }
         provisioner.delete(event.getProcess());
     }
 

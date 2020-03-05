@@ -319,18 +319,15 @@ public class DeploymentProcessState {
         return configurations.stream().allMatch(Configuration::isComplete);
     }
     
-    StateChanged deleteArtifact() {
+    StateChanged deletionStarted() {
         return transition(ChangeKind.DELETION_STARTED);
     }
     
-    StateChanged deletetionFinish() {
+    StateChanged deletionFinished() {
         persistentLocation = null;
-        return transition(ChangeKind.DELETION_FINISHED);
-    }
-
-    StateChanged removePersistentLocation() {
-        version++;
-        persistentLocation = null;
+        this.endpoint = null;
+        deploymentCompletedAt = null;
+        endpointActivatedAt = null;
         return transition(ChangeKind.DELETION_FINISHED);
     }
 
