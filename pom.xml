@@ -48,6 +48,7 @@
 
     <modules>
         <module>deployer</module>
+        <module>instance</module>
     </modules>
 
     <scm>
@@ -89,7 +90,7 @@
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <payara.version>5.194</payara.version>
+        <payara.version>5.201-SNAPSHOT</payara.version>
     </properties>
 
     <dependencyManagement>

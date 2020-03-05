@@ -41,6 +41,7 @@ package fish.payara.cloud.deployer.provisioning;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Provisions application resources for a deployment.
@@ -75,4 +76,12 @@ public interface Provisioner {
      * {@link fish.payara.cloud.deployer.process.ChangeKind#DELETION_FINISHED}
      */
     DeploymentProcessState delete(DeploymentProcessState deployment);
+
+     /**
+     * Gets a map of all deployments in a namespace
+     * @param namespace name of Namespace to get deployments in
+     * @return map where key is the deployment id and the values being a list
+     * of ingress URLs.
+     */
+    Map<String, List<String>> getDeploymentsWithIngress(Namespace namespace);
 }

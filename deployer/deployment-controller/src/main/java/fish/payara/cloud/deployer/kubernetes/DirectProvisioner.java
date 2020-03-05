@@ -66,7 +66,9 @@ import java.util.stream.Collectors;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
 import fish.payara.cloud.deployer.process.Namespace;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -212,6 +214,26 @@ class DirectProvisioner implements Provisioner {
         client.extensions().ingresses().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
         return process.artifactDeleted(deployment);
     }
+    
+    @Override
+    public Map<String, List<String>> getDeploymentsWithIngress(Namespace namespace) {
+        Map<String, List<String>> deployments = new HashMap<>();
+        for (Ingress ingress : client.extensions().ingresses().inNamespace(convertNamespace(namespace))
+                .withLabel("managed-by", "payara-cloud").list().getItems()) {
+            List<String> pathList = new ArrayList<>();
+            for (var rule: ingress.getSpec().getRules()) {
+                for (var path : rule.getHttp().getPaths()) {
+                    pathList.add(path.toString());
+                }
+            }
+            deployments.put(ingress.getMetadata().getName(), pathList);
+        }
+        return deployments;
+    }
+
+    static String convertNamespace(Namespace namespace) {
+        return namespace.getProject()+"-"+namespace.getStage();
+    }
 
     class Naming {
         DeploymentProcessState deployment;
@@ -228,7 +250,7 @@ class DirectProvisioner implements Provisioner {
         }
 
         String getNamespace() {
-            return deployment.getNamespace().getProject()+"-"+deployment.getNamespace().getStage();
+            return convertNamespace(deployment.getNamespace());
         }
 
         NamespacedKubernetesClient namespaceClient() {
