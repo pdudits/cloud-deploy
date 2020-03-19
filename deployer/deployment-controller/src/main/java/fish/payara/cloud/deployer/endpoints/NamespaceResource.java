@@ -45,8 +45,7 @@ package fish.payara.cloud.deployer.endpoints;
 import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.provisioning.DeploymentInfo;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.mvc.Controller;
@@ -55,13 +54,19 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.RedirectionException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
  * @author jonathan coustick
  */
-@Path("/namespaces")
+@Path("/namespaces/")
 @ApplicationScoped
 public class NamespaceResource {
     
@@ -83,7 +88,11 @@ public class NamespaceResource {
     @GET
     @Produces(MediaType.TEXT_HTML)
     @Controller
-    public String getNamespaces() {
+    public String getNamespaces(@Context UriInfo uriInfo) {
+        if (!uriInfo.getRequestUri().toString().endsWith("/")) {
+            // there are relative links in the view, so we need to be at /namespaces/ for the to work
+            throw new RedirectionException(Response.Status.MOVED_PERMANENTLY, uriInfo.getRequestUri().resolve("namespaces/"));
+        }
         model.put("title", "Namespaces");
         model.put("namespaces", getAllNamespaces().stream().collect(Collectors.groupingBy(Namespace::getStage)));
         return "namespaces.xhtml";
