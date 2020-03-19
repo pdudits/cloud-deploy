@@ -40,6 +40,7 @@ package fish.payara.cloud.deployer.inspection.datasource;
 
 import fish.payara.cloud.deployer.process.Configuration;
 
+import java.lang.reflect.Proxy;
 import java.util.EnumMap;
 import java.util.Optional;
 import java.util.Set;
@@ -50,21 +51,22 @@ import java.util.stream.Stream;
 
 public class DatasourceConfiguration extends Configuration {
     static final String DEFAULT_URL = "<default>";
-    static final String DEFAULT_NAME = "java:comp/DefaultDataSource";
+    public static final String DEFAULT_NAME = "java:comp/DefaultDataSource";
     public static final String KIND = "dataSource";
 
     private final EnumMap<Key, String> defaultValues = new EnumMap<>(Key.class);
 
     DatasourceConfiguration(String jndiName) {
         super(jndiName);
-        defaultValues.put(Key.steadypoolsize, "1");
-        defaultValues.put(Key.maxpoolsize, "10");
-        defaultValues.put(Key.maxwaittime, "30000");
+        for (Key key : Key.values()) {
+            key.defaultValue.ifPresent(val -> defaultValues.put(key, val));
+        }
+        defaultValues.put(Key.poolName, jndiName.replaceAll("\\W","_"));
     }
 
     static DatasourceConfiguration createDefault() {
         var result = new DatasourceConfiguration(DEFAULT_NAME);
-        result.defaultValues.put(Key.jdbcurl, DEFAULT_URL);
+        result.defaultValues.put(Key.jdbcUrl, DEFAULT_URL);
         return result;
     }
 
@@ -96,10 +98,17 @@ public class DatasourceConfiguration extends Configuration {
                 value.validator.accept(context.key(value.name()));
             }
         }
-        Optional<Integer> maxPoolSize = context.key(Key.steadypoolsize.name()).convertIfValid(Integer::parseInt);
-        Optional<Integer> steadyPoolSize = context.key(Key.steadypoolsize.name()).convertIfValid(Integer::parseInt);
+        Optional<Integer> maxPoolSize = context.key(Key.steadyPoolSize.name()).convertIfValid(Integer::parseInt);
+        Optional<Integer> steadyPoolSize = context.key(Key.steadyPoolSize.name()).convertIfValid(Integer::parseInt);
         if (maxPoolSize.isPresent() && steadyPoolSize.isPresent() && steadyPoolSize.get() > maxPoolSize.get()) {
             context.addValidationError("Steady pool size much be smaller or equal to maxPoolSize");
+        }
+        if (!context.updatedKeys().isEmpty()) {
+            context.key(Key.jdbcUrl.name()).check(value -> {
+                if (DEFAULT_URL.equals(value)) {
+                    context.addValidationError("URL must be defined when any of the attributes are overriden");
+                }
+            });
         }
     }
 
@@ -113,12 +122,15 @@ public class DatasourceConfiguration extends Configuration {
 
 
     enum Key {
-        steadypoolsize("1", Integer::parseInt, Key::assertNonNegative),
-        maxpoolsize("10", Integer::parseInt, Key::assertPositive),
-        maxwaittime("30000", Integer::parseInt, Key::assertPositive),
-        jdbcurl,
+        steadyPoolSize("1", Integer::parseInt, Key::assertNonNegative),
+        maxPoolSize("10", Integer::parseInt, Key::assertPositive),
+        maxWaitTime("30000", Integer::parseInt, Key::assertPositive),
+        jdbcUrl,
+        datasourceClass("org.h2.jdbcx.JdbcDataSource"),
+        resourceType("javax.sql.DataSource"),
         user,
-        password;
+        password,
+        poolName;
 
         private final Optional<String> defaultValue;
         Consumer<UpdateContext> validator;
@@ -126,6 +138,11 @@ public class DatasourceConfiguration extends Configuration {
         Key() {
             this.validator = (c) -> {};
             this.defaultValue = Optional.empty();
+        }
+
+        Key(String defaultValue) {
+            this.validator = (c) -> {};
+            this.defaultValue = Optional.of(defaultValue);
         }
 
         Key(String defaultValue, Consumer<String> checkFunction) {
@@ -156,5 +173,39 @@ public class DatasourceConfiguration extends Configuration {
 
     }
 
+    // extremely barebone mapper, will need more general separation between data storage, validation and interpretation
+    static Value createValue(Configuration conf) {
+        if (!conf.getKind().equals(KIND)) {
+            throw new IllegalArgumentException("Configuration is not a Datasource configuration");
+        }
+        return (Value) Proxy.newProxyInstance(Value.class.getClassLoader(), new Class[]{Value.class}, (proxy, method, args) -> {
+            Optional<String> value = conf.getValue(method.getName());
+            if (method.getReturnType().equals(Optional.class)) {
+                // at this time we only support Optional<String>
+                return value;
+            } else if (!value.isPresent()) {
+                throw new IllegalArgumentException("required value for "+method.getName()+" is missing");
+            } else if (method.getReturnType().equals(int.class)) {
+                return Integer.parseInt(value.get());
+            } else {
+                return value.get();
+            }
+        });
+    }
 
+    public interface Value {
+        int steadyPoolSize();
+        int maxPoolSize();
+        int maxWaitTime();
+        String jdbcUrl();
+        Optional<String> user();
+        Optional<String> password();
+        String poolName();
+        String resourceType();
+        String datasourceClass();
+
+        static Value forConfiguration(Configuration c) {
+            return createValue(c);
+        }
+    }
 }

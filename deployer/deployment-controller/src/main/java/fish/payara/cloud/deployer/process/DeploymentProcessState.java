@@ -48,6 +48,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import javax.json.bind.annotation.JsonbPropertyOrder;
 import javax.json.bind.annotation.JsonbTransient;
 import javax.json.bind.annotation.JsonbTypeAdapter;
@@ -279,6 +280,10 @@ public class DeploymentProcessState {
         return findConfiguration(kind, getName());
     }
 
+    public Stream<Configuration> findConfigurations(String kind) {
+        return configurations.stream().filter(c -> c.getKind().equals(kind));
+    }
+
     public boolean hasConfiguration(String kind, String id) {
         return findConfiguration(kind, id).isPresent();
     }
@@ -288,7 +293,7 @@ public class DeploymentProcessState {
     }
 
     public boolean hasConfigurationOverrides(String kind) {
-        return findConfiguration(kind).map(Configuration::hasOverrides).orElse(false);
+        return findConfigurations(kind).anyMatch(Configuration::hasOverrides);
     }
     
     StateChanged transition(ChangeKind target) {
