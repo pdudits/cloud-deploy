@@ -51,8 +51,8 @@
                     <li><h:outputLink value="${ingress}">${ingress}</h:outputLink></li>
                 </c:forEach>
                 </ul>
-                <form action="#{mvc.uri('DeploymentResource#deleteDeploymentViaForm', {'id' : deployment.id})}" method="post">
-                    <button style="float:right">Delete</button>
+                <form action="#{mvc.uri('DeploymentResource#deleteDeploymentViaForm', {'id' : deployment.id})}" method="post" style="text-align:right">
+                    <button>Delete</button>
                 </form>
             </section>
             </c:forEach>
