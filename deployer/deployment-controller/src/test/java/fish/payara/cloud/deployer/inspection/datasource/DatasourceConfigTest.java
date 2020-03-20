@@ -38,12 +38,16 @@
 
 package fish.payara.cloud.deployer.inspection.datasource;
 
+import fish.payara.cloud.deployer.process.ConfigurationValidationException;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.Optional;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class DatasourceConfigTest {
@@ -58,8 +62,36 @@ public class DatasourceConfigTest {
     public void nonDefaultDatasourceRequiresUrl() {
         var conf = new DatasourceConfiguration("jdbc/main");
         assertFalse(conf.isComplete());
-        ProcessAccessor.updateConfiguration(conf, Map.of("jdbcurl", "jdbc:h2:mem"));
+        ProcessAccessor.updateConfiguration(conf, Map.of("jdbcUrl", "jdbc:h2:mem"));
         assertTrue(conf.isComplete());
         assertTrue(conf.hasOverrides());
+    }
+
+    @Test(expected = ConfigurationValidationException.class)
+    public void changeToDefaultDataSourceRequiresUrlNegative() {
+        var conf = DatasourceConfiguration.createDefault();
+        ProcessAccessor.updateConfiguration(conf, Map.of("maxWaitTime", "40000"));
+    }
+
+    @Test
+    public void changeToDefaultDataSourceRequiresUrlPositive() {
+        var conf = DatasourceConfiguration.createDefault();
+        ProcessAccessor.updateConfiguration(conf, Map.of("maxWaitTime", "40000", "jdbcUrl", "jdbc:h2:mem"));
+        ProcessAccessor.updateConfiguration(conf, Map.of("maxWaitTime", "30000"));
+    }
+
+    @Test
+    public void testDefaultValue() {
+        var conf = DatasourceConfiguration.createDefault();
+        var value = DatasourceConfiguration.createValue(conf);
+        assertEquals("java_comp_DefaultDataSource", value.poolName());
+        assertEquals(1, value.steadyPoolSize());
+        assertEquals(10, value.maxPoolSize());
+        assertEquals(30000, value.maxWaitTime());
+        assertEquals(Optional.empty(), value.password());
+        assertEquals(Optional.empty(), value.user());
+        assertNotNull(value.datasourceClass());
+        assertNotNull(value.jdbcUrl());
+        assertNotNull(value.resourceType());
     }
 }

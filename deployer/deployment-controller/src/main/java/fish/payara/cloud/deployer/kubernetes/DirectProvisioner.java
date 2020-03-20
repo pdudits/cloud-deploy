@@ -39,6 +39,7 @@
 package fish.payara.cloud.deployer.kubernetes;
 
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.inspection.datasource.DatasourceConfiguration;
 import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
 import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
@@ -61,6 +62,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -102,6 +104,13 @@ class DirectProvisioner implements Provisioner {
                 String configMapName = provisionSystemProperties(naming, deployment.findConfiguration(MicroprofileConfiguration.KIND).get());
                 applySystemPropertyFromConfigMap(deploymentResource, configMapName);
             }
+            if (deployment.hasConfigurationOverrides(DatasourceConfiguration.KIND)) {
+                var dsConfigurations = deployment.findConfigurations(DatasourceConfiguration.KIND)
+                        .filter(Configuration::hasOverrides)
+                        .collect(Collectors.toSet());
+                String postBootConfigMapName = provisionDatasourcePostBoot(naming, dsConfigurations);
+                applyPostbootFromConfigMap(deploymentResource, postBootConfigMapName);
+            }
             provisionDeployment(naming, deploymentResource);
             var uri = provisionIngress(naming);
             process.endpointDetermined(deployment, uri);
@@ -109,6 +118,41 @@ class DirectProvisioner implements Provisioner {
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
+    }
+
+    private void applyPostbootFromConfigMap(Deployment deploymentResource, String postBootConfigMapName) {
+        // add config map volume
+        var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
+        podTemplate.getVolumes()
+                .add(new VolumeBuilder()
+                        .withName("postboot")
+                        .withNewConfigMap()
+                        .withName(postBootConfigMapName)
+                        .endConfigMap()
+                        .build());
+        // mount the volume into first, main container
+        var mainContainer = podTemplate.getContainers().get(0);
+        mainContainer.getVolumeMounts()
+                .add(new VolumeMountBuilder()
+                        .withName("postboot")
+                        .withMountPath("/postboot")
+                        .build());
+        // add command line argument
+        mainContainer.getArgs().addAll(List.of("--postbootcommandfile","/postboot/postboot"));
+    }
+
+    private String provisionDatasourcePostBoot(Naming naming, Set<Configuration> dsConfigurations) {
+        var postboot = new DatasourcePostbootCommands();
+        dsConfigurations.forEach(postboot::addDatasource);
+        var configMap = new ConfigMapBuilder().withNewMetadata()
+                .withName(naming.getName()+"-postboot")
+                .withLabels(naming.labelsForComponent("postboot"))
+                .endMetadata()
+                .withData(Map.of("postboot", postboot.toString()))
+                .build();
+
+        var created = naming.namespaceClient().resource(configMap).createOrReplace();
+        return created.getMetadata().getName();
     }
 
     private void applySystemPropertyFromConfigMap(Deployment deploymentResource, String configMapName) {

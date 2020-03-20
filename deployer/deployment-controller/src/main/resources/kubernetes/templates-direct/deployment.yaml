@@ -34,6 +34,10 @@ spec:
         app.kubernetes.io/managed-by: payara-cloud   
       annotations:
         payara.cloud/artifact-url: $(URL)
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: "http"
     spec:
       initContainers:
         - name: download-app

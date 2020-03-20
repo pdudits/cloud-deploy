@@ -258,6 +258,9 @@ public class ConfigBean {
         }
 
         private void updateValue(String key, String value) {
+            if (value != null && value.isBlank()) {
+                value = null;
+            }
             if (Objects.equals(value, values.get(key))) {
                 return;
             }
