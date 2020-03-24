@@ -1,0 +1,99 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: webapps.payara.cloud
+spec:
+  group: payara.cloud
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: webapps
+    # singular name to be used as an alias on the CLI and for display
+    singular: webapp
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: WebApp
+  subresources:
+    status: {}
+  versions:
+    - name: v1beta1
+      # Each version can be enabled/disabled by Served flag.
+      served: true
+      # One and only one version must be marked as the storage version.
+      storage: true
+  validation:
+    openAPIV3Schema: # keep in sync with ../deployer/deployment-controller/src/main/schema/crd-schema.yaml#components/schemas/WebApp
+      required:
+        - spec
+      properties:
+        spec:
+          type: object
+          required:
+            - artifactUrl
+          properties:
+            # name is part of standard metadata
+            # id is part of standard metadata (uid)
+            # namespace is determined by kubernetes namespace of the object
+            artifactUrl:
+              type: string
+              format: uri
+              description: "The URL of stored artifact"
+              nullable: false
+            # artifact: will be specified if we need more structure
+
+            configuration:
+              description: "Set of configurations of an artifact"
+              type: array
+              items:
+                type: object
+                required:
+                  - kind
+                  - id
+                properties:
+                  kind:
+                    type: string
+                    pattern: '\w+'
+                    nullable: false
+                  id:
+                    type: string
+                    pattern: '\w([^\s:]|:([^:]|$))+' # anything without spaces and double colon
+                    nullable: false
+                  values:
+                    type: object
+                    additionalProperties:
+                      type: string
+            deploymentProcessId:
+              # even though kubernetes assignes own ID, some parts of the process already depend on generated ID
+              # so we keep this for reference. Entries created via Kubernetes API do not need to specify this.
+              type: string
+              format: UUID
+        status:
+          type: object
+          properties:
+            # we just learn from deployment status and figure this out as we write controller
+            observedGeneration:
+              type: integer
+            publicEndpoint:
+              type: string
+              format: uri
+            conditions: # condition per https://github.com/kubernetes/community/blob/master/contributors/devel/sig-architecture/api-conventions.md#typical-status-properties
+              type: array
+              items:
+                type: object
+                required:
+                  - type
+                  - status
+                properties:
+                  type:
+                    type: string
+                  status:
+                    type: string
+                    enum: [True, False, Unknown]
+                  reason:
+                    type: string
+                  message:
+                    type: string
+                  lastUpdateTime:
+                    type: string
+                    format: date-time
+
