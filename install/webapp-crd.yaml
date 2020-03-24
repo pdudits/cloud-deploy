@@ -62,6 +62,10 @@ spec:
                     type: object
                     additionalProperties:
                       type: string
+                  defaultValues:
+                    type: object
+                    additionalProperties:
+                      type: string
             deploymentProcessId:
               # even though kubernetes assignes own ID, some parts of the process already depend on generated ID
               # so we keep this for reference. Entries created via Kubernetes API do not need to specify this.

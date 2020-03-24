@@ -180,11 +180,14 @@ public class CrdTestManual {
         config.setKind("contextRoot");
         config.setId("whatever.war");
         config.setValues(Map.of("key1", "value1", "key 2", "value 3", "emptyKey", ""));
+        config.setDefaultValues(Map.of("key1", "value12", "key 2", "value 33", "emptyKey", ""));
+        resource.getSpec().addConfigurationItem(config);
         resource.getSpec().addConfigurationItem(config);
         crClient.create(resource);
 
         var read = readFromServer(resource);
         assertEquals(config.getValues(), read.getSpec().getConfiguration().get(0).getValues());
+        assertEquals(config.getDefaultValues(), read.getSpec().getConfiguration().get(0).getDefaultValues());
     }
 
     @Test

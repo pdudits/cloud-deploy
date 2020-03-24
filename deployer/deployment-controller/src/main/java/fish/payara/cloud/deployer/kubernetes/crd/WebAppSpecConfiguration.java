@@ -50,7 +50,8 @@ import java.util.Objects;
 public class WebAppSpecConfiguration {
     private String kind;
     private String id;
-    private Map<String, String> values = null;
+    private Map<String, String> values;
+    private Map<String, String> defaultValues;
 
 
     public WebAppSpecConfiguration kind(String kind) {
@@ -67,7 +68,6 @@ public class WebAppSpecConfiguration {
     public void setKind(String kind) {
         this.kind = kind;
     }
-
 
     public WebAppSpecConfiguration id(String id) {
 
@@ -109,6 +109,15 @@ public class WebAppSpecConfiguration {
     }
 
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Map<String, String> getDefaultValues() {
+        return defaultValues;
+    }
+
+    public void setDefaultValues(Map<String, String> defaultValues) {
+        this.defaultValues = defaultValues;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -120,12 +129,13 @@ public class WebAppSpecConfiguration {
         WebAppSpecConfiguration webAppSpecConfiguration = (WebAppSpecConfiguration) o;
         return Objects.equals(this.kind, webAppSpecConfiguration.kind) &&
                 Objects.equals(this.id, webAppSpecConfiguration.id) &&
-                Objects.equals(this.values, webAppSpecConfiguration.values);
+                Objects.equals(this.values, webAppSpecConfiguration.values) &&
+                Objects.equals(this.defaultValues, webAppSpecConfiguration.defaultValues);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(kind, id, values);
+        return Objects.hash(kind, id);
     }
 
 
