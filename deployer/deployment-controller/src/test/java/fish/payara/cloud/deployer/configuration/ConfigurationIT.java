@@ -62,6 +62,7 @@ import javax.inject.Inject;
 
 import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
 import static fish.payara.cloud.deployer.ArquillianDeployments.configuration;
+import static fish.payara.cloud.deployer.ArquillianDeployments.shrinkwrap;
 import static fish.payara.cloud.deployer.inspection.InspectionHelper.write;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 
@@ -70,7 +71,7 @@ public class ConfigurationIT {
 
     @Deployment
     public static WebArchive createDeployment() {
-        return compose(configuration());
+        return compose(shrinkwrap(), configuration());
     }
 
     @Inject

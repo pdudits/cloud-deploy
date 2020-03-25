@@ -44,6 +44,7 @@ package fish.payara.cloud.deployer.endpoints;
 
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
+import fish.payara.cloud.deployer.provisioning.DeploymentInfo;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
 import java.net.URI;
@@ -54,6 +55,7 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.mvc.Models;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import org.junit.Assert;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -98,11 +100,10 @@ public class NamespaceIT {
     @Test
     public void testDeploymentsList() {
         var client = ClientBuilder.newClient().target(uri).path("api/namespaces/bar/foo");
-        var response = client.request(MediaType.APPLICATION_JSON).get(Map.class);
+        var response = client.request(MediaType.APPLICATION_JSON).get(JsonArray.class);
         Assert.assertEquals(1, response.size());
-        List array = (List) response.get("foo");
-        Assert.assertEquals(1, array.size());
-        Assert.assertEquals("http://www.example.com", array.get(0).toString());
+        var deployment = response.get(0);
+        Assert.assertEquals("http://www.example.com", deployment.asJsonObject().getJsonArray("urls").getString(0));
     }
     
 }

@@ -50,6 +50,7 @@ import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessLogOutput;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.LogProduced;
 import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.process.ProcessAccessor;
 import fish.payara.cloud.deployer.process.StateChanged;
@@ -113,6 +114,7 @@ public class ArquillianDeployments {
                 StateChanged.class,
                 DeploymentProcessLogOutput.class,
                 Configuration.class,
+                LogProduced.class,
                 ProcessAccessor.class);
     }
 

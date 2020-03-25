@@ -103,6 +103,6 @@ class MockProvisioner implements Provisioner {
 
     @Override
     public List<DeploymentInfo> getDeploymentsWithIngress(Namespace namespace) {
-        return List.of(new DeploymentInfo(namespace, UUID.randomUUID().toString(), "foo").addUrl("http://www.example/com"));
+        return List.of(new DeploymentInfo(namespace, UUID.randomUUID().toString(), "foo").addUrl("http://www.example.com"));
     }
 }
