@@ -38,10 +38,13 @@
 
 package fish.payara.cloud.deployer.inspection.datasource;
 
+import fish.payara.cloud.deployer.configuration.ConfigurationSubfactory;
 import fish.payara.cloud.deployer.process.Configuration;
 
+import javax.enterprise.context.ApplicationScoped;
 import java.lang.reflect.Proxy;
 import java.util.EnumMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -68,6 +71,17 @@ public class DatasourceConfiguration extends Configuration {
         var result = new DatasourceConfiguration(DEFAULT_NAME);
         result.defaultValues.put(Key.jdbcUrl, DEFAULT_URL);
         return result;
+    }
+
+    private void importDefaults(Map<String, String> defaultValues) {
+        for (var defaultEntry : defaultValues.entrySet()) {
+            try {
+                Key key = Key.valueOf(defaultEntry.getKey());
+                this.defaultValues.put(key, defaultEntry.getValue());
+            } catch (IllegalArgumentException iae) {
+                // probably old or user generated configuration object with a typo
+            }
+        }
     }
 
     @Override
@@ -208,4 +222,23 @@ public class DatasourceConfiguration extends Configuration {
             return createValue(c);
         }
     }
+
+    @ApplicationScoped
+    static class Subfactory implements ConfigurationSubfactory {
+        @Override
+        public boolean supportsKind(String kind) {
+            return KIND.equals(kind);
+        }
+
+        @Override
+        public Configuration importConfiguration(String kind, String id, Map<String, String> defaultValues) {
+            var config = DEFAULT_NAME.equals(id) ? createDefault() : new DatasourceConfiguration(id);
+            if (defaultValues != null) {
+                config.importDefaults(defaultValues);
+            }
+            return config;
+        }
+    }
+
+
 }

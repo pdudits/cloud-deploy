@@ -36,65 +36,34 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.mpconfig;
+package fish.payara.cloud.deployer.configuration;
 
-import fish.payara.cloud.deployer.configuration.ConfigurationSubfactory;
 import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.ConfigurationFactory;
+import fish.payara.cloud.deployer.process.PersistedDeployment;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
+import javax.enterprise.inject.Instance;
+import javax.inject.Inject;
 
-public class MicroprofileConfiguration extends Configuration {
-
-    public static final String KIND = "microprofileConfig";
-    private final Properties inspectedValues;
-
-    public MicroprofileConfiguration(String name, Properties inspectedValues) {
-        super(name);
-        this.inspectedValues = inspectedValues;
-    }
+@ApplicationScoped
+class Factory implements ConfigurationFactory {
+    @Inject
+    Instance<ConfigurationSubfactory> subfactories;
 
     @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return additionalKeysAnd(inspectedValues.stringPropertyNames());
-    }
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        if (inspectedValues.containsKey(key)) {
-            return Optional.of(inspectedValues.getProperty(key));
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean supportsAdditionalKeys() {
-        return true;
-    }
-
-    @ApplicationScoped
-    static class Subfactory implements ConfigurationSubfactory {
-
-        @Override
-        public boolean supportsKind(String kind) {
-            return KIND.equals(kind);
-        }
-
-        @Override
-        public Configuration importConfiguration(String kind, String id, Map<String, String> defaultValues) {
-            var importedDefaults = new Properties();
-            if (defaultValues != null) {
-                importedDefaults.putAll(defaultValues);
+    public Configuration importConfiguration(PersistedDeployment.PersistedConfiguration configuration) {
+        Configuration importedConfiguration = null;
+        for (ConfigurationSubfactory subfactory : subfactories) {
+            if (subfactory.supportsKind(configuration.getKind())) {
+                if (importedConfiguration == null) {
+                    importedConfiguration = subfactory.importConfiguration(configuration.getKind(),
+                            configuration.getId(), configuration.getDefaultValues());
+                } else {
+                    throw new IllegalStateException("Multiple subfactories matched kind "+configuration.getKind());
+                }
             }
-            return new MicroprofileConfiguration(id, importedDefaults);
         }
+        return importedConfiguration;
     }
 }
