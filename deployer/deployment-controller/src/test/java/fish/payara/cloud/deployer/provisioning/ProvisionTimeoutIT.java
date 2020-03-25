@@ -56,19 +56,17 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.Map;
+
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.mpConfig;
+import static fish.payara.cloud.deployer.ArquillianDeployments.provisioning;
 
 @RunWith(Arquillian.class)
 public class ProvisionTimeoutIT {
     @Deployment
     public static WebArchive deployment() {
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addClass(ProcessObserver.class)
-                .addPackage(ProvisioningController.class.getPackage())
-                .addClass(ArtifactStorage.class)
-                .addClass(TempArtifactStorage.class)
-                .addClass(ManagedConcurrencyProducer.class)
-                .addAsResource(new StringAsset("provisioning.timeout=PT2S"), "META-INF/microprofile-config.properties");
+        return compose(provisioning(), mpConfig(Map.of("provisioning.timeout","PT2S")));
     }
 
     @Inject

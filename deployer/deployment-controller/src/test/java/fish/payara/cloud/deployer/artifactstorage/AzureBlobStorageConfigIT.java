@@ -57,33 +57,22 @@ import javax.enterprise.inject.spi.Extension;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 import static org.junit.Assert.assertEquals;
+import static fish.payara.cloud.deployer.ArquillianDeployments.*;
 
 @RunWith(Arquillian.class)
 @Category(DockerTest.class)
 public class AzureBlobStorageConfigIT {
     @Deployment
     public static WebArchive deployment() {
-        var shrinkwrap = Maven.resolver().loadPomFromFile("pom.xml").resolve("com.microsoft.azure:azure-storage")
-                .withTransitivity().asFile();
-        return ShrinkWrap.create(WebArchive.class)
-                .addAsLibraries(shrinkwrap)
-                .addClass(ArtifactStorage.class)
-                .addClass(AzureBlobStorage.class)
-                .addClass(DeploymentProcessState.class)
-                .addClass(Namespace.class)
-                .addClass(ProcessAccessor.class)
-                .addAsServiceProvider(Extension.class, SetupExtension.class)
-                .addPackage(SetupExtension.class.getPackage())
-                .addAsResource(
-                        // the properties are defined by the build and available in the client,
-                        // but not in the server, which is already running
-                        new StringAsset("artifactstorage=Azure\n"+passSystemProperties(AzureBlobStorage.CONFIG_CONNECTIONSTRING,
-                                AzureBlobStorage.CONFIG_CONTAINER)),
-                        "META-INF/microprofile-config.properties");
+        return compose(azureStorage(), deploymentProcessModel(), setupExtension(), mpConfig(
+                Map.of("artifactstorage", "Azure",
+                        AzureBlobStorage.CONFIG_CONNECTIONSTRING, System.getProperty(AzureBlobStorage.CONFIG_CONNECTIONSTRING),
+                        AzureBlobStorage.CONFIG_CONTAINER, System.getProperty(AzureBlobStorage.CONFIG_CONTAINER))));
     }
 
     static String passSystemProperties(String... properties) {

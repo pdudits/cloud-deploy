@@ -65,6 +65,9 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.runner.RunWith;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.restApi;
+
 /**
  * Tests that the deployment endpoint works
  * @author jonathan coustick
@@ -74,16 +77,7 @@ public class UploadIT {
     
     @Deployment
     public static WebArchive deployment() {
-        WebArchive archive =  ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Provisioner.class.getPackage())
-                .addPackage(Application.class.getPackage())
-                .addClass(ManagedConcurrencyProducer.class)
-                .addClass(Models.class)
-                .addClass(ModelsImpl.class);
-
-        System.out.println(archive.toString(true));
-        return archive;
+        return compose(restApi());
     }
     
     @ArquillianResource

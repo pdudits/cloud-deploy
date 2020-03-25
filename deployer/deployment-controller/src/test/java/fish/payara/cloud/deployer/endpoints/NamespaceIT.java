@@ -64,6 +64,9 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.restApi;
+
 /**
  * Test for the namespaces endpoint
  * @author jonathan coustick
@@ -73,14 +76,7 @@ public class NamespaceIT {
     
     @Deployment
     public static WebArchive deployment() {
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Application.class.getPackage())
-                .addPackage(Provisioner.class.getPackage())
-                .addClass(ContextRootConfiguration.class)
-                .addClass(ManagedConcurrencyProducer.class)
-                .addClass(Models.class)
-                .addClass(ModelsImpl.class);
+        return compose(restApi());
     }
 
     @Inject
