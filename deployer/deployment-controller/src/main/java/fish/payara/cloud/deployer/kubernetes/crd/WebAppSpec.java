@@ -52,7 +52,7 @@ import java.util.UUID;
 public class WebAppSpec {
     private URI artifactUrl;
 
-    private List<WebAppSpecConfiguration> _configuration = null;
+    private List<WebAppSpecConfiguration> configuration = null;
 
     private UUID deploymentProcessId;
 
@@ -73,15 +73,15 @@ public class WebAppSpec {
 
     public WebAppSpec _configuration(List<WebAppSpecConfiguration> _configuration) {
 
-        this._configuration = _configuration;
+        this.configuration = _configuration;
         return this;
     }
 
     public WebAppSpec addConfigurationItem(WebAppSpecConfiguration _configurationItem) {
-        if (this._configuration == null) {
-            this._configuration = new ArrayList<>();
+        if (this.configuration == null) {
+            this.configuration = new ArrayList<>();
         }
-        this._configuration.add(_configurationItem);
+        this.configuration.add(_configurationItem);
         return this;
     }
 
@@ -94,12 +94,12 @@ public class WebAppSpec {
     }
 
     public List<WebAppSpecConfiguration> getConfiguration() {
-        return _configuration;
+        return configuration;
     }
 
 
     public void setConfiguration(List<WebAppSpecConfiguration> _configuration) {
-        this._configuration = _configuration;
+        this.configuration = _configuration;
     }
 
 
@@ -129,13 +129,13 @@ public class WebAppSpec {
         }
         WebAppSpec webAppSpec = (WebAppSpec) o;
         return Objects.equals(this.artifactUrl, webAppSpec.artifactUrl) &&
-                Objects.equals(this._configuration, webAppSpec._configuration) &&
+                Objects.equals(this.configuration, webAppSpec.configuration) &&
                 Objects.equals(this.deploymentProcessId, webAppSpec.deploymentProcessId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(artifactUrl, _configuration, deploymentProcessId);
+        return Objects.hash(artifactUrl, configuration, deploymentProcessId);
     }
 
 
@@ -144,7 +144,7 @@ public class WebAppSpec {
         StringBuilder sb = new StringBuilder();
         sb.append("class WebAppSpec {\n");
         sb.append("    artifactUrl: ").append(toIndentedString(artifactUrl)).append("\n");
-        sb.append("    _configuration: ").append(toIndentedString(_configuration)).append("\n");
+        sb.append("    _configuration: ").append(toIndentedString(configuration)).append("\n");
         sb.append("    deploymentProcessId: ").append(toIndentedString(deploymentProcessId)).append("\n");
         sb.append("}");
         return sb.toString();

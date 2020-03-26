@@ -39,7 +39,6 @@
 package fish.payara.cloud.deployer.kubernetes.crd;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
 import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.process.PersistedDeployment;
 import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
@@ -54,7 +53,6 @@ import java.net.URI;
 import java.net.URL;
 import java.time.Instant;
 import java.util.Collection;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)

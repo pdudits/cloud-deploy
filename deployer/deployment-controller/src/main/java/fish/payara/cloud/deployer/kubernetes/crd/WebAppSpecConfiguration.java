@@ -39,7 +39,6 @@
 package fish.payara.cloud.deployer.kubernetes.crd;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.PersistedDeployment;
 
 import java.util.HashMap;
