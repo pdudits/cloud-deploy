@@ -160,6 +160,5 @@ public class WebAppSpec {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }
 

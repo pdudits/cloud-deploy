@@ -39,12 +39,21 @@
 package fish.payara.cloud.deployer.kubernetes.crd;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.process.PersistedDeployment;
 import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class WebAppCustomResource extends CustomResource {
@@ -109,4 +118,70 @@ public class WebAppCustomResource extends CustomResource {
     public static MixedOperation<WebAppCustomResource, WebAppList, DoneableWebApp, Resource<WebAppCustomResource, DoneableWebApp>> client(KubernetesClient client, CustomResourceDefinition definition) {
         return client.customResources(definition, WebAppCustomResource.class, WebAppList.class, DoneableWebApp.class);
     }
+
+    /**
+     * Convert to representation of persisted deployment.
+     * Namespace is provided from outside, as mapping of Kubernetes namespace to deployer namespace is concern of provisioner
+     * @param namespace Namespace of the deployment.
+     * @return
+     */
+    public PersistedDeployment asPersistedDeployment(Namespace namespace) {
+        return new PersistedDeployment() {
+            @Override
+            public String getId() {
+                return getSpec().getDeploymentProcessId() != null ? getSpec().getDeploymentProcessId().toString() : getMetadata().getUid();
+            }
+
+            @Override
+            public String getName() {
+                return getMetadata().getName();
+            }
+
+            @Override
+            public Namespace getNamespace() {
+                return namespace;
+            }
+
+            @Override
+            public URI getArtifactLocation() {
+                return getSpec().getArtifactUrl();
+            }
+
+            @Override
+            public URI getPublicEndpoint() {
+                return getStatus() != null ? getStatus().getPublicEndpoint() : null;
+            }
+
+            @Override
+            public Instant getProvisionedAt() {
+                return Instant.parse(getMetadata().getCreationTimestamp());
+            }
+
+            @Override
+            public boolean isFailed() {
+                return false; // TODO: conditions
+            }
+
+            @Override
+            public String getFailureMessage() {
+                return null; // TODO: conditions
+            }
+
+            @Override
+            public boolean isDeleted() {
+                return getMetadata().getDeletionTimestamp() != null;
+            }
+
+            @Override
+            public Instant getDeletedAt() {
+                return getMetadata().getDeletionTimestamp() != null ? Instant.parse(getMetadata().getDeletionTimestamp()) : null;
+            }
+
+            @Override
+            public Collection<PersistedConfiguration> getConfiguration() {
+                return getSpec().getConfiguration().stream().map(WebAppSpecConfiguration::asPersistedConfiguration).collect(Collectors.toSet());
+            }
+        };
+    }
+
 }

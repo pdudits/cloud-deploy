@@ -38,40 +38,42 @@
 
 package fish.payara.cloud.deployer.configuration;
 
-import fish.payara.cloud.deployer.inspection.Inspection;
-import fish.payara.cloud.deployer.inspection.InspectionObserver;
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
+import fish.payara.cloud.deployer.inspection.datasource.DatasourceConfiguration;
+import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
 import fish.payara.cloud.deployer.process.ChangeKind;
+import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.ConfigurationFactory;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.process.PersistedDeployment;
 import fish.payara.cloud.deployer.process.ProcessObserver;
-import fish.payara.cloud.deployer.utils.DurationConverter;
-import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.EmptyAsset;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.assertj;
 import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
 import static fish.payara.cloud.deployer.ArquillianDeployments.configuration;
 import static fish.payara.cloud.deployer.ArquillianDeployments.shrinkwrap;
 import static fish.payara.cloud.deployer.inspection.InspectionHelper.write;
-import fish.payara.cloud.deployer.provisioning.Provisioner;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Collections;
+import java.util.Map;
 
 @RunWith(Arquillian.class)
-public class ConfigurationIT {
+public class ConfigurationControllerIT {
 
     @Deployment
     public static WebArchive createDeployment() {
-        return compose(shrinkwrap(), configuration());
+        return compose(shrinkwrap(), configuration(), assertj());
     }
 
     @Inject
@@ -79,6 +81,9 @@ public class ConfigurationIT {
 
     @Inject
     ProcessObserver observer;
+
+    @Inject
+    ConfigurationFactory factory;
 
     @Test
     public void configurationIsStartedAfterInspection() {
@@ -99,5 +104,79 @@ public class ConfigurationIT {
         var process = deployment.startWithDefaultConfiguration(testFile, "test-app.war", new Namespace("test","dev"));
         observer.await(ChangeKind.CONFIGURATION_STARTED);
         observer.await(ChangeKind.CONFIGURATION_FINISHED);
-    }    
+    }
+
+    // these mainly exercise configuration factory. Semantic tests are better suited for unit tests of respective
+    // configurations
+    @Test
+    public void allConfigurationKindsAreImportableWithoutDefaults() {
+        for (ImportableConfigs imported : ImportableConfigs.values()) {
+            var config = factory.importConfiguration(imported.nullDefaults());
+            assertThat(config).isInstanceOf(imported.configClass);
+        }
+    }
+
+    @Test
+    public void allConfigurationKindsAreImportableWithoEmptyDefaults() {
+        for (ImportableConfigs imported : ImportableConfigs.values()) {
+            var config = factory.importConfiguration(imported.emptyDefaults());
+            assertThat(config).isInstanceOf(imported.configClass);
+        }
+    }
+
+
+    enum ImportableConfigs {
+        CONTEXT_ROOT(ContextRootConfiguration.KIND, ContextRootConfiguration.class),
+        MP_CONFIG(MicroprofileConfiguration.KIND, MicroprofileConfiguration.class),
+        DATASOURCE(DatasourceConfiguration.KIND, DatasourceConfiguration.class);
+
+        final String kind;
+        final Class<? extends Configuration> configClass;
+
+        ImportableConfigs(String kind, Class<? extends Configuration> configClass) {
+            this.kind = kind;
+            this.configClass = configClass;
+        }
+
+        ImportedConfiguration nullDefaults() {
+            return new ImportedConfiguration(kind, "any", null);
+        }
+
+        ImportedConfiguration emptyDefaults() {
+            return new ImportedConfiguration(kind, "any", Collections.emptyMap());
+        }
+    }
+
+    static class ImportedConfiguration implements PersistedDeployment.PersistedConfiguration {
+        private String kind;
+        private String id;
+        private Map<String,String> defaultValues;
+        private Map<String,String> values;
+
+        public ImportedConfiguration(String kind, String id, Map<String, String> defaultValues) {
+            this.kind = kind;
+            this.id = id;
+            this.defaultValues = defaultValues;
+        }
+
+        @Override
+        public String getKind() {
+            return kind;
+        }
+
+        @Override
+        public String getId() {
+            return id;
+        }
+
+        @Override
+        public Map<String, String> getDefaultValues() {
+            return defaultValues;
+        }
+
+        @Override
+        public Map<String, String> getValues() {
+            return values;
+        }
+    }
 }

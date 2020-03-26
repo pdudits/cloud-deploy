@@ -95,7 +95,7 @@ public class ContextRootConfiguration extends Configuration {
             case CONTEXT_ROOT:
                 return Optional.ofNullable(defaultContext);
             case APP_NAME:
-                return Optional.of(appName);
+                return Optional.ofNullable(appName);
             default:
                 return super.getDefaultValue(key);
         }
@@ -111,12 +111,20 @@ public class ContextRootConfiguration extends Configuration {
         @Override
         public Configuration importConfiguration(String kind, String id, Map<String, String> defaultValues) {
             if (defaultValues == null) {
-                return new ContextRootConfiguration(id, null, null);
+                return new ContextRootConfiguration(id, guessAppName(id), null);
             } else {
                 var appName = defaultValues.get(APP_NAME);
+                if (appName == null) {
+                    appName = guessAppName(id);
+                }
                 var contextRoot = defaultValues.get(CONTEXT_ROOT);
                 return new ContextRootConfiguration(id, appName, contextRoot);
             }
+        }
+
+        private String guessAppName(String id) {
+            // Config doesn't specify inspected name, let's assume id is file name, and use that.
+            return id.replaceAll("\\.[^\\.]+$", "");
         }
     }
 }

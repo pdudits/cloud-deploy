@@ -39,6 +39,8 @@
 package fish.payara.cloud.deployer.kubernetes.crd;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import fish.payara.cloud.deployer.process.Configuration;
+import fish.payara.cloud.deployer.process.PersistedDeployment;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -159,6 +161,30 @@ public class WebAppSpecConfiguration {
             return "null";
         }
         return o.toString().replace("\n", "\n    ");
+    }
+
+    public PersistedDeployment.PersistedConfiguration asPersistedConfiguration() {
+        return new PersistedDeployment.PersistedConfiguration() {
+            @Override
+            public String getKind() {
+                return WebAppSpecConfiguration.this.getKind();
+            }
+
+            @Override
+            public String getId() {
+                return WebAppSpecConfiguration.this.getId();
+            }
+
+            @Override
+            public Map<String, String> getValues() {
+                return WebAppSpecConfiguration.this.getValues();
+            }
+
+            @Override
+            public Map<String, String> getDefaultValues() {
+                return WebAppSpecConfiguration.this.getDefaultValues();
+            }
+        };
     }
 
 }
