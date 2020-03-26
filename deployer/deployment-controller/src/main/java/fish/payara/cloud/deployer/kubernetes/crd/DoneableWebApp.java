@@ -36,53 +36,13 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.provisioning;
+package fish.payara.cloud.deployer.kubernetes.crd;
 
-import fish.payara.cloud.deployer.artifactstorage.ArtifactStorage;
-import fish.payara.cloud.deployer.artifactstorage.TempArtifactStorage;
-import fish.payara.cloud.deployer.process.ChangeKind;
-import fish.payara.cloud.deployer.process.DeploymentProcess;
-import fish.payara.cloud.deployer.process.DeploymentProcessState;
-import fish.payara.cloud.deployer.process.Namespace;
-import fish.payara.cloud.deployer.process.ProcessObserver;
-import fish.payara.cloud.deployer.utils.ManagedConcurrencyProducer;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.fabric8.kubernetes.api.builder.Function;
+import io.fabric8.kubernetes.client.CustomResourceDoneable;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.util.Map;
-
-import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
-import static fish.payara.cloud.deployer.ArquillianDeployments.mpConfig;
-import static fish.payara.cloud.deployer.ArquillianDeployments.provisioning;
-
-@RunWith(Arquillian.class)
-public class ProvisionTimeoutIT {
-    @Deployment
-    public static WebArchive deployment() {
-        return compose(provisioning(), mpConfig(Map.of("provisioning.timeout","PT2S")));
-    }
-
-    @Inject
-    DeploymentProcess deployment;
-
-    @Inject
-    ProcessObserver observer;
-
-    @Test
-    public void provisionWithoutActivityTimesOut() {
-        DeploymentProcessState process = deployment.start(new File("target/test.war"), "test-fail.war", new Namespace("test", "dev"));
-        // submittings configs triggers provisioning
-        observer.reset();
-        deployment.submitConfigurations(process);
-        observer.await(ChangeKind.PROVISION_STARTED);
-        // and without further activity it will fail
-        observer.await(ChangeKind.FAILED);
+public class DoneableWebApp extends CustomResourceDoneable<WebAppCustomResource> {
+    public DoneableWebApp(WebAppCustomResource resource, Function<WebAppCustomResource, WebAppCustomResource> function) {
+        super(resource, function);
     }
 }

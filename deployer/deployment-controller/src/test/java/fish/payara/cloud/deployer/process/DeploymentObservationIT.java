@@ -48,6 +48,8 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.deploymentProcess;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -58,9 +60,7 @@ import static org.junit.Assert.assertTrue;
 public class DeploymentObservationIT {
     @Deployment
     public static WebArchive deployment() {
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addClass(ProcessObserver.class);
+        return compose(deploymentProcess());
     }
 
     @Inject

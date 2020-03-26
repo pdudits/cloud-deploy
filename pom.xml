@@ -90,7 +90,7 @@
     <properties>
         <maven.compiler.release>11</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <payara.version>5.201-SNAPSHOT</payara.version>
+        <payara.version>5.201</payara.version>
     </properties>
 
     <dependencyManagement>

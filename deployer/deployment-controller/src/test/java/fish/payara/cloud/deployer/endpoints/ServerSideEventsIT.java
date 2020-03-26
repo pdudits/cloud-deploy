@@ -71,6 +71,8 @@ import java.util.logging.Logger;
 import javax.enterprise.context.RequestScoped;
 import javax.mvc.Models;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.restApi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -81,13 +83,7 @@ public class ServerSideEventsIT {
 
     @Deployment
     public static WebArchive deployment() {
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Provisioner.class.getPackage())
-                .addPackage(Application.class.getPackage())
-                .addClass(ManagedConcurrencyProducer.class)
-                .addClass(Models.class)
-                .addClass(ModelsImpl.class);
+        return compose(restApi());
     }
 
     @Inject

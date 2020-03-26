@@ -59,6 +59,8 @@ import javax.ws.rs.core.MediaType;
 import java.net.URI;
 import java.util.Map;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.restApi;
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.APP_NAME;
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.CONTEXT_ROOT;
 import static fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration.KIND;
@@ -74,14 +76,7 @@ import static org.junit.Assert.assertTrue;
 public class ConfigurationIT {
     @Deployment
     public static WebArchive deployment() {
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Application.class.getPackage())
-                .addPackage(Provisioner.class.getPackage())
-                .addClass(ContextRootConfiguration.class)
-                .addClass(ManagedConcurrencyProducer.class)
-                .addClass(Models.class)
-                .addClass(ModelsImpl.class);
+        return compose(restApi());
     }
 
     @Inject

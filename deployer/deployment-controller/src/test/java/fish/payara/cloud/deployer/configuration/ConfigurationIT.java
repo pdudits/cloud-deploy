@@ -60,6 +60,9 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.configuration;
+import static fish.payara.cloud.deployer.ArquillianDeployments.shrinkwrap;
 import static fish.payara.cloud.deployer.inspection.InspectionHelper.write;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 
@@ -68,18 +71,7 @@ public class ConfigurationIT {
 
     @Deployment
     public static WebArchive createDeployment() {
-        var shrinkwrap = Maven.resolver().loadPomFromFile("pom.xml").resolve("org.jboss.shrinkwrap:shrinkwrap-impl-base")
-                .withTransitivity().asFile();
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Inspection.class.getPackage())
-                .addPackage(ContextRootConfiguration.class.getPackage())
-                .addPackage(Provisioner.class.getPackage())
-                .addClass(DurationConverter.class)
-                .addClass(ManagedConcurrencyProducer.class)
-                .addClass(InspectionObserver.class)
-                .addClass(ConfigurationController.class)
-                .addAsLibraries(shrinkwrap);
+        return compose(shrinkwrap(), configuration());
     }
 
     @Inject

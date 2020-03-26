@@ -55,6 +55,10 @@ import org.junit.runner.RunWith;
 
 import javax.inject.Inject;
 
+import static fish.payara.cloud.deployer.ArquillianDeployments.compose;
+import static fish.payara.cloud.deployer.ArquillianDeployments.inspection;
+import static fish.payara.cloud.deployer.ArquillianDeployments.restApi;
+import static fish.payara.cloud.deployer.ArquillianDeployments.shrinkwrap;
 import static fish.payara.cloud.deployer.inspection.InspectionHelper.write;
 import static org.junit.Assert.assertEquals;
 
@@ -62,16 +66,7 @@ import static org.junit.Assert.assertEquals;
 public class InspectionIT {
     @Deployment
     public static WebArchive deployment() {
-        var shrinkwrap = Maven.resolver().loadPomFromFile("pom.xml").resolve("org.jboss.shrinkwrap:shrinkwrap-impl-base")
-                .withTransitivity().asFile();
-        return ShrinkWrap.create(WebArchive.class)
-                .addPackage(DeploymentProcess.class.getPackage())
-                .addPackage(Inspection.class.getPackage())
-                .addPackage(ContextRootConfiguration.class.getPackage())
-                .addClass(DurationConverter.class)
-                .addClass(ManagedConcurrencyProducer.class)
-                .addClass(InspectionObserver.class)
-                .addAsLibraries(shrinkwrap);
+        return compose(shrinkwrap(), inspection());
     }
 
     @Inject
