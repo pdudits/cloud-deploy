@@ -121,11 +121,18 @@ class DirectProvisioner implements Provisioner {
             }
             provisionDeployment(naming, deploymentResource);
             var uri = provisionIngress(naming);
+
+            updateCustomResourceEndpoint(customResource, uri);
             process.endpointDetermined(deployment, uri);
             LOGGER.log(Level.INFO, "Provisioned {0} at {1}", new Object[]{deployment.getId(), uri});
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
+    }
+
+    private void updateCustomResourceEndpoint(WebAppCustomResource customResource, URI uri) {
+        customResource.makeStatus().setPublicEndpoint(uri);
+        WebAppCustomResource.client(client).updateStatus(customResource);
     }
 
     private WebAppCustomResource provisionCustomResource(Naming naming) {
@@ -134,8 +141,8 @@ class DirectProvisioner implements Provisioner {
         result.getMetadata().setName(naming.getName());
         result.getMetadata().setNamespace(naming.getNamespace());
         result.getMetadata().setLabels(naming.labelsForComponent("webapp"));
-        var definition = WebAppCustomResource.findDefinition(client);
-        result = WebAppCustomResource.client(client, definition).create(result);
+
+        result = WebAppCustomResource.client(client).create(result);
         naming.setOwner(result);
         return result;
     }
