@@ -41,6 +41,8 @@ package fish.payara.cloud.deployer.kubernetes;
 import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
 import fish.payara.cloud.deployer.inspection.datasource.DatasourceConfiguration;
 import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
+import fish.payara.cloud.deployer.kubernetes.crd.WebAppCustomResource;
+import fish.payara.cloud.deployer.kubernetes.crd.WebAppSpecConfiguration;
 import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
@@ -50,6 +52,8 @@ import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -63,6 +67,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -96,6 +101,9 @@ class DirectProvisioner implements Provisioner {
         var naming = new Naming(deployment);
         try {
             provisionNamespace(naming);
+
+            var customResource = provisionCustomResource(naming);
+
             provisionDatagrid(naming);
             provisionService(naming);
 
@@ -120,6 +128,18 @@ class DirectProvisioner implements Provisioner {
         }
     }
 
+    private WebAppCustomResource provisionCustomResource(Naming naming) {
+        WebAppCustomResource result = makeCustomResource(naming.deployment);
+        // k8s names must be lowercase
+        result.getMetadata().setName(naming.getName());
+        result.getMetadata().setNamespace(naming.getNamespace());
+        result.getMetadata().setLabels(naming.labelsForComponent("webapp"));
+        var definition = WebAppCustomResource.findDefinition(client);
+        result = WebAppCustomResource.client(client, definition).create(result);
+        naming.setOwner(result);
+        return result;
+    }
+
     private void applyPostbootFromConfigMap(Deployment deploymentResource, String postBootConfigMapName) {
         // add config map volume
         var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
@@ -140,7 +160,6 @@ class DirectProvisioner implements Provisioner {
         // add command line argument
         mainContainer.getArgs().addAll(List.of("--postbootcommandfile","/postboot/postboot"));
     }
-
     private String provisionDatasourcePostBoot(Naming naming, Set<Configuration> dsConfigurations) {
         var postboot = new DatasourcePostbootCommands();
         dsConfigurations.forEach(postboot::addDatasource);
@@ -150,7 +169,7 @@ class DirectProvisioner implements Provisioner {
                 .endMetadata()
                 .withData(Map.of("postboot", postboot.toString()))
                 .build();
-
+        configMap = naming.applyOwner(configMap);
         var created = naming.namespaceClient().resource(configMap).createOrReplace();
         return created.getMetadata().getName();
     }
@@ -183,6 +202,7 @@ class DirectProvisioner implements Provisioner {
                 .endMetadata()
                 .withData(Map.of("microprofile-config.properties", buildPropertyFile(configuration)))
                 .build();
+        naming.applyOwner(configMap);
         var created = naming.namespaceClient().resource(configMap).createOrReplace();
         return created.getMetadata().getName();
     }
@@ -214,7 +234,7 @@ class DirectProvisioner implements Provisioner {
 
     private Deployment createBaseDeployment(Naming naming) {
         var template = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/deployment.yaml"), naming::variableValue);
-        return Serialization.unmarshal(template, Deployment.class);
+        return naming.applyOwner(Serialization.unmarshal(template, Deployment.class));
     }
 
     private void provisionNamespace(Naming n) throws IOException {
@@ -226,10 +246,11 @@ class DirectProvisioner implements Provisioner {
 
     private HasMetadata createFromTemplate(String namespace, Naming naming, String template) throws IOException {
         var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
+
         NamespacedKubernetesClient namespacedClient = namespace == null ? client : client.inNamespace(namespace);
-        return namespacedClient.resource(Serialization.unmarshal(resource, HasMetadata.class)).createOrReplace();
+        return namespacedClient.resource(naming.applyOwner(Serialization.unmarshal(resource, HasMetadata.class))).createOrReplace();
     }
-    
+
     /**
      * Gets a list of namespaces that have been provisioned, in JSON format
      * @return provisioned namespaces
@@ -258,7 +279,7 @@ class DirectProvisioner implements Provisioner {
         client.extensions().ingresses().withLabel(APP_KUBERNETES_IO_PART_OF, id).delete();
         return process.deletionFinished(deployment);
     }
-    
+
     @Override
     public List<DeploymentInfo> getDeploymentsWithIngress(Namespace namespace) {
         List<DeploymentInfo> deployments = new ArrayList<>();
@@ -282,8 +303,45 @@ class DirectProvisioner implements Provisioner {
         return namespace.getProject()+"-"+namespace.getStage();
     }
 
+    public static WebAppCustomResource makeCustomResource(DeploymentProcessState state) {
+        WebAppCustomResource result = new WebAppCustomResource();
+        var spec = result.getSpec();
+        spec.setDeploymentProcessId(UUID.fromString(state.getId()));
+        spec.setArtifactUrl(state.getPersistentLocation());
+        state.getConfigurations().stream().map(DirectProvisioner::makeConfiguration).forEach(spec::addConfigurationItem);
+
+        var status = result.makeStatus();
+        status.setPublicEndpoint(state.getEndpoint());
+
+        return result;
+    }
+
+    public static WebAppSpecConfiguration makeConfiguration(Configuration configuration) {
+        WebAppSpecConfiguration result = new WebAppSpecConfiguration();
+        result.setKind(configuration.getKind());
+        result.setId(configuration.getId());
+        var values = new HashMap<String, String>();
+        var defaultValues = new HashMap<String, String>();
+        for (String key : configuration.getKeys()) {
+            var defaultValue = configuration.getDefaultValue(key);
+            defaultValue.ifPresent(value -> defaultValues.put(key, value));
+            configuration.getValue(key).ifPresent(value -> {
+                if (defaultValue.isEmpty() || !value.equals(defaultValue.get())) {
+                    values.put(key, value);
+                }
+            });
+        }
+        result.setValues(values);
+        result.setDefaultValues(defaultValues);
+        return result;
+    }
+
     class Naming {
+
+
         DeploymentProcessState deployment;
+        private OwnerReference owner;
+
         private Naming(DeploymentProcessState deployment) {
             this.deployment = deployment;
         }
@@ -328,7 +386,8 @@ class DirectProvisioner implements Provisioner {
         }
 
         private String getName() {
-            return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.APP_NAME).get();
+            // name is used as kubernetes object names, and those need to be lowercase
+            return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.APP_NAME).get().toLowerCase();
         }
 
         private String getContextRoot() {
@@ -344,6 +403,20 @@ class DirectProvisioner implements Provisioner {
 
         private String getId() {
             return deployment.getId();
+        }
+
+        void setOwner(HasMetadata owner) {
+            // blockOwnerDeletion=true means that owner cannot be deleted unless owned object is deleted first
+            // controller=true doesn't appear to mean anything, but is set on usual ownership chains
+            this.owner = new OwnerReference(owner.getApiVersion(), true, true,
+                    owner.getKind(), owner.getMetadata().getName(), owner.getMetadata().getUid());
+        }
+
+        <T extends HasMetadata> T applyOwner(T resource) {
+            if (owner != null) {
+                resource.getMetadata().setOwnerReferences(List.of(owner));
+            }
+            return resource;
         }
     }
 
