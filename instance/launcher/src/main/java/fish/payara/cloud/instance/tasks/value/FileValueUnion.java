@@ -51,6 +51,10 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -169,14 +173,30 @@ public class FileValueUnion implements FileValue {
             this.uri = uri;
         }
 
+        private <T> T fetch(HttpResponse.BodyHandler<T> handler) {
+            var client = HttpClient.newHttpClient();
+            try {
+                var request = HttpRequest.newBuilder(URI.create(uri)).GET().build();
+                var response = client.send(request, handler);
+                return response.body();
+            } catch (IOException | InterruptedException | RuntimeException e) {
+                throw new IllegalArgumentException("Cannot download "+uri, e);
+            }
+        }
+
         @Override
         public String fileName() {
-            throw new UnsupportedOperationException("Not yet supported");
+            try {
+                var path = fetch(HttpResponse.BodyHandlers.ofFile(Files.createTempFile("launcher", "tmp")));
+                return path.toAbsolutePath().toString();
+            } catch (IOException e) {
+                throw new IllegalStateException("Cannot create temp file", e);
+            }
         }
 
         @Override
         public String contents() {
-            throw new UnsupportedOperationException("Not yet supported");
+            return fetch(HttpResponse.BodyHandlers.ofString());
         }
     }
 
