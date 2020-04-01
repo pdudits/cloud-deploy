@@ -49,7 +49,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodCondition;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.Watcher;
 import io.fabric8.kubernetes.client.utils.Serialization;
@@ -69,7 +68,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Properties;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.logging.Logger;
 
 import org.junit.Assert;
@@ -95,6 +93,22 @@ public class CreateTestManual {
         DirectProvisioner provisoner = setupProvisioner();
         provisoner.provision(process);
         
+        var namespaces = provisoner.getNamespaces();
+        Assert.assertEquals("namespace not listed", 1, namespaces.size());
+        Assert.assertEquals("Incorrect namespace created", "test-dev", namespaces.get(0).toString());
+    }
+
+    @Test
+    public void createViaInstance() throws ProvisioningException {
+        var process = ProcessAccessor.createProcessWithName("ROOT.war");
+        ProcessAccessor.setPersistentLocation(process, URI.create("https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"));
+
+        var contextRoot = new ContextRootConfiguration("ROOT.war", "ui", "/");
+        ProcessAccessor.addConfiguration(process, contextRoot);
+
+        CloudInstanceProvisioner provisoner = setupInstanceProvisioner();
+        provisoner.provision(process);
+
         var namespaces = provisoner.getNamespaces();
         Assert.assertEquals("namespace not listed", 1, namespaces.size());
         Assert.assertEquals("Incorrect namespace created", "test-dev", namespaces.get(0).toString());
@@ -145,6 +159,15 @@ public class CreateTestManual {
         provisoner.client = setupClient();
         return provisoner;
     }
+
+    private CloudInstanceProvisioner setupInstanceProvisioner() {
+        var provisoner = new CloudInstanceProvisioner();
+        provisoner.domain = "9ba44192900145a88bfb.westeurope.aksapp.io";
+        provisoner.process = mock(DeploymentProcess.class);
+        provisoner.client = setupClient();
+        return provisoner;
+    }
+
 
     private NamespacedKubernetesClient setupClient() {
         if (client != null) {

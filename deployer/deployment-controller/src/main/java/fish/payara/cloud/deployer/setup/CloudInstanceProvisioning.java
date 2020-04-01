@@ -38,16 +38,16 @@
 
 package fish.payara.cloud.deployer.setup;
 
-import java.lang.annotation.Annotation;
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Stereotype;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public enum ProvisioningSetup {
-    DIRECT(DirectProvisioning.class),
-    MOCK(MockProvisioning.class),
-    CLOUD_INSTANCE(CloudInstanceProvisioning.class);
-
-    final Class<?> alternative;
-
-    ProvisioningSetup(Class<? extends Annotation> alternative) {
-        this.alternative = alternative;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Stereotype
+@Alternative
+@Target(ElementType.TYPE)
+public @interface CloudInstanceProvisioning {
 }
