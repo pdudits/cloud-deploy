@@ -54,7 +54,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
 @JsonSubTypes({
         @JsonSubTypes.Type(Deployment.class),
-        @JsonSubTypes.Type(MicroprofileConfigProperties.class)
+        @JsonSubTypes.Type(MicroprofileConfigProperties.class),
+        @JsonSubTypes.Type(DataSource.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class ConfigurationTask {
