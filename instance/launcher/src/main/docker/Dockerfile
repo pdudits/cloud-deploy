@@ -27,7 +27,7 @@ COPY maven/launcher.jar .
 RUN true \
     && java -jar payara-micro.jar --rootdir micro/ --outputlauncher \
     && java -jar launcher.jar --outputlauncher micro/ \
-    && java -jar micro/launch-micro.jar --warmup \
+    && java -jar micro/launch-micro.jar --warmup --nocluster \
     && true
 
 
@@ -38,4 +38,5 @@ COPY --from=prepare-root ${PAYARA_HOME}/micro/ ${PAYARA_HOME}/
 
 # Default command to run
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=90.0", "-jar", "cloud-instance.jar"]
-CMD ["${CONFIG_DIR}"]
+# Cannot refer to CONFIG_DIR, because it's not launched in a shell
+CMD /config

@@ -1,0 +1,8 @@
+{
+  "deployment": {
+    "contextRoot": "/",
+    "artifact": {
+      "httpGet": "https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"
+    }
+  }
+}
