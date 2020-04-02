@@ -40,7 +40,6 @@ package fish.payara.cloud.deployer.kubernetes;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import fish.payara.cloud.deployer.inspection.contextroot.ContextRootConfiguration;
 import fish.payara.cloud.deployer.inspection.datasource.DatasourceConfiguration;
 import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
 import fish.payara.cloud.deployer.kubernetes.crd.WebAppCustomResource;
@@ -55,8 +54,6 @@ import fish.payara.cloud.deployer.provisioning.ProvisioningException;
 import fish.payara.cloud.deployer.setup.CloudInstanceProvisioning;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
-import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.OwnerReference;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -104,20 +101,20 @@ class CloudInstanceProvisioner implements Provisioner {
 
     @Override
     public void provision(DeploymentProcessState deployment) throws ProvisioningException {
-        var naming = new Naming(deployment);
+        var support = new CreationSupport(deployment, client, domain);
         try {
-            provisionNamespace(naming);
+            provisionNamespace(support);
 
-            var customResource = provisionCustomResource(naming);
+            var customResource = provisionCustomResource(support);
 
-            provisionDatagrid(naming);
-            provisionService(naming);
+            provisionDatagrid(support);
+            provisionService(support);
 
-            var deploymentResource = createBaseDeployment(naming);
+            var deploymentResource = createBaseDeployment(support);
             var configBag = new HashMap<String,String>();
 
             if (deployment.hasConfigurationOverrides(MicroprofileConfiguration.KIND)) {
-                configBag.putAll(configureMicroprofileConfig(naming, deployment.findConfiguration(MicroprofileConfiguration.KIND).get()));
+                configBag.putAll(configureMicroprofileConfig(support, deployment.findConfiguration(MicroprofileConfiguration.KIND).get()));
             }
             if (deployment.hasConfigurationOverrides(DatasourceConfiguration.KIND)) {
                 var dsConfigurations = deployment.findConfigurations(DatasourceConfiguration.KIND)
@@ -125,12 +122,12 @@ class CloudInstanceProvisioner implements Provisioner {
                         .collect(Collectors.toSet());
                 configBag.putAll(configureDataSources(dsConfigurations));
             }
-            configBag.putAll(configureDeployment(naming));
+            configBag.putAll(configureDeployment(support));
 
-            var configResource = provisionConfig(naming, configBag, deploymentResource);
+            var configResource = provisionConfig(support, configBag, deploymentResource);
 
-            provisionDeployment(naming, deploymentResource);
-            var uri = provisionIngress(naming);
+            provisionDeployment(support, deploymentResource);
+            var uri = provisionIngress(support);
 
             updateCustomResourceEndpoint(customResource, uri);
             process.endpointDetermined(deployment, uri);
@@ -140,7 +137,7 @@ class CloudInstanceProvisioner implements Provisioner {
         }
     }
 
-    private Map<String, String> configureDeployment(Naming naming) throws JsonProcessingException {
+    private Map<String, String> configureDeployment(CreationSupport support) throws JsonProcessingException {
         // {
         //  "deployment": {
         //    "contextRoot": "/",
@@ -150,22 +147,22 @@ class CloudInstanceProvisioner implements Provisioner {
         //  }
         //}
         var configObject = Map.of("deployment",
-                Map.of("contextRoot", naming.getContextRoot(),
+                Map.of("contextRoot", support.getContextRoot(),
                         "artifact", Map.of(
-                                "httpGet", naming.deployment.getPersistentLocation().toString())));
+                                "httpGet", support.deployment.getPersistentLocation().toString())));
         return Map.of("deployment.json", mapper.writeValueAsString(configObject));
     }
 
-    private ConfigMap provisionConfig(Naming naming, Map<String, String> configBag, Deployment deploymentResource) {
+    private ConfigMap provisionConfig(CreationSupport support, Map<String, String> configBag, Deployment deploymentResource) {
         // create config map from bag
         var configMap = new ConfigMapBuilder().withNewMetadata()
-                .withName(naming.getName()+"-deployment-config")
-                .withLabels(naming.labelsForComponent("deployment-config"))
+                .withName(support.getName()+"-deployment-config")
+                .withLabels(support.labelsForComponent("deployment-config"))
                 .endMetadata()
                 .withData(configBag)
                 .build();
-        naming.applyOwner(configMap);
-        var configResource = naming.namespaceClient().resource(configMap).createOrReplace();
+        support.applyOwner(configMap);
+        var configResource = support.namespaceClient().resource(configMap).createOrReplace();
 
         // add config map volume
         var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
@@ -192,12 +189,12 @@ class CloudInstanceProvisioner implements Provisioner {
         WebAppCustomResource.client(client).updateStatus(customResource);
     }
 
-    private WebAppCustomResource provisionCustomResource(Naming naming) {
-        WebAppCustomResource result = makeCustomResource(naming.deployment);
+    private WebAppCustomResource provisionCustomResource(CreationSupport support) {
+        WebAppCustomResource result = makeCustomResource(support.deployment);
         // k8s names must be lowercase
-        result.getMetadata().setName(naming.getName());
-        result.getMetadata().setNamespace(naming.getNamespace());
-        result.getMetadata().setLabels(naming.labelsForComponent("webapp"));
+        result.getMetadata().setName(support.getName());
+        result.getMetadata().setNamespace(support.getNamespace());
+        result.getMetadata().setLabels(support.labelsForComponent("webapp"));
 
         var didExist = WebAppCustomResource.client(client).delete(result);
         if (didExist) {
@@ -205,7 +202,7 @@ class CloudInstanceProvisioner implements Provisioner {
             LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(5));
         }
         result = WebAppCustomResource.client(client).createOrReplace(result);
-        naming.setOwner(result);
+        support.setOwner(result);
         return result;
     }
 
@@ -233,7 +230,7 @@ class CloudInstanceProvisioner implements Provisioner {
         }
     }
 
-    private Map<String,String> configureMicroprofileConfig(Naming naming, Configuration configuration) throws JsonProcessingException {
+    private Map<String,String> configureMicroprofileConfig(CreationSupport support, Configuration configuration) throws JsonProcessingException {
         // we encode to JSON the following object:
         // {
         //  "mpConfig": {
@@ -251,41 +248,34 @@ class CloudInstanceProvisioner implements Provisioner {
         return Map.of("mpconfig.json", mapper.writeValueAsString(configObject));
     }
 
-    private URI provisionIngress(Naming naming) throws IOException {
-        naming.createNamespaced("ingress.yaml");
+    private URI provisionIngress(CreationSupport support) throws IOException {
+        support.createNamespaced("ingress.yaml");
         // in real world, we should wait until ingress is actually ready by watching its state.
-        return URI.create(String.format("http://%s.%s%s", naming.getNamespace(), domain, naming.getContextRoot()));
+        return URI.create(String.format("http://%s.%s%s", support.getNamespace(), domain, support.getContextRoot()));
     }
 
-    private void provisionService(Naming naming) throws IOException {
-        naming.createNamespaced("service.yaml");
+    private void provisionService(CreationSupport support) throws IOException {
+        support.createNamespaced("service.yaml");
     }
 
-    private void provisionDatagrid(Naming naming) throws IOException {
-        naming.createNamespaced("datagrid.yaml");
+    private void provisionDatagrid(CreationSupport support) throws IOException {
+        support.createNamespaced("datagrid.yaml");
     }
 
-    private void provisionDeployment(Naming naming, Deployment deployment) throws IOException {
-        naming.namespaceClient().resource(deployment).deletingExisting().createOrReplace();
+    private void provisionDeployment(CreationSupport support, Deployment deployment) throws IOException {
+        support.namespaceClient().resource(deployment).deletingExisting().createOrReplace();
     }
 
-    private Deployment createBaseDeployment(Naming naming) {
-        var template = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-launcher/deployment.yaml"), naming::variableValue);
-        return naming.applyOwner(Serialization.unmarshal(template, Deployment.class));
+    private Deployment createBaseDeployment(CreationSupport support) {
+        var template = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-launcher/deployment.yaml"), support::variableValue);
+        return support.applyOwner(Serialization.unmarshal(template, Deployment.class));
     }
 
-    private void provisionNamespace(Naming n) throws IOException {
+    private void provisionNamespace(CreationSupport n) throws IOException {
         var serverNamespace = client.namespaces().withName(n.getNamespace()).get();
         if (serverNamespace == null) {
             n.createGlobal("namespace.yaml");
         }
-    }
-
-    private HasMetadata createFromTemplate(String namespace, Naming naming, String template) throws IOException {
-        var resource = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/"+template), naming::variableValue);
-
-        NamespacedKubernetesClient namespacedClient = namespace == null ? client : client.inNamespace(namespace);
-        return namespacedClient.resource(naming.applyOwner(Serialization.unmarshal(resource, HasMetadata.class))).createOrReplace();
     }
 
     /**
@@ -368,89 +358,5 @@ class CloudInstanceProvisioner implements Provisioner {
         result.setDefaultValues(defaultValues);
         return result;
     }
-
-    class Naming {
-
-
-        DeploymentProcessState deployment;
-        private OwnerReference owner;
-
-        private Naming(DeploymentProcessState deployment) {
-            this.deployment = deployment;
-        }
-
-        private void createNamespaced(String template) throws IOException {
-            createFromTemplate(getNamespace(), this, template);
-        }
-
-        private void createGlobal(String template) throws IOException {
-            createFromTemplate(null, this, template);
-        }
-
-        String getNamespace() {
-            return convertNamespace(deployment.getNamespace());
-        }
-
-        NamespacedKubernetesClient namespaceClient() {
-            return client.inNamespace(getNamespace());
-        }
-
-        public String variableValue(String var) {
-            switch(var) {
-                case "ID":
-                    return getId();
-                case "PROJECT":
-                    return deployment.getNamespace().getProject();
-                case "STAGE":
-                    return deployment.getNamespace().getStage();
-                case "URL":
-                    return deployment.getPersistentLocation().toString();
-                case "NAME":
-                    return getName();
-                case "DOMAIN":
-                    return domain;
-                case "PATH":
-                    return getContextRoot();
-                case "VERSION":
-                    return "VERSION";
-                default:
-                    throw new IllegalArgumentException("No value provided for variable "+var);
-            }
-        }
-
-        private String getName() {
-            // name is used as kubernetes object names, and those need to be lowercase
-            return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.APP_NAME).get().toLowerCase();
-        }
-
-        private String getContextRoot() {
-            return deployment.getConfigValue(ContextRootConfiguration.KIND, ContextRootConfiguration.CONTEXT_ROOT).get();
-        }
-
-        public Map<String, String> labelsForComponent(String componentName) {
-            return Map.of("app.kubernetes.io/name", getName(),
-                    "app.kubernetes.io/component", componentName,
-                    "app.kubernetes.io/part-of", getId(),
-                    "app.kubernetes.io/managed-by", "payara-cloud");
-        }
-
-        private String getId() {
-            return deployment.getId();
-        }
-
-        void setOwner(HasMetadata owner) {
-            // blockOwnerDeletion=true means that owner cannot be deleted unless owned object is deleted first
-            // controller=true doesn't appear to mean anything, but is set on usual ownership chains
-            this.owner = new OwnerReference(owner.getApiVersion(), true, true,
-                    owner.getKind(), owner.getMetadata().getName(), owner.getMetadata().getUid());
-        }
-
-        <T extends HasMetadata> T applyOwner(T resource) {
-            if (owner != null) {
-                resource.getMetadata().setOwnerReferences(List.of(owner));
-            }
-            return resource;
-        }
-    }
-
+    
 }
