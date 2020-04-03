@@ -208,7 +208,8 @@ class CloudInstanceProvisioner implements Provisioner {
 
     private Map<String,String> configureDataSources(Set<Configuration> dsConfigurations) {
         return dsConfigurations.stream()
-                .collect(Collectors.toMap(c -> "datasource_"+c.getValue("poolName").get(), c -> createDatasourceConfig(c)));
+                .collect(Collectors.toMap(c -> "datasource_"+c.getValue("poolName").get()+".json",
+                        c -> createDatasourceConfig(c)));
     }
 
     private String createDatasourceConfig(Configuration configuration) {
@@ -220,6 +221,7 @@ class CloudInstanceProvisioner implements Provisioner {
         //}
         Map<String,Object> configObject = new HashMap<>();
         var propertyMap = configuration.getKeys().stream()
+                .filter(configuration::hasValue)
                 .collect(Collectors.toMap(k -> k, k -> configuration.getValue(k).get()));
         configObject.put("dataSource", propertyMap);
 

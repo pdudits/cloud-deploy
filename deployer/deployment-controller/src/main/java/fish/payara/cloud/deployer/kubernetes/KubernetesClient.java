@@ -39,6 +39,7 @@
 package fish.payara.cloud.deployer.kubernetes;
 
 import fish.payara.cloud.deployer.kubernetes.crd.WebAppCustomResource;
+import fish.payara.cloud.deployer.setup.CloudInstanceProvisioning;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
@@ -50,6 +51,7 @@ import java.util.logging.Logger;
 
 @ApplicationScoped
 @DirectProvisioning
+@CloudInstanceProvisioning
 public class KubernetesClient {
     private static final Logger LOGGER = Logger.getLogger(KubernetesClient.class.getName());
 
