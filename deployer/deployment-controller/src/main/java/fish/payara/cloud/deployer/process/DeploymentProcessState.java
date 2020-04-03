@@ -106,6 +106,33 @@ public class DeploymentProcessState {
         this.usingDefaultConfiguration = usingDefaultConfiguration;
     }
 
+    static DeploymentProcessState importPersisted(PersistedDeployment persisted, ConfigurationFactory configurationFactory) {
+        var state = new DeploymentProcessState(persisted.getId(), persisted.getNamespace(),  persisted.getName(), null, false);
+        state.persistentLocation = persisted.getArtifactLocation();
+        state.endpoint = persisted.getPublicEndpoint();
+
+        state.deploymentCompletedAt = persisted.getProvisionedAt();
+        state.endpointActivatedAt = persisted.getProvisionedAt();
+
+        if (persisted.isFailed()) {
+            state.failed = true;
+            state.completionMessage = persisted.getFailureMessage();
+        } else if (persisted.isDeleted()) {
+            state.lastChange = ChangeKind.DELETION_FINISHED;
+            state.lastStatusChange = persisted.getDeletedAt();
+        } else {
+            state.complete = true;
+        }
+
+        for (PersistedDeployment.PersistedConfiguration persistedConfiguration : persisted.getConfiguration()) {
+            var importedConfiguration = configurationFactory.importConfiguration(persistedConfiguration);
+            importedConfiguration.updateConfiguration(persistedConfiguration.getValues());
+            importedConfiguration.setSubmitted(true);
+            state.addConfiguration(importedConfiguration);
+        }
+        return state;
+    }
+
     /**
      * Opaque identifier of deployment
      * @return

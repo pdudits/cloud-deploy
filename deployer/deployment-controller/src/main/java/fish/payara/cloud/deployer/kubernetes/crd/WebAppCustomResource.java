@@ -39,12 +39,21 @@
 package fish.payara.cloud.deployer.kubernetes.crd;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import fish.payara.cloud.deployer.process.Namespace;
+import fish.payara.cloud.deployer.process.PersistedDeployment;
 import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.client.CustomResource;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.internal.KubernetesDeserializer;
+
+import java.net.URI;
+import java.net.URL;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
 public class WebAppCustomResource extends CustomResource {
@@ -52,6 +61,13 @@ public class WebAppCustomResource extends CustomResource {
     public static final String CRD_NAME = "webapps."+CRD_GROUP;
     public static final String KIND = "WebApp";
     public static final String VERSION = "v1beta1";
+    public static final CustomResourceDefinitionContext DEFINITION_CONTEXT = new CustomResourceDefinitionContext.Builder()
+            .withGroup(CRD_GROUP)
+            .withName(CRD_NAME)
+            .withPlural("webapps")
+            .withVersion(VERSION)
+            .withScope("Namespace")
+            .build();
 
     private WebAppSpec spec = new WebAppSpec();
     private WebAppStatus status;
@@ -101,12 +117,95 @@ public class WebAppCustomResource extends CustomResource {
         KubernetesDeserializer.registerCustomKind(CRD_GROUP + "/" + VERSION, "WebApp", WebAppCustomResource.class);
     }
 
+    // cached resource definition
+    private static volatile URL LAST_SEEN_CLIENT;
+    private static volatile CustomResourceDefinition CACHED_DEFINITION;
+
     public static CustomResourceDefinition findDefinition(KubernetesClient client) {
-        return client.customResourceDefinitions().withName(CRD_NAME).get();
+        if (CACHED_DEFINITION != null && client.getMasterUrl().equals(LAST_SEEN_CLIENT)) {
+            return CACHED_DEFINITION;
+        }
+        LAST_SEEN_CLIENT = null;
+        var definition = client.customResourceDefinitions().withName(CRD_NAME).get();
+        synchronized (WebAppCustomResource.class) {
+            CACHED_DEFINITION = definition;
+            LAST_SEEN_CLIENT = client.getMasterUrl();
+        }
+        return definition;
     }
 
     // Wonderful return type
     public static MixedOperation<WebAppCustomResource, WebAppList, DoneableWebApp, Resource<WebAppCustomResource, DoneableWebApp>> client(KubernetesClient client, CustomResourceDefinition definition) {
         return client.customResources(definition, WebAppCustomResource.class, WebAppList.class, DoneableWebApp.class);
     }
+
+    public static MixedOperation<WebAppCustomResource, WebAppList, DoneableWebApp, Resource<WebAppCustomResource, DoneableWebApp>> client(KubernetesClient client) {
+        return client.customResources(findDefinition(client), WebAppCustomResource.class, WebAppList.class, DoneableWebApp.class);
+    }
+
+    /**
+     * Convert to representation of persisted deployment.
+     * Namespace is provided from outside, as mapping of Kubernetes namespace to deployer namespace is concern of provisioner
+     * @param namespace Namespace of the deployment.
+     * @return
+     */
+    public PersistedDeployment asPersistedDeployment(Namespace namespace) {
+        return new PersistedDeployment() {
+            @Override
+            public String getId() {
+                return getSpec().getDeploymentProcessId() != null ? getSpec().getDeploymentProcessId().toString() : getMetadata().getUid();
+            }
+
+            @Override
+            public String getName() {
+                return getMetadata().getName();
+            }
+
+            @Override
+            public Namespace getNamespace() {
+                return namespace;
+            }
+
+            @Override
+            public URI getArtifactLocation() {
+                return getSpec().getArtifactUrl();
+            }
+
+            @Override
+            public URI getPublicEndpoint() {
+                return getStatus() != null ? getStatus().getPublicEndpoint() : null;
+            }
+
+            @Override
+            public Instant getProvisionedAt() {
+                return Instant.parse(getMetadata().getCreationTimestamp());
+            }
+
+            @Override
+            public boolean isFailed() {
+                return false; // TODO: conditions
+            }
+
+            @Override
+            public String getFailureMessage() {
+                return null; // TODO: conditions
+            }
+
+            @Override
+            public boolean isDeleted() {
+                return getMetadata().getDeletionTimestamp() != null;
+            }
+
+            @Override
+            public Instant getDeletedAt() {
+                return getMetadata().getDeletionTimestamp() != null ? Instant.parse(getMetadata().getDeletionTimestamp()) : null;
+            }
+
+            @Override
+            public Collection<PersistedConfiguration> getConfiguration() {
+                return getSpec().getConfiguration().stream().map(WebAppSpecConfiguration::asPersistedConfiguration).collect(Collectors.toSet());
+            }
+        };
+    }
+
 }

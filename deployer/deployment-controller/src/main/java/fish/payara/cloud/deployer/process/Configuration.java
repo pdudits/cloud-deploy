@@ -213,7 +213,6 @@ public abstract class Configuration {
         }
     }
 
-
     void updateConfiguration(Map<String,String> values) {
         if (isSubmitted()) {
             throw new IllegalStateException(this+" is already submitted");
@@ -225,14 +224,18 @@ public abstract class Configuration {
             ctx.addValidationError(t.getMessage());
         }
         if (ctx.isValid()) {
-            additionalKeys.addAll(ctx.additionalKeys);
-            updatedValues.putAll(ctx.updateValues);
-            ctx.removedKeys.forEach(updatedValues::remove);
-            ctx.removedAdditionalKeys.forEach(additionalKeys::remove);
-            removeDefaultValues();
+            applyUpdate(ctx);
         } else {
             throw new ConfigurationValidationException(getKind(), getId(), ctx.mainValidationError, ctx.validationErrors);
         }
+    }
+
+    private void applyUpdate(UpdateContext ctx) {
+        additionalKeys.addAll(ctx.additionalKeys);
+        updatedValues.putAll(ctx.updateValues);
+        ctx.removedKeys.forEach(updatedValues::remove);
+        ctx.removedAdditionalKeys.forEach(additionalKeys::remove);
+        removeDefaultValues();
     }
 
     private void removeDefaultValues() {

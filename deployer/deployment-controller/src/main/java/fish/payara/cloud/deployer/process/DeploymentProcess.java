@@ -40,6 +40,7 @@ package fish.payara.cloud.deployer.process;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import java.io.File;
 import java.net.URI;
@@ -64,6 +65,9 @@ public class DeploymentProcess implements DeploymentManagement {
 
     @Inject
     Event<StateChanged> deploymentEvent;
+
+    @Inject
+    Instance<ConfigurationFactory> configurationFactory;
 
     @Override
     public DeploymentProcessState start(File artifactLocation, String name, Namespace target) {
@@ -237,5 +241,29 @@ public class DeploymentProcess implements DeploymentManagement {
         runningProcesses.put(id, temp);
         return delete(temp);
     }
-    
+
+    /**
+     * Import information about deployment that was already persisted.
+     * This serves for synchronizing status with persistent store after controller starts fresh, i. e. to enable
+     * reconfiguration or redeployment.
+     *
+     * @param persisted
+     * @return imported process state
+     * @throws UnsupportedOperationException when import is not supported
+     * @throws ConfigurationValidationException when provided configuration is invalid
+     */
+    public DeploymentProcessState importPersisted(PersistedDeployment persisted) {
+        if (configurationFactory.isUnsatisfied()) {
+            throw new UnsupportedOperationException("Import not supported, no Configuration Factory defined");
+        }
+        var factory = configurationFactory.get();
+        try {
+            var processState = DeploymentProcessState.importPersisted(persisted, factory);
+            runningProcesses.put(processState.getId(), processState);
+            // maybe an event IMPORTED would be fine.
+            return processState;
+        } finally {
+            configurationFactory.destroy(factory);
+        }
+    }
 }

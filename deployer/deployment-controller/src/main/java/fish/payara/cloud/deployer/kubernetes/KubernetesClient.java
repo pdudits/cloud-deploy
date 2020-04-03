@@ -38,6 +38,7 @@
 
 package fish.payara.cloud.deployer.kubernetes;
 
+import fish.payara.cloud.deployer.kubernetes.crd.WebAppCustomResource;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
@@ -58,6 +59,8 @@ public class KubernetesClient {
     @PostConstruct
     void connectApiServer() {
         client = new DefaultKubernetesClient().inAnyNamespace();
+        WebAppCustomResource.register();
+        WebAppCustomResource.findDefinition(client);
        
         var version = client.getVersion();
         LOGGER.info("Successfully connected to API Server version "+version.getMajor()+"."+version.getMinor());

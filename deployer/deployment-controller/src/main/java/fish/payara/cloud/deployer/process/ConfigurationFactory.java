@@ -36,65 +36,10 @@
  *  holder.
  */
 
-package fish.payara.cloud.deployer.inspection.mpconfig;
+package fish.payara.cloud.deployer.process;
 
-import fish.payara.cloud.deployer.configuration.ConfigurationSubfactory;
-import fish.payara.cloud.deployer.process.Configuration;
-
-import javax.enterprise.context.ApplicationScoped;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
 
-public class MicroprofileConfiguration extends Configuration {
-
-    public static final String KIND = "microprofileConfig";
-    private final Properties inspectedValues;
-
-    public MicroprofileConfiguration(String name, Properties inspectedValues) {
-        super(name);
-        this.inspectedValues = inspectedValues;
-    }
-
-    @Override
-    public String getKind() {
-        return KIND;
-    }
-
-    @Override
-    public Set<String> getKeys() {
-        return additionalKeysAnd(inspectedValues.stringPropertyNames());
-    }
-
-    @Override
-    public Optional<String> getDefaultValue(String key) {
-        if (inspectedValues.containsKey(key)) {
-            return Optional.of(inspectedValues.getProperty(key));
-        }
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean supportsAdditionalKeys() {
-        return true;
-    }
-
-    @ApplicationScoped
-    static class Subfactory implements ConfigurationSubfactory {
-
-        @Override
-        public boolean supportsKind(String kind) {
-            return KIND.equals(kind);
-        }
-
-        @Override
-        public Configuration importConfiguration(String kind, String id, Map<String, String> defaultValues) {
-            var importedDefaults = new Properties();
-            if (defaultValues != null) {
-                importedDefaults.putAll(defaultValues);
-            }
-            return new MicroprofileConfiguration(id, importedDefaults);
-        }
-    }
+public interface ConfigurationFactory {
+    Configuration importConfiguration(PersistedDeployment.PersistedConfiguration configuration);
 }

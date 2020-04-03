@@ -145,6 +145,18 @@ public class ArquillianDeployments {
         return a -> a.addAsLibraries(shrinkwrap);
     }
 
+    public static Composition assertj() {
+        var shrinkwrap = Maven.resolver().loadPomFromFile("pom.xml").resolve("org.assertj:assertj-core")
+                .withTransitivity().asFile();
+        return a -> a.addAsLibraries(shrinkwrap);
+    }
+
+    public static Composition fabric8() {
+        var shrinkwrap = Maven.resolver().loadPomFromFile("pom.xml").resolve("io.fabric8:kubernetes-client")
+                .withTransitivity().asFile();
+        return a -> a.addAsLibraries(shrinkwrap);
+    }
+
     public static Composition provisioning() {
         return a -> compose(a, deploymentProcess(), utils()).addPackage(Provisioner.class.getPackage())
                 .addClass(ArtifactStorage.class)

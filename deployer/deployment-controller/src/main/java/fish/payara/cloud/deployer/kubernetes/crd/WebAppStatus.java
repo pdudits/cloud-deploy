@@ -49,7 +49,6 @@ import java.util.Objects;
 /**
  * WebAppStatus
  */
-@javax.annotation.processing.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2020-03-23T19:23:58.881+01:00[Europe/Prague]")
 public class WebAppStatus {
     private Long observedGeneration;
 

@@ -38,8 +38,11 @@
 
 package fish.payara.cloud.deployer.inspection.contextroot;
 
+import fish.payara.cloud.deployer.configuration.ConfigurationSubfactory;
 import fish.payara.cloud.deployer.process.Configuration;
 
+import javax.enterprise.context.ApplicationScoped;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -92,9 +95,36 @@ public class ContextRootConfiguration extends Configuration {
             case CONTEXT_ROOT:
                 return Optional.ofNullable(defaultContext);
             case APP_NAME:
-                return Optional.of(appName);
+                return Optional.ofNullable(appName);
             default:
                 return super.getDefaultValue(key);
+        }
+    }
+
+    @ApplicationScoped
+    static class Subfactory implements ConfigurationSubfactory {
+        @Override
+        public boolean supportsKind(String kind) {
+            return KIND.equals(kind);
+        }
+
+        @Override
+        public Configuration importConfiguration(String kind, String id, Map<String, String> defaultValues) {
+            if (defaultValues == null) {
+                return new ContextRootConfiguration(id, guessAppName(id), null);
+            } else {
+                var appName = defaultValues.get(APP_NAME);
+                if (appName == null) {
+                    appName = guessAppName(id);
+                }
+                var contextRoot = defaultValues.get(CONTEXT_ROOT);
+                return new ContextRootConfiguration(id, appName, contextRoot);
+            }
+        }
+
+        private String guessAppName(String id) {
+            // Config doesn't specify inspected name, let's assume id is file name, and use that.
+            return id.replaceAll("\\.[^\\.]+$", "");
         }
     }
 }
