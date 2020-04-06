@@ -38,6 +38,8 @@
 
 package fish.payara.cloud.deployer.kubernetes;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import fish.payara.cloud.deployer.inspection.datasource.DatasourceConfiguration;
 import fish.payara.cloud.deployer.inspection.mpconfig.MicroprofileConfiguration;
 import fish.payara.cloud.deployer.kubernetes.crd.WebAppCustomResource;
@@ -45,14 +47,17 @@ import fish.payara.cloud.deployer.kubernetes.crd.WebAppSpecConfiguration;
 import fish.payara.cloud.deployer.process.Configuration;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.DeploymentProcessState;
+import fish.payara.cloud.deployer.process.Namespace;
 import fish.payara.cloud.deployer.provisioning.DeploymentInfo;
 import fish.payara.cloud.deployer.provisioning.Provisioner;
 import fish.payara.cloud.deployer.provisioning.ProvisioningException;
-import fish.payara.cloud.deployer.setup.DirectProvisioning;
+import fish.payara.cloud.deployer.setup.CloudInstanceProvisioning;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
+import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.NamespacedKubernetesClient;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -61,24 +66,24 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static fish.payara.cloud.deployer.kubernetes.Template.fillTemplate;
-import fish.payara.cloud.deployer.process.Namespace;
-import io.fabric8.kubernetes.api.model.extensions.Ingress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.logging.Level;
 
-@DirectProvisioning
+@CloudInstanceProvisioning
 @ApplicationScoped
-class DirectProvisioner implements Provisioner {
-    public static final Logger LOGGER = Logger.getLogger(DirectProvisioner.class.getName());
+class CloudInstanceProvisioner implements Provisioner {
+    public static final Logger LOGGER = Logger.getLogger(CloudInstanceProvisioner.class.getName());
     private static final String APP_KUBERNETES_IO_PART_OF = "app.kubernetes.io/part-of";
 
     @Inject
@@ -90,6 +95,8 @@ class DirectProvisioner implements Provisioner {
 
     @Inject
     DeploymentProcess process;
+
+    private ObjectMapper mapper = new ObjectMapper();
 
 
     @Override
@@ -104,17 +111,21 @@ class DirectProvisioner implements Provisioner {
             provisionService(support);
 
             var deploymentResource = createBaseDeployment(support);
+            var configBag = new HashMap<String,String>();
+
             if (deployment.hasConfigurationOverrides(MicroprofileConfiguration.KIND)) {
-                String configMapName = provisionSystemProperties(support, deployment.findConfiguration(MicroprofileConfiguration.KIND).get());
-                applySystemPropertyFromConfigMap(deploymentResource, configMapName);
+                configBag.putAll(configureMicroprofileConfig(support, deployment.findConfiguration(MicroprofileConfiguration.KIND).get()));
             }
             if (deployment.hasConfigurationOverrides(DatasourceConfiguration.KIND)) {
                 var dsConfigurations = deployment.findConfigurations(DatasourceConfiguration.KIND)
                         .filter(Configuration::hasOverrides)
                         .collect(Collectors.toSet());
-                String postBootConfigMapName = provisionDatasourcePostBoot(support, dsConfigurations);
-                applyPostbootFromConfigMap(deploymentResource, postBootConfigMapName);
+                configBag.putAll(configureDataSources(dsConfigurations));
             }
+            configBag.putAll(configureDeployment(support));
+
+            var configResource = provisionConfig(support, configBag, deploymentResource);
+
             provisionDeployment(support, deploymentResource);
             var uri = provisionIngress(support);
 
@@ -124,6 +135,53 @@ class DirectProvisioner implements Provisioner {
         } catch (Exception e) {
             throw new ProvisioningException("Failed to provision "+deployment.getId(), e);
         }
+    }
+
+    private Map<String, String> configureDeployment(CreationSupport support) throws JsonProcessingException {
+        // {
+        //  "deployment": {
+        //    "contextRoot": "/",
+        //    "artifact": {
+        //      "httpGet": "https://cloud3.blob.core.windows.net/deployment/micro1/ROOT.war"
+        //    }
+        //  }
+        //}
+        var configObject = Map.of("deployment",
+                Map.of("contextRoot", support.getContextRoot(),
+                        "artifact", Map.of(
+                                "httpGet", support.deployment.getPersistentLocation().toString())));
+        return Map.of("deployment.json", mapper.writeValueAsString(configObject));
+    }
+
+    private ConfigMap provisionConfig(CreationSupport support, Map<String, String> configBag, Deployment deploymentResource) {
+        // create config map from bag
+        var configMap = new ConfigMapBuilder().withNewMetadata()
+                .withName(support.getName()+"-deployment-config")
+                .withLabels(support.labelsForComponent("deployment-config"))
+                .endMetadata()
+                .withData(configBag)
+                .build();
+        support.applyOwner(configMap);
+        var configResource = support.namespaceClient().resource(configMap).createOrReplace();
+
+        // add config map volume
+        var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
+        podTemplate.getVolumes()
+                .add(new VolumeBuilder()
+                        .withName("deployment-config")
+                        .withNewConfigMap()
+                        .withName(configResource.getMetadata().getName())
+                        .endConfigMap()
+                        .build());
+        // mount the volume into first, main container
+        var mainContainer = podTemplate.getContainers().get(0);
+        mainContainer.getVolumeMounts()
+                .add(new VolumeMountBuilder()
+                        .withName("deployment-config")
+                        .withMountPath("/config/deployment-config")
+                        .build());
+
+        return configResource;
     }
 
     private void updateCustomResourceEndpoint(WebAppCustomResource customResource, URI uri) {
@@ -138,83 +196,58 @@ class DirectProvisioner implements Provisioner {
         result.getMetadata().setNamespace(support.getNamespace());
         result.getMetadata().setLabels(support.labelsForComponent("webapp"));
 
-        result = WebAppCustomResource.client(client).create(result);
+        var didExist = WebAppCustomResource.client(client).delete(result);
+        if (didExist) {
+            // we need to wait until everything gets deleted. TODO: Obviously properly refresh status
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(5));
+        }
+        result = WebAppCustomResource.client(client).createOrReplace(result);
         support.setOwner(result);
         return result;
     }
 
-    private void applyPostbootFromConfigMap(Deployment deploymentResource, String postBootConfigMapName) {
-        // add config map volume
-        var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
-        podTemplate.getVolumes()
-                .add(new VolumeBuilder()
-                        .withName("postboot")
-                        .withNewConfigMap()
-                        .withName(postBootConfigMapName)
-                        .endConfigMap()
-                        .build());
-        // mount the volume into first, main container
-        var mainContainer = podTemplate.getContainers().get(0);
-        mainContainer.getVolumeMounts()
-                .add(new VolumeMountBuilder()
-                        .withName("postboot")
-                        .withMountPath("/postboot")
-                        .build());
-        // add command line argument
-        mainContainer.getArgs().addAll(List.of("--postbootcommandfile","/postboot/postboot"));
-    }
-    private String provisionDatasourcePostBoot(CreationSupport support, Set<Configuration> dsConfigurations) {
-        var postboot = new DatasourcePostbootCommands();
-        dsConfigurations.forEach(postboot::addDatasource);
-        var configMap = new ConfigMapBuilder().withNewMetadata()
-                .withName(support.getName()+"-postboot")
-                .withLabels(support.labelsForComponent("postboot"))
-                .endMetadata()
-                .withData(Map.of("postboot", postboot.toString()))
-                .build();
-        configMap = support.applyOwner(configMap);
-        var created = support.namespaceClient().resource(configMap).createOrReplace();
-        return created.getMetadata().getName();
+    private Map<String,String> configureDataSources(Set<Configuration> dsConfigurations) {
+        return dsConfigurations.stream()
+                .collect(Collectors.toMap(c -> "datasource_"+c.getValue("poolName").get()+".json",
+                        c -> createDatasourceConfig(c)));
     }
 
-    private void applySystemPropertyFromConfigMap(Deployment deploymentResource, String configMapName) {
-        // add config map volume
-        var podTemplate = deploymentResource.getSpec().getTemplate().getSpec();
-        podTemplate.getVolumes()
-                .add(new VolumeBuilder()
-                        .withName("mp-config")
-                        .withNewConfigMap()
-                            .withName(configMapName)
-                        .endConfigMap()
-                .build());
-        // mount the volume into first, main container
-        var mainContainer = podTemplate.getContainers().get(0);
-        mainContainer.getVolumeMounts()
-                .add(new VolumeMountBuilder()
-                        .withName("mp-config")
-                        .withMountPath("/mp-config")
-                    .build());
-        // add command line argument
-        mainContainer.getArgs().addAll(List.of("--systemproperties","/mp-config/microprofile-config.properties"));
+    private String createDatasourceConfig(Configuration configuration) {
+        // we encode to JSON the following object:
+        // {
+        //  "dataSource": {
+        //    "key" : "value"
+        //  }
+        //}
+        Map<String,Object> configObject = new HashMap<>();
+        var propertyMap = configuration.getKeys().stream()
+                .filter(configuration::hasValue)
+                .collect(Collectors.toMap(k -> k, k -> configuration.getValue(k).get()));
+        configObject.put("dataSource", propertyMap);
+
+        try {
+            return mapper.writeValueAsString(configObject);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Cannot write config as JSON", e);
+        }
     }
 
-    private String provisionSystemProperties(CreationSupport support, Configuration configuration) {
-        var configMap = new ConfigMapBuilder().withNewMetadata()
-                .withName(support.getName()+"-mpconfig")
-                .withLabels(support.labelsForComponent("mpconfig"))
-                .endMetadata()
-                .withData(Map.of("microprofile-config.properties", buildPropertyFile(configuration)))
-                .build();
-        support.applyOwner(configMap);
-        var created = support.namespaceClient().resource(configMap).createOrReplace();
-        return created.getMetadata().getName();
-    }
+    private Map<String,String> configureMicroprofileConfig(CreationSupport support, Configuration configuration) throws JsonProcessingException {
+        // we encode to JSON the following object:
+        // {
+        //  "mpConfig": {
+        //    "map": {
+        //      "key": "value"
+        //     }
+        //  }
+        //}
+        Map<String,Object> configObject = new HashMap<>();
+        var propertyMap = configuration.getKeys().stream()
+                .filter(configuration::hasDefinedValue) // skip defaults
+                .collect(Collectors.toMap(k -> k, k -> configuration.getValue(k).get()));
+        configObject.put("mpConfig", Map.of("map", propertyMap));
 
-    private String buildPropertyFile(Configuration configuration) {
-        return
-            configuration.getKeys().stream()
-                    .map(key -> key+"="+configuration.getValue(key).orElse(""))
-                    .collect(Collectors.joining("\n"));
+        return Map.of("mpconfig.json", mapper.writeValueAsString(configObject));
     }
 
     private URI provisionIngress(CreationSupport support) throws IOException {
@@ -236,7 +269,7 @@ class DirectProvisioner implements Provisioner {
     }
 
     private Deployment createBaseDeployment(CreationSupport support) {
-        var template = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-direct/deployment.yaml"), support::variableValue);
+        var template = fillTemplate(getClass().getResourceAsStream("/kubernetes/templates-launcher/deployment.yaml"), support::variableValue);
         return support.applyOwner(Serialization.unmarshal(template, Deployment.class));
     }
 
@@ -246,7 +279,6 @@ class DirectProvisioner implements Provisioner {
             n.createGlobal("namespace.yaml");
         }
     }
-
 
     /**
      * Gets a list of namespaces that have been provisioned, in JSON format
@@ -301,7 +333,7 @@ class DirectProvisioner implements Provisioner {
         var spec = result.getSpec();
         spec.setDeploymentProcessId(UUID.fromString(state.getId()));
         spec.setArtifactUrl(state.getPersistentLocation());
-        state.getConfigurations().stream().map(DirectProvisioner::makeConfiguration).forEach(spec::addConfigurationItem);
+        state.getConfigurations().stream().map(CloudInstanceProvisioner::makeConfiguration).forEach(spec::addConfigurationItem);
 
         var status = result.makeStatus();
         status.setPublicEndpoint(state.getEndpoint());
@@ -328,5 +360,5 @@ class DirectProvisioner implements Provisioner {
         result.setDefaultValues(defaultValues);
         return result;
     }
-
+    
 }

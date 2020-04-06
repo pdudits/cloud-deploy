@@ -36,33 +36,18 @@
  *  holder.
  */
 
-package fish.payara.cloud.instance.tasks;
+package fish.payara.cloud.deployer.setup;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import javax.enterprise.inject.Alternative;
+import javax.enterprise.inject.Stereotype;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-/**
- * A configuration task to apply to an instance.
- *
- * <p>Subclasses of this class represent a configuration (such as deployment, microprofile config override
- * or datasource definition) that can be applied to an instance</p>
- *
- * <p>Tasks support JSON serialization via Jackson.</p>
- */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-@JsonSubTypes({
-        @JsonSubTypes.Type(Deployment.class),
-        @JsonSubTypes.Type(MicroprofileConfigProperties.class),
-        @JsonSubTypes.Type(DataSource.class)
-})
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class ConfigurationTask {
-    public abstract void accept(TaskVisitor visitor);
-
-    @JsonIgnore
-    public int getPriority() {
-        return 0;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Stereotype
+@Alternative
+@Target(ElementType.TYPE)
+public @interface CloudInstanceProvisioning {
 }

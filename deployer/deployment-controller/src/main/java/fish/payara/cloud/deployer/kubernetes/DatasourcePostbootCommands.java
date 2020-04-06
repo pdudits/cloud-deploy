@@ -83,6 +83,8 @@ class DatasourcePostbootCommands {
             postboot.append("create-jdbc-resource")
                     .append(" --connectionpoolid ")
                     .append(dsConfig.getId())
+                    .append(" ")
+                    .append(dsConfig.getId())
                     .append("\n");
         }
     }

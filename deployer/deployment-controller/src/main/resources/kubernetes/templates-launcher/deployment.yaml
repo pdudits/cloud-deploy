@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $(NAME)
+  labels:
+    app.kubernetes.io/name: $(NAME)
+    app.kubernetes.io/component: payara-app
+    app.kubernetes.io/part-of: $(ID)
+    app.kubernetes.io/managed-by: payara-cloud     
+    #app.kubernetes.io/version: $(VERSION)
+  annotations:
+    #payara.cloud/artifact-version: XXX
+    payara.cloud/project: $(PROJECT)
+    payara.cloud/stage: $(STAGE)
+    payara.cloud/artifact: $(NAME)
+    payara.cloud/domain: $(DOMAIN)
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: $(NAME)
+      app.kubernetes.io/part-of: $(ID)
+      app.kubernetes.io/component: payara-app
+  template:
+    metadata:
+      name: $(ID)
+      labels:
+        app.kubernetes.io/name: $(NAME)
+        app.kubernetes.io/instance: $(NAME)
+        app.kubernetes.io/component: payara-app
+        app.kubernetes.io/part-of: $(ID)
+        app.kubernetes.io/managed-by: payara-cloud   
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: "http"
+    spec:
+      containers:
+      - name: micro
+        image: payara.azurecr.io/payara/cloud-instance:latest
+        # config is mounted in provision code in /config
+        args: ["/config"]
+        resources:
+          # Allocate quarter of CPU at rest, allow for use up to 1 CPU.
+          requests:
+            cpu: 250m
+          limits:
+            memory: "512Mi"
+            # disable for snappier demo
+            # cpu: "1"
+        ports:
+          - containerPort: 8080
+            name: http
+          - containerPort: 6900
+            name: datagrid
+        # poll hard at startup, then in regular periods (Since 1.16)
+        startupProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 3
+          periodSeconds: 1
+          failureThreshold: 120
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          failureThreshold: 3
+          initialDelaySeconds: 60
+        # Kubernetes 1.14 doesn't know startup probe yet, let's use readyness
+        # so that we don't announce failed deployment as success
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          failureThreshold: 1   
+          periodSeconds: 2
+          initialDelaySeconds: 3

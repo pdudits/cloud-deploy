@@ -39,6 +39,7 @@
 package fish.payara.cloud.instance;
 
 import fish.payara.cloud.instance.tasks.ConfigurationTask;
+import fish.payara.cloud.instance.tasks.DataSource;
 import fish.payara.cloud.instance.tasks.Deployment;
 import fish.payara.cloud.instance.tasks.TaskVisitor;
 import fish.payara.cloud.instance.tasks.value.FileValue;
@@ -121,5 +122,42 @@ public class ConfigurationPlan {
         public void microprofileConfigValues(Map<String, StringValue> map) {
             map.entrySet().forEach(e -> applicator.addSystemProperty(e.getKey(), e.getValue().value()));
         }
+
+        @Override
+        public void dataSource(DataSource.DataSourceDefinition dataSource) {
+            applicator.addPostBootCommand("create-jdbc-connection-pool",
+                    "--datasourceclassname", dataSource.datasourceClass(),
+                     "--restype", dataSource.resourceType(),
+                     "--steadypoolsize", String.valueOf(dataSource.steadyPoolSize()),
+                     "--maxpoolsize", String.valueOf(dataSource.maxPoolSize()),
+                     "--maxwait", String.valueOf(dataSource.maxWaitTime()),
+                     "--property", constructProperties(dataSource),
+                    dataSource.poolName());
+
+            if (dataSource.isDefaultDataSource()) {
+                applicator.addPostBootCommand("set", "resources.jdbc-resource.jdbc/__default.pool-name="+dataSource.poolName());
+            } else {
+                applicator.addPostBootCommand("create-jdbc-resource", "--connectionpoolid", dataSource.poolName(), dataSource.jndiName());
+            }
+        }
+
+        private String constructProperties(DataSource.DataSourceDefinition dataSource) {
+            var propertyString = new StringBuilder();
+            propertyString.append("url=")
+                    .append(escapeProperty(dataSource.jdbcUrl()));
+            if (dataSource.user().isPresent()) {
+                propertyString.append(":user=")
+                        .append(escapeProperty(dataSource.user().get()));
+            }
+            if (dataSource.password().isPresent()) {
+                propertyString.append(":password=")
+                        .append(escapeProperty(dataSource.password().get()));
+            }
+            return propertyString.toString();
+        }
+    }
+
+    static String escapeProperty(String jdbcUrl) {
+        return jdbcUrl.replaceAll("([=:\\\\])","\\\\$1");
     }
 }

@@ -49,4 +49,6 @@ public interface TaskVisitor {
     void microprofileConfigProperties(FileValue file);
 
     void microprofileConfigValues(Map<String, StringValue> map);
+
+    void dataSource(DataSource.DataSourceDefinition dataSource);
 }

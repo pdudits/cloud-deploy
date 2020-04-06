@@ -183,6 +183,10 @@ public abstract class Configuration {
         return updatedValues.containsKey(key);
     }
 
+    public final boolean hasValue(String key) {
+        return hasDefinedValue(key) || hasDefaultValue(key);
+    }
+
     /**
      * Check if value has default value
      * @param key key to check

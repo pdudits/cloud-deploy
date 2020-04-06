@@ -193,6 +193,9 @@ public class DatasourceConfiguration extends Configuration {
             throw new IllegalArgumentException("Configuration is not a Datasource configuration");
         }
         return (Value) Proxy.newProxyInstance(Value.class.getClassLoader(), new Class[]{Value.class}, (proxy, method, args) -> {
+            if ("jndiName".equals(method.getName())) {
+                return conf.getId();
+            }
             Optional<String> value = conf.getValue(method.getName());
             if (method.getReturnType().equals(Optional.class)) {
                 // at this time we only support Optional<String>
@@ -217,6 +220,7 @@ public class DatasourceConfiguration extends Configuration {
         String poolName();
         String resourceType();
         String datasourceClass();
+        String jndiName();
 
         static Value forConfiguration(Configuration c) {
             return createValue(c);

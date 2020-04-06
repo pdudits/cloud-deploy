@@ -36,33 +36,42 @@
  *  holder.
  */
 
-package fish.payara.cloud.instance.tasks;
+package fish.payara.cloud.instance;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.output.Slf4jLogConsumer;
+import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
 
-/**
- * A configuration task to apply to an instance.
- *
- * <p>Subclasses of this class represent a configuration (such as deployment, microprofile config override
- * or datasource definition) that can be applied to an instance</p>
- *
- * <p>Tasks support JSON serialization via Jackson.</p>
- */
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_OBJECT)
-@JsonSubTypes({
-        @JsonSubTypes.Type(Deployment.class),
-        @JsonSubTypes.Type(MicroprofileConfigProperties.class),
-        @JsonSubTypes.Type(DataSource.class)
-})
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public abstract class ConfigurationTask {
-    public abstract void accept(TaskVisitor visitor);
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
-    @JsonIgnore
-    public int getPriority() {
-        return 0;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@Testcontainers
+public class LauncherDockerIT {
+    @Container
+    public GenericContainer instance = new GenericContainer<>("payara/cloud-instance")
+            .withExposedPorts(8080)
+            .withCopyFileToContainer(MountableFile.forClasspathResource("/docker/"), "/config/")
+            .withLogConsumer(new Slf4jLogConsumer(LoggerFactory.getLogger("payara-micro")))
+            .withCommand("/config") // does it get replaced with /bin/sh here?
+            .waitingFor(Wait.forHttp("/health"));
+
+    @Test
+    public void indexAccessible() throws IOException, InterruptedException {
+        var client = HttpClient.newHttpClient();
+        var indexHtml = client.send(HttpRequest.newBuilder().GET().uri(URI.create("http://localhost:"+instance.getMappedPort(8080))).build(),
+                HttpResponse.BodyHandlers.ofString());
+        System.out.println(indexHtml.body());
+        assertTrue(() -> indexHtml.body().contains("doesn't work properly without JavaScript enabled"));
     }
 }

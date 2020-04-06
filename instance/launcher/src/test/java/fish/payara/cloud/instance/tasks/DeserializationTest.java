@@ -38,11 +38,13 @@
 
 package fish.payara.cloud.instance.tasks;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DeserializationTest {
 
@@ -99,6 +101,15 @@ public class DeserializationTest {
         assertEquals("constantValue", map.get("constant").value());
         assertEquals("valueInFile", map.get("fileRef").value());
         assertEquals("propertyValue", map.get("propertyRef").value());
+    }
+
+    @Test
+    public void datasourceConstants() {
+        var value = deserialize("datasource-constants.json", DataSource.class);
+        assertEquals("2", value.getSteadyPoolSize().value());
+        var definition = value.toDefinition();
+        // we (deliberately) missed jndiName, so this represents default data source
+        assertTrue(definition.isDefaultDataSource());
     }
 
 }

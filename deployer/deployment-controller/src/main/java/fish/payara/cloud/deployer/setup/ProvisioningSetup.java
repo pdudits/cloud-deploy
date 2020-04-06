@@ -42,7 +42,8 @@ import java.lang.annotation.Annotation;
 
 public enum ProvisioningSetup {
     DIRECT(DirectProvisioning.class),
-    MOCK(MockProvisioning.class);
+    MOCK(MockProvisioning.class),
+    CLOUD_INSTANCE(CloudInstanceProvisioning.class);
 
     final Class<?> alternative;
 
