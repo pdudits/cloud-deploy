@@ -33,21 +33,23 @@
 # and therefore, elected the GPL Version 2 license, then the option applies
 # only if the new code is made subject to such option by the copyright
 # holder.
-
-FROM azul/zulu-openjdk-alpine:11.0.6 AS micro_launcher
-# Create base image which utilizes root launcher
-
-ENV PAYARA_HOME=/opt/payara
+FROM azul/zulu-openjdk-alpine:11.0.6 AS base
+ENV PAYARA_HOME=/opt/payara\
+    DEPLOY_DIR=/opt/payara/deployments
 
 # Create and set the Payara user and working directory owned by the new user
 RUN addgroup payara && \
     adduser -D -h ${PAYARA_HOME} -H -s /bin/bash payara -G payara && \
     echo payara:payara | chpasswd && \
-    mkdir -p ${PAYARA_HOME} && \
+    mkdir -p ${PAYARA_HOME} ${DEPLOY_DIR} && \
     chown -R payara:payara ${PAYARA_HOME}
+
 USER payara
 
 WORKDIR ${PAYARA_HOME}
+
+FROM base AS micro_launcher
+# Create base image which utilizes root launcher
 
 COPY maven/payara-micro.jar ${PAYARA_HOME}/payara-micro.jar
 
@@ -56,25 +58,12 @@ COPY maven/payara-micro.jar ${PAYARA_HOME}/payara-micro.jar
 RUN java -jar payara-micro.jar --rootdir micro-root --outputlauncher && \
     rm ${PAYARA_HOME}/payara-micro.jar
 
-FROM azul/zulu-openjdk-alpine:11.0.6
-# Image that utilizes warmed-up Class Data Sharing archive
-
-ENV PAYARA_HOME=/opt/payara\
-    DEPLOY_DIR=/opt/payara/deployments
+FROM base AS cds
 
 COPY --from=micro_launcher ${PAYARA_HOME} ${PAYARA_HOME}/
-COPY maven/warmup.war /tmp/warmup/
-COPY maven/postdeploy /tmp/warmup/
+COPY --chown=payara:payara maven/warmup.war maven/postdeploy /tmp/warmup/
 
-# Create and set the Payara user and working directory owned by the new user
-RUN addgroup payara && \
-    adduser -D -h ${PAYARA_HOME} -H -s /bin/bash payara -G payara && \
-    echo payara:payara | chpasswd && \
-    mkdir -p ${DEPLOY_DIR} && \
-    chown -R payara:payara ${PAYARA_HOME} /tmp/warmup
-USER payara
-
-WORKDIR ${PAYARA_HOME}
+# Image that utilizes warmed-up Class Data Sharing archive
 
 # 1. Collect list of classes to put into CDS archive by doing warmup deployment, and then undeploying it
 # 2. Create CDS archive payara.jsa
@@ -84,6 +73,10 @@ RUN java -XX:DumpLoadedClassList=classes.lst -jar micro-root/launch-micro.jar \
     java -Xshare:dump -XX:SharedClassListFile=classes.lst -XX:SharedArchiveFile=payara.jsa \
          -jar micro-root/launch-micro.jar && \
     rm -rf /tmp/warmup classes.lst
+
+FROM base AS final_output
+
+COPY --from=cds ${PAYARA_HOME} ${PAYARA_HOME}/
 
 # Run Payara Micro, requiring CDS to be utilized
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=90.0", \
