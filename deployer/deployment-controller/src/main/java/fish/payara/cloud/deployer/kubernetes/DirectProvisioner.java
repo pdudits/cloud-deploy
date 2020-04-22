@@ -64,6 +64,8 @@ import java.net.URI;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -138,7 +140,12 @@ class DirectProvisioner implements Provisioner {
         result.getMetadata().setNamespace(support.getNamespace());
         result.getMetadata().setLabels(support.labelsForComponent("webapp"));
 
-        result = WebAppCustomResource.client(client).create(result);
+        var didExist = WebAppCustomResource.client(client).delete(result);
+        if (didExist) {
+            // we need to wait until everything gets deleted. TODO: Obviously properly refresh status
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(5));
+        }
+        result = WebAppCustomResource.client(client).createOrReplace(result);
         support.setOwner(result);
         return result;
     }
