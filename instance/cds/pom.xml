@@ -41,7 +41,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>fish.payara.cloud</groupId>
-        <artifactId>cloud-deploy-parent</artifactId>
+        <artifactId>instance-parent</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
     <artifactId>cds</artifactId>
@@ -49,7 +49,7 @@
 
     <properties>
         <skip.docker>true</skip.docker>
-        <docker.name>payara/micro:zulu-11-cds</docker.name>
+        <docker.name>payara/micro:${payara.version}-zulu-11-cds</docker.name>
     </properties>
 
     <dependencies>
