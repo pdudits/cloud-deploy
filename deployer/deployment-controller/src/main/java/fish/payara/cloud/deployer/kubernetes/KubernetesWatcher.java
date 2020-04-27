@@ -41,6 +41,7 @@ package fish.payara.cloud.deployer.kubernetes;
 import fish.payara.cloud.deployer.process.ChangeKind;
 import fish.payara.cloud.deployer.process.DeploymentProcess;
 import fish.payara.cloud.deployer.process.StateChanged;
+import fish.payara.cloud.deployer.setup.CloudInstanceProvisioning;
 import fish.payara.cloud.deployer.setup.DirectProvisioning;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
@@ -83,6 +84,7 @@ import java.util.regex.Pattern;
  */
 @ApplicationScoped
 @DirectProvisioning
+@CloudInstanceProvisioning
 class KubernetesWatcher implements Closeable {
     private static final Logger LOGGER = Logger.getLogger(KubernetesWatcher.class.getName());
 
