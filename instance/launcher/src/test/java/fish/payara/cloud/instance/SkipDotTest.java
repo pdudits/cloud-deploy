@@ -38,59 +38,20 @@
 
 package fish.payara.cloud.instance;
 
-import fish.payara.cloud.instance.tasks.ConfigurationTask;
-import fish.payara.cloud.instance.tasks.Serialization;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Entry point.
- * Invoke with path to directory containing configuration tasks in json format.
- */
-public class Main {
-    private final Path configRoot;
+public class SkipDotTest {
+    @Test
+    public void dotSubdirsShouldBeSkipped() {
+        Path root = Path.of("/config/");
+        Path file1 = root.resolve(Path.of("deployment-config","deployment.json"));
+        Path file2 = root.resolve(Path.of("deployment-config", "..2020_04_27_09_09_39.122666172", "deployment.json"));
+        var main = new Main("/config");
 
-    public Main(String configDir) {
-        this.configRoot = Path.of(configDir);
+        Assertions.assertTrue(main.skipDotFiles(file1));
+        Assertions.assertFalse(main.skipDotFiles(file2));
     }
-
-    public static void main(String[] args) throws Exception {
-        if ("--outputlauncher".equals(args[0])) {
-            Applicator.getRepackager().packageTo(args[1]);
-        } else {
-            Main main = new Main(args[0]);
-            main.run();
-        }
-    }
-
-    private void run() throws Exception {
-        List<ConfigurationTask> tasks = parseConfig();
-        ConfigurationPlan plan = ConfigurationPlan.plan(tasks);
-        Applicator planApplicator = Applicator.getInstance();
-        plan.execute(planApplicator);
-        planApplicator.start();
-    }
-
-    private List<ConfigurationTask> parseConfig() throws IOException {
-        return Files.walk(configRoot)
-                .filter(this::skipDotFiles)
-                .filter(p -> p.getFileName().toString().endsWith(".json"))
-                .peek(p -> System.out.println("Found configuration file "+p.toAbsolutePath()))
-                .map(Serialization::deserialize).collect(Collectors.toList());
-    }
-
-    boolean skipDotFiles(Path path) {
-        for (int i=configRoot.getNameCount(); i<path.getNameCount(); i++) {
-            if (path.getName(i).toString().startsWith(".")) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-
 }
